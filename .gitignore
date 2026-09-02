@@ -1,0 +1,24 @@
+# Eclipse
+.metadata/
+**/.settings/
+**/.classpath
+**/.project
+
+# Maven
+**/target/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IntelliJ
+.idea/
+
+# VSCode
+.vscode/
+
+# Spring Boot
+**/src/main/resources/application.properties

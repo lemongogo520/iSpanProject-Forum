@@ -85,6 +85,19 @@
         @update:model-value="fetchPosts"
       />
     </template>
+    <!-- 錯誤提示 -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="3000"
+      location="top"
+    >
+      {{ snackbar.message }}
+
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.show = false"> 關閉 </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -94,11 +107,27 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import httpClient from "@/api/httpClient";
+import { getPostsByBoard } from "@/api/postApi";
 
 // Router
 const route = useRoute();
-
 const router = useRouter();
+
+// Snackbar 狀態
+const errorMessage = ref("");
+const snackbar = ref({
+  show: false,
+  message: "",
+  color: "error",
+});
+
+const showMessage = (message, color = "error") => {
+  snackbar.value = {
+    show: true,
+    message,
+    color,
+  };
+};
 
 // Board ID
 const boardId = route.params.boardId;
@@ -119,36 +148,23 @@ const totalPages = ref(0);
 // 狀態
 const loading = ref(false);
 
-const errorMessage = ref("");
-
 // ======================
 // 取得 Board
 // ======================
 
 const fetchBoard = () => {
-
-    httpClient({
-        method: 'get',
-        url: `/api/boards/${boardId}`
+  httpClient({
+    method: "get",
+    url: `/api/boards/${boardId}`,
+  })
+    .then((response) => {
+      board.value = response.data;
     })
-    .then(response => {
-
-        console.log('===== Board API =====')
-        console.log('URL:', `/api/boards/${boardId}`)
-        console.log('DATA:', response.data)
-
-        board.value = response.data
-
-    })
-    .catch(error => {
-
-        console.log(error)
-
-        errorMessage.value = '找不到這個討論版'
-
-    })
-
-}
+    .catch((error) => {
+      console.log("取得看板失敗：", error);
+      errorMessage.value = "找不到這個討論版";
+    });
+};
 
 // ======================
 // 取得 Posts
@@ -158,29 +174,16 @@ const fetchPosts = () => {
   loading.value = true;
   errorMessage.value = "";
 
-  httpClient({
-    method: 'get',
-    url: `/api/posts/boards/${boardId}`,
-    // 💡 註：GET 請求建議使用 params。若您的 httpClient 封裝特殊必須用 data，再自行改回 data。
-    params: {
-      page: page.value - 1,
-      size: pageSize.value
-    }
-  })
-    .then(response => {
-      console.log('===== Posts API =====');
-      console.log('URL:', `/api/posts/boards/${boardId}`);
-      console.log('DATA:', response.data);
-
-      // 因後端 Controller 回傳 List<Posts> (純陣列)，故直接賦值
+  getPostsByBoard(boardId, page.value - 1, pageSize.value)
+    .then((response) => {
       posts.value = response.data.content;
       totalPages.value = response.data.totalPages;
-      
-      loading.value = false;
     })
-    .catch(error => {
-      console.log(error);
-      errorMessage.value = '文章取得失敗';
+    .catch((error) => {
+      console.error("取得文章失敗：", error);
+      errorMessage.value = "文章取得失敗";
+    })
+    .finally(() => {
       loading.value = false;
     });
 };
@@ -188,8 +191,6 @@ const fetchPosts = () => {
 // ======================
 // 點擊文章
 // ======================
-
-
 
 const openPost = (postId) => {
   router.push(`/post/${postId}`);
@@ -204,20 +205,19 @@ const createPost = () => {
   const currentBoardId = board.value.id || boardId;
 
   if (!currentBoardId) {
-    alert("系統提示：找不到目前的看板 ID，請重新整理頁面再試一次。");
+    showMessage("找不到目前的看板 ID，請重新整理頁面再試一次", "error");
     return;
   }
-
-  // 2. 執行跳轉與錯誤處理（改為統一的 then / catch 風格）
-  router.push(`/post/create?boardId=${currentBoardId}`)
-    .then(() => {
-      console.log('===== 路由跳轉成功 =====');
-      console.log('URL:', `/post/create?boardId=${currentBoardId}`);
+  router
+    .push({
+      name: "PostCreate",
+      query: {
+        boardId: currentBoardId,
+      },
     })
-    .catch(error => {
-      console.log('===== 路由跳轉失敗 =====');
-      console.log(error);
-      alert("跳轉失敗！請確認你的 router/index.js 裡是否有設定 /post/create 這個路徑。");
+    .catch((error) => {
+      console.error("跳轉發文頁失敗：", error);
+      showMessage("跳轉失敗，請確認發文頁路由設定", "error");
     });
 };
 // ======================

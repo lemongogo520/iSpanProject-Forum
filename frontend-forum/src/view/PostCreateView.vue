@@ -2,7 +2,12 @@
 <template>
   <v-container class="py-8" max-width="800">
     <!-- 返回看板 -->
-    <v-btn variant="text" prepend-icon="mdi-arrow-left" class="mb-4" @click="goBack">
+    <v-btn
+      variant="text"
+      prepend-icon="mdi-arrow-left"
+      class="mb-4"
+      @click="goBack"
+    >
       返回看板
     </v-btn>
 
@@ -16,14 +21,14 @@
       <v-card-title class="text-h5 mb-4">
         {{ isEditing ? "編輯文章" : "發表新文章" }}
       </v-card-title>
-      
+
       <v-form ref="form" @submit.prevent="handleSubmit">
         <!-- 標題輸入 -->
         <v-text-field
           v-model="title"
           label="文章標題"
           variant="outlined"
-          :rules="[v => !!v || '請輸入標題']"
+          :rules="[(v) => !!v || '請輸入標題']"
           required
           class="mb-4"
         />
@@ -51,13 +56,30 @@
         </div>
       </v-form>
     </v-card>
+
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="3000"
+      location="top"
+    >
+      {{ snackbar.message }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.show = false">關閉</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import httpClient from "@/api/httpClient";
+
+import {
+  createPost as createPostApi,
+  updatePost as updatePostApi,
+  getPost as getPostApi,
+} from "@/api/postApi";
 
 import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
@@ -76,11 +98,7 @@ const isEditing = computed(() => {
 
 // 新增文章時從 query 取得 boardId
 // 編輯文章時會由文章 API 補上原本的 boardId
-const boardId = ref(
-  route.query.boardId
-    ? Number(route.query.boardId)
-    : null
-);
+const boardId = ref(route.query.boardId ? Number(route.query.boardId) : null);
 
 // ======================
 // 表單資料
@@ -89,6 +107,19 @@ const title = ref("");
 const content = ref("");
 const submitting = ref(false);
 const loading = ref(false);
+const snackbar = ref({
+  show: false,
+  message: "",
+  color: "success",
+});
+
+const showMessage = (message, color = "success") => {
+  snackbar.value = {
+    show: true,
+    message,
+    color,
+  };
+};
 
 // ======================
 // Quill 工具列
@@ -116,10 +147,7 @@ const fetchEditingPost = () => {
 
   loading.value = true;
 
-  httpClient({
-    method: "get",
-    url: `/api/posts/${editingPostId}`,
-  })
+  getPostApi(editingPostId)
     .then((response) => {
       const post = response.data;
 
@@ -132,8 +160,7 @@ const fetchEditingPost = () => {
     })
     .catch((error) => {
       console.error("取得文章失敗：", error);
-      alert(error.response?.data ?? "取得文章失敗");
-      router.back();
+      showMessage(error.response?.data ?? "取得文章失敗", "error");
     })
     .finally(() => {
       loading.value = false;
@@ -146,81 +173,58 @@ const fetchEditingPost = () => {
 const handleSubmit = () => {
   const cleanTitle = title.value.trim();
 
-  if (
-    !cleanTitle ||
-    !content.value ||
-    content.value === "<p><br></p>"
-  ) {
-    alert("請填寫標題與內容");
+  if (!cleanTitle || !content.value || content.value === "<p><br></p>") {
+    showMessage("請填寫標題與內容", "error");
     return;
   }
 
   if (!boardId.value) {
-    alert("找不到文章所屬看板");
+    showMessage("找不到文章所屬看板", "error");
     return;
   }
 
   submitting.value = true;
 
-  const requestConfig = isEditing.value
-    ? {
-        method: "put",
-        url: `/api/posts/${editingPostId}`,
-        data: {
-          title: cleanTitle,
-          content: content.value,
-          board: {
-            id: boardId.value,
-          },
-        },
-      }
-    : {
-        method: "post",
-        url: "/api/posts",
-        data: {
-          title: cleanTitle,
-          content: content.value,
-          board: {
-            id: boardId.value,
-          },
-        },
-      };
+  // 準備文章資料
+  const postData = {
+    title: cleanTitle,
+    content: content.value,
+    board: {
+      id: boardId.value,
+    },
+  };
 
-  httpClient(requestConfig)
-    .then((response) => {
-      console.log(
-        isEditing.value
-          ? "修改文章成功："
-          : "新增文章成功：",
-        response.data
-      );
+  // 編輯使用 PUT，新增使用 POST
+  const request = isEditing.value
+    ? updatePostApi(editingPostId, postData)
+    : createPostApi(postData);
 
-      if (isEditing.value) {
-        // 修改完成後回到文章詳細頁
-        router.push({
-          name: "PostDetail",
-          params: {
-            postId: editingPostId,
-          },
-        });
-      } else {
-        // 新增完成後返回原本的看板
-        router.back();
-      }
+  request
+    .then(() => {
+      showMessage(isEditing.value ? "文章修改成功" : "文章發布成功", "success");
+      setTimeout(() => {
+        if (isEditing.value) {
+          router.push({
+            name: "PostDetail",
+            params: {
+              postId: editingPostId,
+            },
+          });
+        } else {
+          router.back();
+        }
+      }, 300);
     })
     .catch((error) => {
       console.error(
-        isEditing.value
-          ? "修改文章失敗："
-          : "新增文章失敗：",
-        error
+        isEditing.value ? "修改文章失敗：" : "新增文章失敗：",
+        error,
       );
 
-      alert(
+      showMessage(
         error.response?.data ??
-          (isEditing.value
-            ? "修改文章失敗"
-            : "新增文章失敗")
+          (isEditing.value ? "修改文章失敗" : "新增文章失敗"),
+        "error",
       );
     })
     .finally(() => {

@@ -1,46 +1,43 @@
 package forum.board.friends;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import forum.board.users.Users;
+import forum.board.friends.FriendshipEntity.FriendshipStatus;
 
 
 
-public interface FriendshipRepository extends JpaRepository<Friendship, UUID>{
-	@Query("""
-			from Friendship f 
-			where(f.user1.id = :user1Id and f.user2.id = :user2Id) 
-			or (f.user1.id = :user2Id and f.user2.id = :user1Id)
-			""")
-	Optional<Friendship> findRelationBetween(UUID user1Id, UUID user2Id);
-	//檢查雙向關係 
+public interface FriendshipRepository extends JpaRepository<FriendshipEntity, Long>{
+	// 檢查雙向關係 
+	Optional<FriendshipEntity> findByUser1IdAndUser2Id( UUID user1Id, UUID user2Id );
 	
-	
-	Set<Friendship> findByRequester(Users user);
-	
+	// 指定user的好友關係
 	@Query("""
 	        from Friendship f
-	        JOIN FETCH f.user1
-	        JOIN FETCH f.user2
 	        WHERE (f.user1.id = :userId OR f.user2.id = :userId)
-	          AND f.status = 'ACCEPTED'
+	          AND f.status = :status
 	    """)
-	    Page<Friendship> findFriends(@Param("userId") UUID userId, Pageable pageable);
+	List<FriendshipEntity> findFriends(
+		@Param("userId") UUID userId
+		,@Param("status") FriendshipStatus status); 
 	
-	@Query("""
-			select count(*)
-			from Friendship f 
-			where(f.user1.id = :userId OR f.user2.id = :userId)
-	          AND f.status = 'ACCEPTED'
-			""")
-	
-	long countFriends(UUID userId);
+	/* 某user收到的待處理好友邀請
+		requester 是發送邀請的人 
+		透過 user1 / user2 找出誰是接收者*/
+	@Query(""" 
+		FROM FriendshipEntity f 
+		WHERE f.status = 'PENDING' 
+		AND f.requester.id <> :userId 
+		AND ( f.user1.id = :userId OR f.user2.id = :userId ) """) 
+	List<FriendshipEntity> findPendingRequests( @Param("userId") UUID userId );
+
+	/* user自己送出的待處理好友邀請 */ 
+	List<FriendshipEntity> findByRequesterIdAndStatus( 
+		  UUID requesterId
+		, FriendshipStatus status );
 }

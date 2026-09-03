@@ -1,7 +1,6 @@
 package forum.board.friends;
 
 import java.time.Instant;
-import java.util.UUID;
 
 import forum.board.users.Users;
 
@@ -30,11 +29,11 @@ import lombok.Setter;
 @Entity
 @Table( name="friendship",
 		uniqueConstraints = @UniqueConstraint(columnNames = {"user1_id","user2_id"}))
-public class Friendship {
+public class FriendshipEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
-    private UUID id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user1_id", nullable = false)
@@ -56,26 +55,29 @@ public class Friendship {
     private Instant createTime;
     
     @PrePersist
-    public void onCreate() {
+    public void prePersist() {
+        Instant now = Instant.now();
     	if(this.createTime==null) {
-    		this.createTime = Instant.now();
-    		this.updateTime = Instant.now();
+    		this.createTime = now;
     	}
+        this.updateTime = now;
     }
     
     @Column(name = "update_time", nullable = false)
     private Instant updateTime;
     
     @PreUpdate
-    public void onUpdate() {
+    public void preUpdate() {
     	this.updateTime = Instant.now();	
     }
     
     public enum FriendshipStatus {
-        PENDING, ACCEPTED, REJECTED, BLOCKED
+        PENDING
+        , ACCEPTED
+        // , REJECTED
+        // , BLOCKED
     }
 }
-	
 	
 	
 

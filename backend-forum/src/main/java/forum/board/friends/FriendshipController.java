@@ -26,7 +26,7 @@ public class FriendshipController {
 	@GetMapping("/friend")
 	public String getFriendList(@RequestParam (value="p", defaultValue = "1")Integer pageNumber, Model model, HttpSession httpSession) {
 		UUID loginUserId = (UUID)httpSession.getAttribute("loginUserId");
-		Page<Friendship> page = fService.getFriends(loginUserId,pageNumber);
+		Page<FriendshipEntity> page = fService.getFriends(loginUserId,pageNumber);
 		model.addAttribute("page", page);
 		
 		return "friends/friendsListView";

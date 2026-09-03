@@ -17,7 +17,7 @@ public class ConversationUserService {
     	Page<Users> allUser = uRepo.findAll(pgb);
     	System.out.println(allUser.getTotalElements());
     	if(allUser.isEmpty()) {
-    		throw new IllegalStateException("沒有會員");
+    		throw new RuntimeException("沒有會員");
     	}
     	return allUser;
     }

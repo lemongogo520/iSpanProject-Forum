@@ -46,6 +46,7 @@ public class Posts {
 
 	private String title;
 
+	@Column(columnDefinition = "nvarchar(max)")
 	private String content;
 
 	@Column(nullable = false)

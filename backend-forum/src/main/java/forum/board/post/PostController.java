@@ -34,7 +34,7 @@ public class PostController {
 
 	// 取得單篇文章
 	@GetMapping("/api/posts/{id}")
-	public ResponseEntity<Posts> findById(@PathVariable Integer id) {
+	public ResponseEntity<PostDTO> findById(@PathVariable Integer id) {
 
 		Posts post = postService.findById(id);
 
@@ -42,7 +42,20 @@ public class PostController {
 			return ResponseEntity.notFound().build();
 		}
 
-		return ResponseEntity.ok(post);
+		PostDTO postDTO = new PostDTO();
+		postDTO.setId(post.getId());
+		postDTO.setTitle(post.getTitle());
+		postDTO.setContent(post.getContent());
+		postDTO.setViews(post.getViews());
+		postDTO.setCreateTime(post.getCreateTime());
+		postDTO.setModifyTime(post.getModifyTime());
+		postDTO.setIsDeleted(post.getIsDeleted());
+		postDTO.setUserName(post.getUsers().getAccount());
+		postDTO.setBoardId(post.getBoard().getId());
+		// userid暫時寫死之後改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		postDTO.setUserId( UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9"));
+		
+		return ResponseEntity.ok(postDTO);
 	}
 
 	// 根據board找文章有分頁
@@ -87,7 +100,7 @@ public class PostController {
 	public ResponseEntity<?> delete(@PathVariable Integer id, HttpSession hs) {
 
 		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
-		UUID userId = UUID.fromString("803BB44C-4F12-4056-8733-9D254162CCAE");
+		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
 
 //		if(userId == null) {
 //		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

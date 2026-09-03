@@ -19,71 +19,19 @@
     </v-alert>
     <!-- 文章 -->
     <template v-else-if="post">
-      <v-card elevation="1" class="post-card">
-        <v-row no-gutters>
-          <!-- ====================== -->
-          <!-- 作者區 -->
-          <!-- ====================== -->
-          <v-col cols="12" md="2" class="author-area">
-            <v-avatar size="90" class="mb-4">
-              <v-icon icon="mdi-account" size="55" />
-            </v-avatar>
-            <div class="text-subtitle-1 font-weight-bold">
-              {{ getUserName(post) }}
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">使用者</div>
-          </v-col>
-          <!-- ====================== -->
-          <!-- 文章內容 -->
-          <!-- ====================== -->
-          <v-col cols="12" md="10" class="pa-6">
-            <!-- 發布時間 -->
-            <div class="text-subtitle-2 text-medium-emphasis mb-4">
-              {{ formatDate(post.createTime) }}
-            </div>
-            <!-- 標題 -->
-            <v-card-title class="px-0 text-h5 font-weight-bold">
-              {{ post.title }}
-            </v-card-title>
-            <v-divider class="my-4" />
-            <!-- 文章內容 -->
-            <v-card-text class="px-0 post-content" v-html="post.content" />
-            <!-- 標籤 -->
-            <div class="d-flex align-center flex-wrap ga-2 mt-6">
-              <span class="font-weight-bold mr-2"> 探索主題 </span>
-              <v-chip size="small"> 電腦 </v-chip>
-              <v-chip size="small"> 遊戲 </v-chip>
-              <v-chip size="small"> 科技 </v-chip>
-            </div>
-          </v-col>
-        </v-row>
-      </v-card>
-      <!-- ====================== -->
-      <!-- 按讚 / 倒讚 -->
-      <!-- ====================== -->
-      <div class="reaction-area">
-        <v-btn variant="text" prepend-icon="mdi-thumb-up-outline">
-          {{ likeCount }}
-        </v-btn>
-        <v-btn variant="text" prepend-icon="mdi-thumb-down-outline"> - </v-btn>
-        <v-spacer />
-        <!-- 更多 -->
-        <v-menu>
-          <template #activator="{ props }">
-            <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" />
-          </template>
-          <v-list>
-            <v-list-item title="編輯文章" />
-            <v-list-item title="刪除文章" />
-          </v-list>
-        </v-menu>
-      </div>
+      <PostContent
+        :post="post"
+        :like-count="likeCount"
+        :is-post-owner="isPostOwner"
+        :post-deleting="postDeleting"
+        @edit-post="editPost"
+        @delete-post="requestDelete('post')"/>
       <!-- ====================== -->
       <!-- 留言標題 -->
       <!-- ====================== -->
       <div class="comment-title">
         <v-icon icon="mdi-chevron-down" size="20" />
-        <span> 留言 </span>
+        <span> 留言（{{ totalCommentElements }}） </span>
       </div>
       <!-- ====================== -->
       <!-- 沒有留言 -->
@@ -102,167 +50,31 @@
       <!-- ====================== -->
       <!-- 留言列表 -->
       <!-- ====================== -->
-      <v-card
+      <CommentItem
         v-for="comment in comments"
         :key="comment.id"
-        class="comment-card mb-3 pa-4"
-      >
-        <!-- 父留言編輯模式 -->
-        <template v-if="editingCommentId === comment.id">
-          <v-textarea
-            v-model="editingContent"
-            label="編輯留言"
-            variant="outlined"
-            rows="3"
-            auto-grow
-          />
-
-          <div class="d-flex justify-end ga-2">
-            <v-btn
-              size="small"
-              variant="text"
-              :disabled="commentUpdating"
-              @click="cancelEditComment"
-            >
-              取消
-            </v-btn>
-
-            <v-btn
-              size="small"
-              color="primary"
-              variant="flat"
-              :loading="commentUpdating"
-              @click="updateComment(comment.id)"
-            >
-              儲存
-            </v-btn>
-          </div>
-        </template>
-
-        <!-- 父留言一般顯示模式 -->
-        <template v-else>
-          <!-- 父留言內容 -->
-          <div class="mb-3" :class="{ 'text-grey': comment.isDeleted }">
-            {{ comment.content }}
-          </div>
-
-          <!-- 未刪除留言的操作按鈕 -->
-          <div v-if="!comment.isDeleted" class="d-flex justify-end ga-2">
-            <!-- 回覆 -->
-            <v-btn
-              size="small"
-              color="primary"
-              variant="text"
-              prepend-icon="mdi-reply"
-              @click.stop="startReply(comment.id)"
-            >
-              回覆
-            </v-btn>
-
-            <!-- 編輯 -->
-            <v-btn
-              size="small"
-              color="primary"
-              variant="outlined"
-              prepend-icon="mdi-pencil-outline"
-              @click.stop="startEditComment(comment)"
-            >
-              編輯
-            </v-btn>
-
-            <!-- 刪除 -->
-            <v-btn
-              size="small"
-              color="error"
-              variant="outlined"
-              prepend-icon="mdi-delete-outline"
-              @click.stop="deleteComment(comment.id)"
-            >
-              刪除
-            </v-btn>
-
-            <!-- 查看或收合回覆 -->
-            <v-btn
-              size="small"
-              variant="text"
-              prepend-icon="mdi-comment-outline"
-              @click.stop="toggleReplies(comment.id)"
-            >
-              {{ expandedComments[comment.id] ? "收合回覆" : "查看回覆" }}
-            </v-btn>
-          </div>
-
-          <!-- 回覆輸入框 -->
-          <div
-            v-if="!comment.isDeleted && replyingCommentId === comment.id"
-            class="mt-4 ml-6"
-          >
-            <v-textarea
-              v-model="replyContent"
-              label="回覆這則留言"
-              placeholder="輸入回覆內容..."
-              variant="outlined"
-              rows="2"
-              auto-grow
-            />
-
-            <div class="d-flex justify-end ga-2">
-              <v-btn
-                size="small"
-                variant="text"
-                :disabled="replySubmitting"
-                @click="cancelReply"
-              >
-                取消
-              </v-btn>
-
-              <v-btn
-                size="small"
-                color="primary"
-                variant="flat"
-                :loading="replySubmitting"
-                @click="submitReply(comment.id)"
-              >
-                送出回覆
-              </v-btn>
-            </div>
-          </div>
-
-          <!-- 展開後顯示子留言 -->
-          <div v-if="expandedComments[comment.id]" class="mt-4 ml-6">
-            <v-divider class="mb-3" />
-
-            <!-- 沒有子留言 -->
-            <div
-              v-if="
-                !childComments[comment.id] ||
-                childComments[comment.id].length === 0
-              "
-              class="text-caption text-grey"
-            >
-              目前沒有回覆
-            </div>
-
-            <!-- 子留言列表 -->
-            <v-card
-              v-for="child in childComments[comment.id] || []"
-              :key="child.id"
-              class="mb-2 pa-3"
-              variant="tonal"
-            >
-              <div :class="{ 'text-grey': child.isDeleted }">
-                {{ child.content }}
-              </div>
-
-              <div class="text-caption text-grey mt-2">
-                {{ getUserName(child) }}
-                ・
-                {{ formatDate(child.createTime) }}
-              </div>
-            </v-card>
-          </div>
-        </template>
-      </v-card>
+        :comment="comment"
+        :child-comments="childComments[comment.id] || []"
+        :expanded="Boolean(expandedComments[comment.id])"
+        :editing-comment-id="editingCommentId"
+        :editing-content="editingContent"
+        :replying-comment-id="replyingCommentId"
+        :reply-content="replyContent"
+        :current-user-id="currentUserId"
+        :comment-updating="commentUpdating"
+        :reply-submitting="replySubmitting"
+        :deleting-comment-id="deletingCommentId"
+        @start-edit="startEditComment"
+        @cancel-edit="cancelEditComment"
+        @update-comment="updateComment"
+        @delete-comment="handleCommentDeleteRequest"
+        @start-reply="startReply"
+        @cancel-reply="cancelReply"
+        @submit-reply="submitReply"
+        @toggle-replies="toggleReplies"
+        @update:editing-content="editingContent = $event"
+        @update:reply-content="replyContent = $event"
+      />
       <!-- ====================== -->
       <!-- 留言分頁 -->
       <!-- ====================== -->
@@ -297,13 +109,68 @@
         </div>
       </v-card>
     </template>
+
+    <!-- 共用刪除確認視窗 -->
+    <v-dialog v-model="deleteDialog" max-width="420" persistent>
+      <v-card>
+        <v-card-title class="text-h6">確認刪除</v-card-title>
+        <v-card-text>{{ deleteDialogMessage }}</v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="text"
+            :disabled="isDeleting"
+            @click="closeDeleteDialog"
+          >
+            取消
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            :loading="isDeleting"
+            @click="confirmDelete"
+          >
+            確定刪除
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 共用成功／錯誤提示 -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="3000"
+      location="top"
+    >
+      {{ snackbar.message }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.show = false">關閉</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import httpClient from "@/api/httpClient";
+import {
+  getPost as getPostApi,
+  deletePost as deletePostApi,
+} from "@/api/postApi";
+
+import {
+  getComments as getCommentsApi,
+  getChildComments as getChildCommentsApi,
+  createComment as createCommentApi,
+  createReply as createReplyApi,
+  updateComment as updateCommentApi,
+  deleteComment as deleteCommentApi,
+} from "@/api/commentApi";
+
+import CommentItem from "@/components/CommentItem.vue";
+import PostContent from "@/components/PostContent.vue";
+
 // ======================
 // Router
 // ======================
@@ -317,6 +184,10 @@ const postId = route.params.postId;
 // Post
 // ======================
 const post = ref(null);
+// ======================
+// 全部留言筆數
+// ======================
+const totalCommentElements = ref(0);
 // ======================
 // 主留言Comments
 // ======================
@@ -352,26 +223,84 @@ const likeCount = ref(0);
 // ======================
 const loading = ref(false);
 const errorMessage = ref("");
+
+// ======================
+// 共用提示與刪除確認
+// ======================
+const snackbar = ref({
+  show: false,
+  message: "",
+  color: "success",
+});
+const deleteDialog = ref(false);
+const deleteTarget = ref(null);
+const postDeleting = ref(false);
+const deletingCommentId = ref(null);
+
+const showMessage = (message, color = "success") => {
+  snackbar.value = {
+    show: true,
+    message,
+    color,
+  };
+};
+
+const deleteDialogMessage = computed(() =>
+  deleteTarget.value?.type === "post"
+    ? "確定要刪除這篇文章嗎？刪除後將無法繼續編輯。"
+    : "確定要刪除這則留言嗎？",
+);
+
+const isDeleting = computed(
+  () => postDeleting.value || deletingCommentId.value !== null,
+);
+
+const requestDelete = (type, commentId = null, parentCommentId = null) => {
+  deleteTarget.value = { type, commentId, parentCommentId };
+  deleteDialog.value = true;
+};
+
+const closeDeleteDialog = () => {
+  if (isDeleting.value) return;
+  deleteDialog.value = false;
+  deleteTarget.value = null;
+};
+
+const confirmDelete = () => {
+  const target = deleteTarget.value;
+  if (!target) return;
+
+  if (target.type === "post") {
+    deletePost();
+  } else {
+    deleteComment(target.commentId, target.parentCommentId);
+  }
+};
+
+const handleCommentDeleteRequest = (commentId, parentCommentId) => {
+  requestDelete("comment", commentId, parentCommentId);
+};
+// ======================
+// 使用者判斷 暫時寫死
+// ======================
+const currentUserId = "10334e31-124a-4a74-b898-4a2c62753cc9";
+
 // ======================
 // 取得 Post
 // ======================
 const fetchPost = () => {
   loading.value = true;
   errorMessage.value = "";
-  httpClient({
-    method: "get",
-    url: `/api/posts/${postId}`,
-  })
+  getPostApi(postId)
     .then((response) => {
       post.value = response.data;
-      // 如果後端有 likes 就使用
       likeCount.value = response.data.likes || 0;
-      loading.value = false;
     })
     .catch((error) => {
-      console.log("===== Post API 失敗 =====");
-      console.log(error);
+      console.log("文章取得失敗:", error);
       errorMessage.value = "文章取得失敗";
+    })
+    .finally(() => {
       loading.value = false;
     });
 };
@@ -379,23 +308,14 @@ const fetchPost = () => {
 // 取得 Comments
 // ======================
 const fetchComments = () => {
-  httpClient({
-    method: "get",
-    url: `/api/comments/posts/${postId}`,
-    params: {
-      page: commentPage.value - 1,
-      size: commentPageSize.value,
-    },
-  })
+  getCommentsApi(postId, commentPage.value - 1, commentPageSize.value)
     .then((response) => {
       comments.value = response.data.content;
       totalCommentPages.value = response.data.totalPages;
-
-      console.log("取得留言成功：", response.data);
+      totalCommentElements.value = response.data.totalElements;
     })
     .catch((error) => {
       console.error("取得留言失敗：", error);
-
       comments.value = [];
       totalCommentPages.value = 0;
     });
@@ -404,12 +324,8 @@ const fetchComments = () => {
 // 取得子留言
 // ======================
 const fetchChildComments = (parentCommentId) => {
-  httpClient({
-    method: "get",
-    url: `/api/comments/${parentCommentId}/children`,
-  })
+  getChildCommentsApi(parentCommentId)
     .then((response) => {
-      childComments.value[parentCommentId] = response.data;
       childComments.value = {
         ...childComments.value,
         [parentCommentId]: response.data,
@@ -417,8 +333,7 @@ const fetchChildComments = (parentCommentId) => {
     })
     .catch((error) => {
       console.error("取得子留言失敗：", error);
-      childComments.value ={...childComments.value,[parentCommentId] : []
-      };
+      childComments.value = { ...childComments.value, [parentCommentId]: [] };
     });
 };
 const toggleReplies = (parentCommentId) => {
@@ -429,10 +344,6 @@ const toggleReplies = (parentCommentId) => {
     ...expandedComments.value,
     [parentCommentId]: willExpand,
   };
-
-  console.log("父留言 ID：", parentCommentId);
-  console.log("是否展開：", willExpand);
-
   // 展開時查詢子留言
   if (willExpand) {
     fetchChildComments(parentCommentId);
@@ -453,39 +364,26 @@ const submitReply = (parentCommentId) => {
   const content = replyContent.value.trim();
 
   if (!content) {
-    alert("請輸入回覆內容");
+    showMessage("請輸入回覆內容", "warning");
     return;
   }
 
   replySubmitting.value = true;
 
-  httpClient({
-    method: "post",
-    url: `/api/comments/posts/${postId}`,
-    params: {
-      parentCommentId: parentCommentId,
-    },
-
-    // 對應後端的 @RequestBody Comments
-    data: {
-      content: content,
-    },
-  })
-    .then((response) => {
-      console.log("回覆成功：", response.data);
-
+  createReplyApi(postId, parentCommentId, content)
+    .then(() => {
       cancelReply();
+      showMessage("回覆成功");
 
-      // 顯示回覆區
-      expandedComments.value[parentCommentId] = true;
+      expandedComments.value = {
+        ...expandedComments.value,
+        [parentCommentId]: true,
+      };
 
-      // 重新取得這則父留言的所有回覆
       fetchChildComments(parentCommentId);
     })
     .catch((error) => {
-      console.error("回覆失敗：", error);
-
-      alert(error.response?.data ?? "回覆失敗");
+      showMessage(error.response?.data ?? "回覆失敗", "error");
     })
     .finally(() => {
       replySubmitting.value = false;
@@ -497,33 +395,48 @@ const submitReply = (parentCommentId) => {
 const submitComment = () => {
   const content = newComment.value.trim();
   if (!content) {
-    alert("請輸入留言內容");
+    showMessage("請輸入留言內容", "warning");
     return;
   }
 
   commentSubmitting.value = true;
-  httpClient({
-    method: "post",
-
-    url: `/api/comments/posts/${postId}`,
-
-    data: {
-      content: content,
-    },
-  })
-    .then((response) => {
-      console.log("新增成功: ", response.data);
+  createCommentApi(postId, content)
+    .then(() => {
       newComment.value = "";
       commentPage.value = 1;
+      showMessage("留言發表成功");
       fetchComments();
     })
     .catch((error) => {
-      console.log("新增失敗", error.response?.data ?? error);
-      alert("留言失敗，請稍後再試");
+      showMessage(error.response?.data ?? "留言失敗，請稍後再試", "error");
     })
     .finally(() => {
       commentSubmitting.value = false;
     });
+};
+// ======================
+// 文章功能-權限判斷
+// ======================
+const isPostOwner = computed(() => {
+  // PostDTO 直接回傳 userId，不是 users.id
+  const postUserId = post.value?.userId;
+
+  if (!postUserId || !currentUserId) {
+    return false;
+  }
+
+  return postUserId.toLowerCase() === currentUserId.toLowerCase();
+});
+// ======================
+// 編輯文章
+// ======================
+const editPost = () => {
+  router.push({
+    name: "post-edit",
+    params: {
+      postId,
+    },
+  });
 };
 // ======================
 // 編輯留言
@@ -536,83 +449,76 @@ const cancelEditComment = () => {
   editingCommentId.value = null;
   editingContent.value = "";
 };
-const updateComment = (commentId) => {
+const updateComment = (commentId, parentCommentId = null) => {
   const content = editingContent.value.trim();
 
   if (!content) {
-    alert("留言內容不能為空白");
+    showMessage("留言內容不能為空白", "warning");
     return;
   }
 
   commentUpdating.value = true;
 
-  httpClient({
-    method: "put",
-    url: `/api/comments/${commentId}`,
-    data: {
-      content: content,
-    },
-  })
-    .then((response) => {
-      console.log("修改留言成功：", response.data);
-
+  updateCommentApi(commentId, content)
+    .then(() => {
       cancelEditComment();
-      fetchComments();
+      showMessage("留言修改成功");
+
+      if (parentCommentId !== null) {
+        fetchChildComments(parentCommentId);
+      } else {
+        fetchComments();
+      }
     })
     .catch((error) => {
-      console.error("修改留言失敗：", error);
-      alert(error.response?.data ?? "修改留言失敗");
+      showMessage(error.response?.data ?? "修改留言失敗", "error");
     })
     .finally(() => {
       commentUpdating.value = false;
     });
 };
 // ======================
-// 刪除留言
+// 刪除文章
 // ======================
-const deleteComment = (commentId) => {
-  if (!confirm("確定要刪除這則留言嗎？")) {
-    return;
-  }
-  httpClient({
-    method: "delete",
-    url: `/api/comments/${commentId}`,
-  })
-    .then((response) => {
-      console.log("刪除留言成功：", response.data);
-      fetchComments();
+const deletePost = () => {
+  postDeleting.value = true;
+
+  deletePostApi(postId)
+    .then(() => {
+      deleteDialog.value = false;
+      deleteTarget.value = null;
+      showMessage("文章刪除成功");
+      router.back();
     })
     .catch((error) => {
-      console.error("刪除留言失敗：", error);
-      alert(error.response?.data ?? "刪除留言失敗");
+      showMessage(error.response?.data ?? "文章刪除失敗", "error");
+    })
+    .finally(() => {
+      postDeleting.value = false;
     });
 };
 // ======================
-// 取得使用者名稱
+// 刪除留言
 // ======================
-const getUserName = (data) => {
-  if (!data) {
-    return "使用者";
-  }
-  if (data.users) {
-    return data.users.name || data.users.account || "使用者";
-  }
-  return "使用者";
-};
-// ======================
-// 日期格式
-// ======================
-const formatDate = (date) => {
-  if (!date) {
-    return "";
-  }
-  return new Date(date).toLocaleString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const deleteComment = (commentId, parentCommentId = null) => {
+  deletingCommentId.value = commentId;
+  deleteCommentApi(commentId)
+    .then(() => {
+      deleteDialog.value = false;
+      deleteTarget.value = null;
+      showMessage("留言刪除成功");
+      if (parentCommentId !== null) {
+        fetchChildComments(parentCommentId);
+      } else {
+        fetchComments();
+      }
+    })
+    .catch((error) => {
+      showMessage(error.response?.data ?? "刪除留言失敗", "error");
+    })
+    .finally(() => {
+      deletingCommentId.value = null;
+    });
 };
 // ======================
 // 返回
@@ -630,32 +536,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.post-card {
-  overflow: hidden;
-}
-/* 作者 */
-.author-area {
-  background: #f7f7f7;
-  border-right: 1px solid #e0e0e0;
-  min-height: 320px;
-  padding: 30px 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-/* 文章內容 */
-.post-content {
-  min-height: 180px;
-  line-height: 1.8;
-  font-size: 16px;
-}
-/* 按讚 */
-.reaction-area {
-  display: flex;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #e0e0e0;
-}
 /* 留言標題 */
 .comment-title {
   display: flex;
@@ -663,9 +543,5 @@ onMounted(() => {
   align-items: center;
   padding: 18px 0;
   font-weight: 600;
-}
-/* 留言 */
-.comment-card {
-  padding: 20px;
 }
 </style>

@@ -114,6 +114,37 @@ public class PostService {
 
 	}
 
+	// 搜尋文章：boardId 沒傳就是全站搜尋
+	public Page<PostDTO> searchPosts(String title,Integer boardId,Pageable pageable) {
+
+		String keyword = title == null ? "" : title.trim();
+
+		// 空白關鍵字不查詢全部文章
+		if (keyword.isEmpty()) {
+			return Page.empty(pageable);
+		}
+
+		// 最新文章優先，時間相同時再依 ID 排序
+		Pageable sortedPageable = PageRequest.of(
+				pageable.getPageNumber(),
+				pageable.getPageSize(),
+				Sort.by(
+						Sort.Order.desc("createTime"),
+						Sort.Order.desc("id")));
+
+		Page<Posts> posts;
+
+		// 全站搜尋
+		if (boardId == null) {
+			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword,sortedPageable);
+		
+		// boardid搜尋
+		} else {
+			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId,keyword,sortedPageable);
+		}
+		return posts.map(this::toDTO);
+	}
+
 	// 修改文章
 	@Transactional
 	public Posts update(Integer id, Posts newPost, UUID userId) {

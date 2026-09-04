@@ -25,7 +25,8 @@
         :is-post-owner="isPostOwner"
         :post-deleting="postDeleting"
         @edit-post="editPost"
-        @delete-post="requestDelete('post')"/>
+        @delete-post="requestDelete('post')"
+      />
       <!-- ====================== -->
       <!-- 留言標題 -->
       <!-- ====================== -->
@@ -144,6 +145,7 @@ import { useRoute, useRouter } from "vue-router";
 import {
   getPost as getPostApi,
   deletePost as deletePostApi,
+  increasePostViews as increasePostViewsApi,
 } from "@/api/postApi";
 
 import {
@@ -504,9 +506,39 @@ const goBack = () => {
 // ======================
 // 頁面載入
 // ======================
-onMounted(() => {
-  fetchPost();
+onMounted(async () => {
+  loading.value = true;
+  // 留言可以先載入
   fetchComments();
+
+  const storageKey = `post-view-time:${postId}`;
+  const cooldown = 5 * 60 * 1000; // 5 分鐘內重複點取文章或重新整理不會增加觀看數
+  let shouldCount = true;
+  try {
+    const lastViewed = Number(sessionStorage.getItem(storageKey));
+
+    shouldCount =
+      !lastViewed || Date.now() - lastViewed >= cooldown;
+  } catch (error) {
+    console.warn("無法讀取瀏覽紀錄：", error);
+  }
+
+  if (shouldCount) {
+    try {
+      await increasePostViewsApi(postId);
+
+      // API 成功後才記錄時間
+      try {
+        sessionStorage.setItem(storageKey, String(Date.now()));
+      } catch (error) {
+        console.warn("無法儲存瀏覽紀錄：", error);
+      }
+    } catch (error) {
+      console.error("增加瀏覽數失敗：", error);
+    }
+  }
+  // 不論是否計次，都正常取得文章
+  fetchPost();
 });
 </script>
 

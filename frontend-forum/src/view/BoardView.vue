@@ -34,7 +34,25 @@
           </v-card-subtitle>
         </v-card-item>
       </v-card>
+      <!-- 看板內搜尋 -->
+      <v-form class="mb-4" @submit.prevent="handleSearch">
+        <div class="d-flex align-center ga-2">
+          <v-text-field
+            v-model="searchKeyword"
+            label="搜尋此看板的文章標題"
+            prepend-inner-icon="mdi-magnify"
+            variant="outlined"
+            hide-details
+            clearable
+            :disabled="loading"
+            @click:clear="clearSearch"
+          />
 
+          <v-btn type="submit" color="primary" :disabled="loading">
+            搜尋
+          </v-btn>
+        </div>
+      </v-form>
       <!-- 發表文章 -->
       <div class="d-flex justify-end mb-4">
         <v-btn color="primary" prepend-icon="mdi-pencil" @click="createPost">
@@ -69,10 +87,14 @@
       >
         <v-icon icon="mdi-forum-outline" size="50" class="mb-3" />
 
-        <div class="text-h6">目前沒有文章</div>
+        <div class="text-h6">
+          {{ activeKeyword ? "找不到符合條件的文章" : "目前沒有文章" }}
+        </div>
 
         <div class="text-body-2 text-medium-emphasis mt-2">
-          成為第一個發表文章的人吧！
+          {{
+            activeKeyword ? "請嘗試其他關鍵字" : "成為第一個發表文章的人吧！"
+          }}
         </div>
       </v-card>
 
@@ -94,7 +116,7 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import httpClient from "@/api/httpClient";
-import { getPostsByBoard } from "@/api/postApi";
+import { getPostsByBoard, searchPosts as searchPostsApi } from "@/api/postApi";
 
 import { useNotification } from "@/composables/useNotification";
 const { showMessage } = useNotification();
@@ -113,6 +135,11 @@ const board = ref({});
 
 // Posts
 const posts = ref([]);
+
+// 搜尋框正在輸入的文字
+const searchKeyword = ref("");
+// 已按下搜尋、實際用來查詢的關鍵字
+const activeKeyword = ref("");
 
 // 分頁
 const page = ref(1);
@@ -145,12 +172,26 @@ const fetchBoard = () => {
 // ======================
 // 取得 Posts
 // ======================
-
 const fetchPosts = () => {
   loading.value = true;
   errorMessage.value = "";
 
-  getPostsByBoard(boardId, page.value - 1, pageSize.value)
+  let request;
+
+  if (activeKeyword.value) {
+    // 搜尋目前看板的文章
+    request = searchPostsApi(
+      activeKeyword.value,
+      page.value - 1,
+      pageSize.value,
+      boardId,
+    );
+  } else {
+    // 沒有關鍵字，顯示原本的看板文章
+    request = getPostsByBoard(boardId, page.value - 1, pageSize.value);
+  }
+
+  return request
     .then((response) => {
       posts.value = response.data.content;
       totalPages.value = response.data.totalPages;
@@ -162,6 +203,30 @@ const fetchPosts = () => {
     .finally(() => {
       loading.value = false;
     });
+};
+// ======================
+// 搜尋功能
+// ======================
+const handleSearch = () => {
+  if (loading.value) return;
+
+  activeKeyword.value = (searchKeyword.value ?? "").trim();
+
+  // 換關鍵字時回到第一頁
+  page.value = 1;
+  fetchPosts();
+};
+
+// 點搜尋框的清除按鈕
+const clearSearch = () => {
+  if (loading.value) return;
+
+  searchKeyword.value = "";
+  activeKeyword.value = "";
+  page.value = 1;
+
+  // 恢復原本的看板文章列表
+  fetchPosts();
 };
 
 // ======================

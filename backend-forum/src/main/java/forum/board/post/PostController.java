@@ -61,9 +61,9 @@ public class PostController {
 
 	// 用posttitle找文章
 	@GetMapping("/api/posts/search")
-	public List<Posts> search(@RequestParam String title) {
+	public Page<PostDTO> search(@RequestParam String title,@RequestParam(required = false) Integer boardId,Pageable pageable) {
 
-		return postService.findPostsByTitle(title);
+		 return postService.searchPosts(title, boardId, pageable);
 	}
 
 	// 新增文章

@@ -29,3 +29,23 @@ export const getPostsByBoard = (boardId, page, size) => {
 export const createPost = (data) => {
   return httpClient.post("/api/posts", data);
 };
+
+// 增加觀看數
+export const increasePostViews = (postId) => {
+  return httpClient.patch(`/api/posts/${postId}/views`);
+};
+
+// 搜尋功能 沒有帶 boardId 時搜尋全站
+export const searchPosts = (title, page, size, boardId = null) => {
+  const params = {
+    title,
+    page,
+    size,
+  };
+
+  if (boardId !== null) {
+    params.boardId = boardId;
+  }
+
+  return httpClient.get("/api/posts/search", { params });
+};

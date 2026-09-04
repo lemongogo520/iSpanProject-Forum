@@ -1,0 +1,41 @@
+.register-page {
+  min-height: 100vh;
+  width: 100%;
+}
+
+.register-container {
+  min-height: 100vh;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 500px;
+  padding: 0;
+  border-radius: 20px !important;
+}
+
+.register-card .v-card-text {
+  padding: 40px !important;
+}
+
+.register-card h2 {
+  color: var(--color-title);
+}
+
+.register-card .text-medium-emphasis {
+  color: var(--color-text) !important;
+}
+
+.register-card .v-text-field {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 600px) {
+  .register-card {
+    border-radius: 14px !important;
+  }
+
+  .register-card .v-card-text {
+    padding: 28px 22px !important;
+  }
+}

@@ -119,17 +119,27 @@ public class FriendshipService {
 	}
 	
 	/* 取得好友列表 */
-	public List<FriendshipEntity> getFriendsList(UUID userId){
-		Optional<Users> userOp = uRepo.findById(userId);
+	public List<FriendResponse> getFriendsList(UUID currentUserId){
+		Optional<Users> userOp = uRepo.findById(currentUserId);
 		if(userOp.isEmpty()) {
 			throw new RuntimeException("用戶不存在");
 		}
 
-		List<FriendshipEntity> friends = fRepo.findFriends(userId, FriendshipStatus.ACCEPTED);
+		List<FriendshipEntity> friends = fRepo.findFriends(currentUserId, FriendshipStatus.ACCEPTED);
 		if(friends.isEmpty()) {
 			throw new RuntimeException("還沒有好友");
 		}
-		return friends;
+
+		return friends.stream().map(friendship ->{
+			Users friend;
+			if(friendship.getUser1().getId().equals(currentUserId)){
+				friend = friendship.getUser2();
+			}else{
+				friend = friendship.getUser1();
+			}
+
+			return new FriendResponse(friend.getId(), friend.getAccount());
+		}).toList();
 	}
 	
 	

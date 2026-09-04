@@ -4,67 +4,62 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import forum.board.common.util.IpUtil;
 import forum.board.exception.AccountExistsException;
 import forum.board.users.UsersService;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-
-@Controller
+@RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class RegisterController {
-	
-	private final UsersService usersService;
+
+    private final UsersService usersService;
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute("registerDTO") RegisterDTO dto,
-                           BindingResult result,
-                           HttpServletRequest request,
-                           Model model) {
-
-        if (result.hasErrors()) {
-            model.addAttribute("error",
-                    result.getFieldError().getDefaultMessage());
-            model.addAttribute("registerDTO", dto);
-            return "register";
-        }
+    public ResponseEntity<?> register(
+            @Valid @RequestBody RegisterDTO dto,
+            HttpServletRequest request) {
 
         // 密碼一致驗證
         if (!dto.getPassword().equals(dto.getConfirmPassword())) {
-            model.addAttribute("error", "兩次輸入的密碼不一致");
-            model.addAttribute("registerDTO", dto);
-            return "register";
-        }
-        
-        try {
-        	//建立會員
-            usersService.register(dto, IpUtil.getClientIp(request));
-        } catch(AccountExistsException e){
 
-            model.addAttribute(
-                "error",
-                e.getMessage()
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ErrorResponse("兩次輸入的密碼不一致"));
+        }
+
+        try {
+
+            // 建立會員
+            usersService.register(
+                    dto,
+                    IpUtil.getClientIp(request)
             );
 
-            return "register";
+        } catch (AccountExistsException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse(e.getMessage()));
         }
 
-        
-        
-        return "redirect:/login";
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new SuccessResponse("註冊成功"));
     }
 
-    @GetMapping("/register")
-    public String registerPage(Model model) {
 
-        model.addAttribute("registerDTO", new RegisterDTO());
+    // =========================
+    // API 回傳格式
+    // =========================
 
-        return "register";
+    public record ErrorResponse(String message) {
+    }
+
+    public record SuccessResponse(String message) {
     }
 }

@@ -16,14 +16,14 @@ const routes = [
       component: () => import("../views/login/RegisterView.vue"),
   },
   {
-    path: "/api/admin/categories",
+    path: "/admin/categories",
     name: "categories",
     component: () => import("../view/AdminCategoryView.vue"),
   },
   {
-    path: "/api/categories",
+    path: "/categories",
     name: "userCategories",
-    component: () => import("../view/CategoryListView.vue"),
+    component: () => import("../view/HomeView.vue"),
   },
   {
     path: "/boards/:boardId",

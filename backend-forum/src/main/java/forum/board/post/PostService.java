@@ -57,6 +57,15 @@ public class PostService {
 		newPost.setBoard(newBoard);
 		newPost.setViews(0); // 假設有瀏覽數欄位
 
+		String postType = newPost.getPostType();
+
+		// 前端還沒傳類型時，新增文章預設為討論
+		if (postType == null) {
+			postType = "討論";
+		}
+
+		newPost.setPostType(validatePostType(postType));
+
 		return postRepo.save(newPost);
 	}
 
@@ -88,6 +97,7 @@ public class PostService {
 		PostDTO postDTO = new PostDTO();
 
 		postDTO.setId(post.getId());
+		postDTO.setPostType(post.getPostType());
 		postDTO.setTitle(post.getTitle());
 		postDTO.setContent(post.getContent());
 		postDTO.setViews(post.getViews());
@@ -96,7 +106,6 @@ public class PostService {
 		postDTO.setIsDeleted(post.getIsDeleted());
 		postDTO.setUserName(post.getUsers().getAccount());
 		postDTO.setBoardId(post.getBoard().getId());
-		// 文章真正的作者，不是目前登入者
 		postDTO.setUserId(post.getUsers().getId());
 
 		return postDTO;
@@ -115,7 +124,7 @@ public class PostService {
 	}
 
 	// 搜尋文章：boardId 沒傳就是全站搜尋
-	public Page<PostDTO> searchPosts(String title,Integer boardId,Pageable pageable) {
+	public Page<PostDTO> searchPosts(String title, Integer boardId, Pageable pageable) {
 
 		String keyword = title == null ? "" : title.trim();
 
@@ -136,13 +145,31 @@ public class PostService {
 
 		// 全站搜尋
 		if (boardId == null) {
-			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword,sortedPageable);
-		
-		// boardid搜尋
+			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword, sortedPageable);
+
+			// boardid搜尋
 		} else {
-			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId,keyword,sortedPageable);
+			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId, keyword, sortedPageable);
 		}
 		return posts.map(this::toDTO);
+	}
+
+	// 檢查文章類型
+	private String validatePostType(String postType) {
+		if (postType == null || postType.trim().isEmpty()) {
+			throw new IllegalArgumentException("請選擇文章類型");
+		}
+
+		String type = postType.trim();
+
+		if (!type.equals("討論")
+				&& !type.equals("攻略")
+				&& !type.equals("心得")
+				&& !type.equals("問題")) {
+			throw new IllegalArgumentException("不支援的文章類型");
+		}
+
+		return type;
 	}
 
 	// 修改文章
@@ -173,11 +200,21 @@ public class PostService {
 			throw new RuntimeException("不能修改別人的文章");
 		}
 
+		String postType = newPost.getPostType();
+
+		// 前端沒傳文章類型時，保留原本的類型
+		if (postType == null) {
+			postType = post.getPostType();
+		}
+
+		String validatedPostType = validatePostType(postType);
+
 		historyService.saveUpdateHistory(post, loginUser, newPost.getTitle(), newPost.getContent());
 
 		// post更新文章
 		post.setTitle(newPost.getTitle());
 		post.setContent(newPost.getContent());
+		post.setPostType(validatedPostType);
 		post.setModifyTime(Instant.now());
 
 		return postRepo.save(post);

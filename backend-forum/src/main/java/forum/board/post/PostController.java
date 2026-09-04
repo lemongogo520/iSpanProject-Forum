@@ -47,40 +47,44 @@ public class PostController {
 
 	// 根據board找文章有分頁
 	@GetMapping("/api/posts/boards/{boardId}")
-	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId,Pageable pageable) {
+	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId, Pageable pageable) {
 
-	    return postService.findByBoardId(boardId, pageable);
+		return postService.findByBoardId(boardId, pageable);
 	}
-	
+
 	// 根據board找文章
-//	@GetMapping("/api/posts/boards/{boardId}")
-//	public List<Posts> findByBoardId(@PathVariable Integer boardId) {
-//
-//		return postService.findByBoardId(boardId);
-//	}
+	// @GetMapping("/api/posts/boards/{boardId}")
+	// public List<Posts> findByBoardId(@PathVariable Integer boardId) {
+	//
+	// return postService.findByBoardId(boardId);
+	// }
 
 	// 用posttitle找文章
 	@GetMapping("/api/posts/search")
-	public Page<PostDTO> search(@RequestParam String title,@RequestParam(required = false) Integer boardId,Pageable pageable) {
+	public Page<PostDTO> search(@RequestParam String title, @RequestParam(required = false) Integer boardId,
+			Pageable pageable) {
 
-		 return postService.searchPosts(title, boardId, pageable);
+		return postService.searchPosts(title, boardId, pageable);
 	}
 
 	// 新增文章
 	@PostMapping("/api/posts")
-	public ResponseEntity<Posts> createPost(@RequestBody Posts post, HttpSession hs) {
+	public ResponseEntity<?> createPost(@RequestBody Posts post, HttpSession hs) {
 
-		// 目前還沒有確認user怎麼寫之後確認後補上!!!!!!!!!!!!!!!!!!!!!!! 
+		// 目前還沒有確認user怎麼寫之後確認後補上!!!!!!!!!!!!!!!!!!!!!!!
 		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
 		// UUID userId = (UUID) hs.getAttribute("loginUserId");
 
-//		if(userId == null) {
-//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//		}
+		// if(userId == null) {
+		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		// }
+		try {
+			Posts result = postService.create(post, userId);
 
-		Posts result = postService.create(post, userId);
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(result);
+			return ResponseEntity.status(HttpStatus.CREATED).body(result);
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
 	}
 
 	@DeleteMapping("/api/posts/{id}")
@@ -89,9 +93,9 @@ public class PostController {
 		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
 		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
 
-//		if(userId == null) {
-//		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//	}
+		// if(userId == null) {
+		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		// }
 		try {
 			postService.delete(id, userId);
 
@@ -108,9 +112,9 @@ public class PostController {
 		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
 		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
 
-//		if(userId == null) {
-//		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//	}
+		// if(userId == null) {
+		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		// }
 
 		try {
 			Posts result = postService.update(id, post, userId);
@@ -120,16 +124,16 @@ public class PostController {
 		}
 
 	}
-	
+
 	@PatchMapping("/api/posts/{id}/views")
 	public ResponseEntity<Void> increaseViews(@PathVariable Integer id) {
-		
+
 		int result = postService.increaseViews(id);
-		
-	    if (result == 0) {
-	        return ResponseEntity.notFound().build();
-	    }
-		
+
+		if (result == 0) {
+			return ResponseEntity.notFound().build();
+		}
+
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 

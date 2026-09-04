@@ -70,6 +70,10 @@
       >
         <v-card-item>
           <v-card-title>
+            <v-chip color="primary" variant="tonal" size="small" class="me-2">
+              {{ post.postType || "討論" }}
+            </v-chip>
+
             {{ post.title }}
           </v-card-title>
 

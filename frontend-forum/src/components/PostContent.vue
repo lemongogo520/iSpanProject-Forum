@@ -13,9 +13,7 @@
             {{ post.userName || "使用者" }}
           </div>
 
-          <div class="text-caption text-medium-emphasis mt-1">
-            使用者
-          </div>
+          <div class="text-caption text-medium-emphasis mt-1">使用者</div>
         </v-col>
 
         <!-- 文章內容區 -->
@@ -25,21 +23,19 @@
           </div>
 
           <v-card-title class="px-0 text-h5 font-weight-bold">
+            <v-chip color="primary" variant="tonal" size="small" class="me-2">
+              {{ post.postType || "討論" }}
+            </v-chip>
+
             {{ post.title }}
           </v-card-title>
-
           <v-divider class="my-4" />
 
-          <v-card-text
-            class="px-0 post-content"
-            v-html="post.content"
-          />
+          <v-card-text class="px-0 post-content" v-html="post.content" />
 
           <!-- 暫時保留的標籤 -->
           <div class="d-flex align-center flex-wrap ga-2 mt-6">
-            <span class="font-weight-bold mr-2">
-              探索主題
-            </span>
+            <span class="font-weight-bold mr-2"> 探索主題 </span>
 
             <v-chip size="small">電腦</v-chip>
             <v-chip size="small">遊戲</v-chip>
@@ -51,30 +47,18 @@
 
     <!-- 按讚與文章操作 -->
     <div class="reaction-area">
-      <v-btn
-        variant="text"
-        prepend-icon="mdi-thumb-up-outline"
-      >
+      <v-btn variant="text" prepend-icon="mdi-thumb-up-outline">
         {{ likeCount }}
       </v-btn>
 
-      <v-btn
-        variant="text"
-        prepend-icon="mdi-thumb-down-outline"
-      >
-        -
-      </v-btn>
+      <v-btn variant="text" prepend-icon="mdi-thumb-down-outline"> - </v-btn>
 
       <v-spacer />
 
       <!-- 只有文章作者顯示 -->
       <v-menu v-if="isPostOwner">
         <template #activator="{ props: menuProps }">
-          <v-btn
-            v-bind="menuProps"
-            icon="mdi-dots-vertical"
-            variant="text"
-          />
+          <v-btn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" />
         </template>
 
         <v-list>
@@ -120,10 +104,7 @@ defineProps({
   },
 });
 
-const emit = defineEmits([
-  "edit-post",
-  "delete-post",
-]);
+const emit = defineEmits(["edit-post", "delete-post"]);
 
 const formatDate = (date) => {
   if (!date) {

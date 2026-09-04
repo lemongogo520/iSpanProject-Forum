@@ -23,6 +23,14 @@
       </v-card-title>
 
       <v-form ref="form" @submit.prevent="handleSubmit">
+        <!-- 文章類型：新增這段 -->
+        <v-select
+          v-model="postType"
+          :items="postTypeOptions"
+          label="文章類型"
+          variant="outlined"
+          class="mb-4"
+        />
         <!-- 標題輸入 -->
         <v-text-field
           v-model="title"
@@ -99,6 +107,9 @@ const content = ref("");
 const submitting = ref(false);
 const loading = ref(false);
 
+const postType = ref("討論");
+const postTypeOptions = ["討論", "攻略", "心得", "問題"];
+
 // ======================
 // Quill 工具列
 // ======================
@@ -168,6 +179,7 @@ const handleSubmit = () => {
   const postData = {
     title: cleanTitle,
     content: content.value,
+    postType: postType.value,
     board: {
       id: boardId.value,
     },

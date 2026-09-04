@@ -18,7 +18,7 @@ public interface FriendshipRepository extends JpaRepository<FriendshipEntity, Lo
 	
 	// 指定user的好友關係
 	@Query("""
-	        from Friendship f
+	        FROM FriendshipEntity f
 	        WHERE (f.user1.id = :userId OR f.user2.id = :userId)
 	          AND f.status = :status
 	    """)

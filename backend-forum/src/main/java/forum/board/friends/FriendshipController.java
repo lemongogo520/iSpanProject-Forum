@@ -1,53 +1,69 @@
 package forum.board.friends;
 
+import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import forum.board.conversation.ConversationUserService;
-import forum.board.users.Users;
 
 import jakarta.servlet.http.HttpSession;
 
 
-@Controller
+
+@RestController 
+@RequestMapping ("/api/friendship")
 @RequiredArgsConstructor
 public class FriendshipController {
 	
 	private final FriendshipService fService;
 	private final ConversationUserService uService;
 	
-	@GetMapping("/friend")
-	public String getFriendList(@RequestParam (value="p", defaultValue = "1")Integer pageNumber, Model model, HttpSession httpSession) {
-		UUID loginUserId = (UUID)httpSession.getAttribute("loginUserId");
-		Page<FriendshipEntity> page = fService.getFriends(loginUserId,pageNumber);
-		model.addAttribute("page", page);
-		
-		return "friends/friendsListView";
+	@GetMapping("/request")
+	public ResponseEntity<Object> sendFriendRequest(@RequestParam UUID targetUserId
+		, HttpSession session) {
+		UUID loginUserId = (UUID)session.getAttribute("loginUserId");	
+		if(loginUserId != null) {
+			fService.sendFriendRequest(loginUserId, targetUserId);
+		}
+		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
+
+	// 取得好友列表
+	@GetMapping("/list")
+	public ResponseEntity<Object> getFriendList(Model model, HttpSession session) {
+		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
+		List<FriendResponse> friendsList = fService.getFriendsList(loginUserId);
+		
+		return ResponseEntity.status(HttpStatus.OK).body(friendsList);
+	}
+
+	// 接受好友邀請
+	@PatchMapping ("/request/{friendshipId}/accept")
+	public ResponseEntity<Object> acceptFriendRequest(@PathVariable Long friendshipId
+		, HttpSession session) {
+		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
+		fService.acceptFriendRequest(friendshipId, loginUserId);
+		
+		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+
+
 	
-	@GetMapping("/friend/addlist")
-	public String getUserList(@RequestParam (value="p", defaultValue = "1")Integer pageNumber
-			, Model model, HttpSession httpSession) {
-		UUID loginUserId = (UUID)httpSession.getAttribute("loginUserId");
-		Page<Users> page = uService.userList(pageNumber);
-		model.addAttribute("page", page);
-		
-		return "friends/addFriendView";
-	}
 	
-	@GetMapping("/friend/add")
-	public String add(@RequestParam String param) {
-		
-		
-		return new String();
-	}
+	
+	
+	
 	
 	
 

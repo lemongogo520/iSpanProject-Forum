@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jsoup.Jsoup;
+import org.owasp.html.CssSchema;
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +33,41 @@ public class PostService {
 	private final BoardRepository boardRepo;
 
 	private final PostsHistoryService historyService;
+
+
+	// 允許文字顏色、背景色，以及顏色函式
+	private static final CssSchema POST_CSS = CssSchema.withProperties(
+			List.of(
+					"color",
+					"background-color",
+					"rgb()",
+					"rgba()",
+					"hsl()",
+					"hsla()"));
+
+	// 允許文章使用的 HTML 標籤與指定 CSS
+	private static final PolicyFactory POST_HTML_POLICY = new HtmlPolicyBuilder()
+			.allowElements(
+					"p", "br", "span",
+					"strong", "b",
+					"em", "i",
+					"u", "s",
+					"h1", "h2", "h3",
+					"ul", "ol", "li",
+					"blockquote", "pre", "code")
+			.allowWithoutAttributes("span")
+			// Quill 1 的程式碼區塊使用此 class
+			.allowAttributes("class")
+			.matching(
+					(elementName, attributeName, value) -> {
+						if ("ql-syntax".equals(value)) {
+							return value;
+						}
+						return null;
+					})
+			.onElements("pre")
+			.allowStyling(POST_CSS)
+			.toFactory();
 
 	// 找所有貼文
 	public List<Posts> findAll() {
@@ -66,6 +105,9 @@ public class PostService {
 
 		newPost.setPostType(validatePostType(postType));
 
+		newPost.setContent(
+				validatePostContent(newPost.getContent()));
+
 		return postRepo.save(newPost);
 	}
 
@@ -99,7 +141,7 @@ public class PostService {
 		postDTO.setId(post.getId());
 		postDTO.setPostType(post.getPostType());
 		postDTO.setTitle(post.getTitle());
-		postDTO.setContent(post.getContent());
+		postDTO.setContent(sanitizePostContent(post.getContent()));
 		postDTO.setViews(post.getViews());
 		postDTO.setCreateTime(post.getCreateTime());
 		postDTO.setModifyTime(post.getModifyTime());
@@ -124,6 +166,7 @@ public class PostService {
 	}
 
 	// 搜尋文章：boardId 沒傳就是全站搜尋
+	@Transactional(readOnly = true)
 	public Page<PostDTO> searchPosts(String title, Integer boardId, Pageable pageable) {
 
 		String keyword = title == null ? "" : title.trim();
@@ -199,6 +242,7 @@ public class PostService {
 		if (!post.getUsers().getId().equals(loginUser.getId())) {
 			throw new RuntimeException("不能修改別人的文章");
 		}
+		String safeContent = validatePostContent(newPost.getContent());
 
 		String postType = newPost.getPostType();
 
@@ -209,11 +253,11 @@ public class PostService {
 
 		String validatedPostType = validatePostType(postType);
 
-		historyService.saveUpdateHistory(post, loginUser, newPost.getTitle(), newPost.getContent());
+		historyService.saveUpdateHistory(post, loginUser, newPost.getTitle(), safeContent);
 
 		// post更新文章
 		post.setTitle(newPost.getTitle());
-		post.setContent(newPost.getContent());
+		post.setContent(safeContent);
 		post.setPostType(validatedPostType);
 		post.setModifyTime(Instant.now());
 
@@ -272,6 +316,31 @@ public class PostService {
 				Sort.by(Sort.Direction.DESC, "createTime"));
 
 		return postRepo.findByBoardIdAndIsDeletedFalse(boardId, sortedPageable);
+	}
+
+	// 清理文章 HTML，只保留允許的標籤、屬性與文字顏色樣式
+	private String sanitizePostContent(String content) {
+		if (content == null) {
+			return "";
+		}
+
+		return POST_HTML_POLICY.sanitize(content);
+	}
+
+	// 清理後再檢查是否還有文字
+	private String validatePostContent(String content) {
+		String safeContent = sanitizePostContent(content);
+
+		String plainText = Jsoup.parse(safeContent)
+				.text()
+				.replace('\u00A0', ' ')
+				.strip();
+
+		if (plainText.isEmpty()) {
+			throw new IllegalArgumentException("文章內容不能為空白");
+		}
+
+		return safeContent;
 	}
 
 }

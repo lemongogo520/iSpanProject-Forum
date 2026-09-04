@@ -11,6 +11,9 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.Instant;
 
 @Entity
@@ -34,6 +37,7 @@ public class Users {
     @Column(name = "account", nullable = false, columnDefinition = "varchar(20)") 
     private String account; 
 
+    @JsonIgnore
     @Column(name = "password", nullable = false, columnDefinition = "varchar(255)") 
     private String password; 
 

@@ -1,0 +1,136 @@
+package forum.board.post;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
+
+@RestController
+@RequiredArgsConstructor
+public class PostController {
+
+	private final PostService postService;
+
+	// 取得全部文章
+	@GetMapping("/api/posts")
+	public List<Posts> findAll() {
+		return postService.findAll();
+	}
+
+	// 取得單篇文章
+	@GetMapping("/api/posts/{id}")
+	public ResponseEntity<PostDTO> findById(@PathVariable Integer id) {
+
+		PostDTO postDTO = postService.findPostDTOById(id);
+
+		if (postDTO == null) {
+			return ResponseEntity.notFound().build();
+		}
+
+		return ResponseEntity.ok(postDTO);
+	}
+
+	// 根據board找文章有分頁
+	@GetMapping("/api/posts/boards/{boardId}")
+	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId,Pageable pageable) {
+
+	    return postService.findByBoardId(boardId, pageable);
+	}
+	
+	// 根據board找文章
+//	@GetMapping("/api/posts/boards/{boardId}")
+//	public List<Posts> findByBoardId(@PathVariable Integer boardId) {
+//
+//		return postService.findByBoardId(boardId);
+//	}
+
+	// 用posttitle找文章
+	@GetMapping("/api/posts/search")
+	public Page<PostDTO> search(@RequestParam String title,@RequestParam(required = false) Integer boardId,Pageable pageable) {
+
+		 return postService.searchPosts(title, boardId, pageable);
+	}
+
+	// 新增文章
+	@PostMapping("/api/posts")
+	public ResponseEntity<Posts> createPost(@RequestBody Posts post, HttpSession hs) {
+
+		// 目前還沒有確認user怎麼寫之後確認後補上!!!!!!!!!!!!!!!!!!!!!!! 
+		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
+		// UUID userId = (UUID) hs.getAttribute("loginUserId");
+
+//		if(userId == null) {
+//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//		}
+
+		Posts result = postService.create(post, userId);
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(result);
+	}
+
+	@DeleteMapping("/api/posts/{id}")
+	public ResponseEntity<?> delete(@PathVariable Integer id, HttpSession hs) {
+
+		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
+		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
+
+//		if(userId == null) {
+//		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//	}
+		try {
+			postService.delete(id, userId);
+
+			return ResponseEntity.ok("文章刪除成功！");
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+
+	}
+
+	@PutMapping("/api/posts/{id}")
+	public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody Posts post, HttpSession session) {
+
+		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
+		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
+
+//		if(userId == null) {
+//		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//	}
+
+		try {
+			Posts result = postService.update(id, post, userId);
+			return ResponseEntity.ok(result);
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+
+	}
+	
+	@PatchMapping("/api/posts/{id}/views")
+	public ResponseEntity<Void> increaseViews(@PathVariable Integer id) {
+		
+		int result = postService.increaseViews(id);
+		
+	    if (result == 0) {
+	        return ResponseEntity.notFound().build();
+	    }
+		
+		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+
+}

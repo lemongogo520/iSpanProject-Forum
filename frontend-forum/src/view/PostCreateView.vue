@@ -56,18 +56,6 @@
         </div>
       </v-form>
     </v-card>
-
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="3000"
-      location="top"
-    >
-      {{ snackbar.message }}
-      <template #actions>
-        <v-btn variant="text" @click="snackbar.show = false">關閉</v-btn>
-      </template>
-    </v-snackbar>
   </v-container>
 </template>
 
@@ -83,6 +71,9 @@ import {
 
 import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
+
+import { useNotification } from "@/composables/useNotification";
+const { showMessage } = useNotification();
 
 const route = useRoute();
 const router = useRouter();
@@ -107,19 +98,6 @@ const title = ref("");
 const content = ref("");
 const submitting = ref(false);
 const loading = ref(false);
-const snackbar = ref({
-  show: false,
-  message: "",
-  color: "success",
-});
-
-const showMessage = (message, color = "success") => {
-  snackbar.value = {
-    show: true,
-    message,
-    color,
-  };
-};
 
 // ======================
 // Quill 工具列
@@ -171,6 +149,7 @@ const fetchEditingPost = () => {
 // 新增或修改文章
 // ======================
 const handleSubmit = () => {
+  if (submitting.value) return;
   const cleanTitle = title.value.trim();
 
   if (!cleanTitle || !content.value || content.value === "<p><br></p>") {
@@ -200,26 +179,38 @@ const handleSubmit = () => {
     : createPostApi(postData);
 
   request
-    .then(() => {
-      showMessage(isEditing.value ? "文章修改成功" : "文章發布成功", "success");
-      setTimeout(() => {
-        if (isEditing.value) {
-          router.push({
+    .then(async () => {
+      const successMessage = isEditing.value ? "文章修改成功" : "文章發布成功";
+
+      const destination = isEditing.value
+        ? {
             name: "PostDetail",
-            params: {
-              postId: editingPostId,
-            },
-          });
-        } else {
-          router.back();
+            params: { postId: editingPostId },
+          }
+        : {
+            name: "board",
+            params: { boardId: boardId.value },
+          };
+
+      // 文章已儲存；導頁失敗要另外處理
+      try {
+        const failure = await router.push(destination);
+
+        if (failure) {
+          showMessage("文章已儲存，但頁面未切換，請勿重複送出", "warning");
+          return;
         }
-      }, 300);
+      } catch (error) {
+        console.error("儲存後跳轉失敗：", error);
+        showMessage("文章已儲存，但跳轉失敗，請返回看板查看", "warning");
+        return;
+      }
+
+      // 導頁完成後，才顯示成功通知
+      showMessage(successMessage, "success");
     })
     .catch((error) => {
-      console.error(
-        isEditing.value ? "修改文章失敗：" : "新增文章失敗：",
-        error,
-      );
+      console.error("文章儲存失敗：", error);
 
       showMessage(
         error.response?.data ??

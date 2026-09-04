@@ -85,19 +85,6 @@
         @update:model-value="fetchPosts"
       />
     </template>
-    <!-- 錯誤提示 -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="3000"
-      location="top"
-    >
-      {{ snackbar.message }}
-
-      <template #actions>
-        <v-btn variant="text" @click="snackbar.show = false"> 關閉 </v-btn>
-      </template>
-    </v-snackbar>
   </v-container>
 </template>
 
@@ -109,25 +96,14 @@ import { useRoute, useRouter } from "vue-router";
 import httpClient from "@/api/httpClient";
 import { getPostsByBoard } from "@/api/postApi";
 
+import { useNotification } from "@/composables/useNotification";
+const { showMessage } = useNotification();
 // Router
 const route = useRoute();
 const router = useRouter();
 
 // Snackbar 狀態
 const errorMessage = ref("");
-const snackbar = ref({
-  show: false,
-  message: "",
-  color: "error",
-});
-
-const showMessage = (message, color = "error") => {
-  snackbar.value = {
-    show: true,
-    message,
-    color,
-  };
-};
 
 // Board ID
 const boardId = route.params.boardId;
@@ -161,7 +137,7 @@ const fetchBoard = () => {
       board.value = response.data;
     })
     .catch((error) => {
-      console.log("取得看板失敗：", error);
+      console.error("取得看板失敗：", error);
       errorMessage.value = "找不到這個討論版";
     });
 };

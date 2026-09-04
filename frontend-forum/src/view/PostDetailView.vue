@@ -135,19 +135,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <!-- 共用成功／錯誤提示 -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="3000"
-      location="top"
-    >
-      {{ snackbar.message }}
-      <template #actions>
-        <v-btn variant="text" @click="snackbar.show = false">關閉</v-btn>
-      </template>
-    </v-snackbar>
   </v-container>
 </template>
 
@@ -170,6 +157,10 @@ import {
 
 import CommentItem from "@/components/CommentItem.vue";
 import PostContent from "@/components/PostContent.vue";
+
+import { useNotification } from "@/composables/useNotification";
+
+const { showMessage } = useNotification();
 
 // ======================
 // Router
@@ -224,26 +215,10 @@ const likeCount = ref(0);
 const loading = ref(false);
 const errorMessage = ref("");
 
-// ======================
-// 共用提示與刪除確認
-// ======================
-const snackbar = ref({
-  show: false,
-  message: "",
-  color: "success",
-});
 const deleteDialog = ref(false);
 const deleteTarget = ref(null);
 const postDeleting = ref(false);
 const deletingCommentId = ref(null);
-
-const showMessage = (message, color = "success") => {
-  snackbar.value = {
-    show: true,
-    message,
-    color,
-  };
-};
 
 const deleteDialogMessage = computed(() =>
   deleteTarget.value?.type === "post"

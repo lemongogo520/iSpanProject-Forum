@@ -36,25 +36,12 @@ public class PostController {
 	@GetMapping("/api/posts/{id}")
 	public ResponseEntity<PostDTO> findById(@PathVariable Integer id) {
 
-		Posts post = postService.findById(id);
+		PostDTO postDTO = postService.findPostDTOById(id);
 
-		if (post == null) {
+		if (postDTO == null) {
 			return ResponseEntity.notFound().build();
 		}
 
-		PostDTO postDTO = new PostDTO();
-		postDTO.setId(post.getId());
-		postDTO.setTitle(post.getTitle());
-		postDTO.setContent(post.getContent());
-		postDTO.setViews(post.getViews());
-		postDTO.setCreateTime(post.getCreateTime());
-		postDTO.setModifyTime(post.getModifyTime());
-		postDTO.setIsDeleted(post.getIsDeleted());
-		postDTO.setUserName(post.getUsers().getAccount());
-		postDTO.setBoardId(post.getBoard().getId());
-		// userid暫時寫死之後改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		postDTO.setUserId( UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9"));
-		
 		return ResponseEntity.ok(postDTO);
 	}
 

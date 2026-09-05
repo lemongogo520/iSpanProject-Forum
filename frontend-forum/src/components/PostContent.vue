@@ -140,6 +140,8 @@ const formatDate = (date) => {
   min-height: 180px;
   line-height: 1.8;
   font-size: 16px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .reaction-area {
@@ -149,11 +151,18 @@ const formatDate = (date) => {
   border-bottom: 1px solid #e0e0e0;
 }
 
-@media (max-width: 960px) {
-  .author-area {
-    min-height: auto;
-    border-right: 0;
-    border-bottom: 1px solid #e0e0e0;
+:deep(.post-content iframe.ql-video) {
+  display: block;
+  width: min(100%, 800px);
+  height: min(56.25vw, 450px) !important;
+  margin: 20px auto;
+  border: 0;
+}
+@media (max-width: 600px) {
+  :deep(.post-content iframe.ql-video) {
+    width: 100%;
+    height: calc((100vw - 72px) * 0.5625) !important;
+    margin: 12px auto;
   }
 }
 </style>

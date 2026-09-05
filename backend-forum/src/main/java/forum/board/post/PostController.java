@@ -65,13 +65,6 @@ public class PostController {
 		return postService.findByBoardId(boardId, sortBy, pageable);
 	}
 
-	// 根據board找文章
-	// @GetMapping("/api/posts/boards/{boardId}")
-	// public List<Posts> findByBoardId(@PathVariable Integer boardId) {
-	//
-	// return postService.findByBoardId(boardId);
-	// }
-
 	// 用posttitle找文章
 	@GetMapping("/api/posts/search")
 	public Page<PostDTO> search(

@@ -120,7 +120,7 @@ const editorOptions = {
       ["bold", "italic", "underline", "strike"],
       [{ list: "ordered" }, { list: "bullet" }],
       [{ color: [] }, { background: [] }],
-      ["blockquote", "code-block"],
+      ["blockquote", "code-block","video"],
       ["clean"],
     ],
   },
@@ -261,5 +261,20 @@ onMounted(() => {
 }
 :deep(.ql-container.ql-snow) {
   border: none !important;
+}
+:deep(.ql-editor iframe.ql-video) {
+  display: block !important;
+  width: 100% !important;
+  max-width: 800px !important;
+  height: min(56.25vw, 450px) !important;
+  margin: 16px auto !important;
+  border: 0;
+}
+@media (max-width: 600px) {
+  :deep(.ql-editor iframe.ql-video) {
+    width: 100% !important;
+    height: calc((100vw - 80px) * 0.5625) !important;
+    margin: 12px auto !important;
+  }
 }
 </style>

@@ -1,5 +1,6 @@
 package forum.board.post;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -53,7 +54,7 @@ public class PostService {
 					"u", "s",
 					"h1", "h2", "h3",
 					"ul", "ol", "li",
-					"blockquote", "pre", "code")
+					"blockquote", "pre", "code", "iframe")
 			.allowWithoutAttributes("span")
 			// Quill 1 的程式碼區塊使用此 class
 			.allowAttributes("class")
@@ -65,6 +66,36 @@ public class PostService {
 						return null;
 					})
 			.onElements("pre")
+			
+			// Quill 的 YouTube iframe
+			.allowAttributes("class")
+			.matching((elementName, attributeName, value) -> {
+				if ("ql-video".equals(value)) {
+					return value;
+				}
+				return null;
+			})
+			.onElements("iframe")
+
+			// 只允許 HTTPS 網址
+			.allowUrlProtocols("https")
+			// iframe 的 src 必須通過 YouTube 網址檢查
+			.allowAttributes("src")
+			.matching((elementName, attributeName, value) -> sanitizeYouTubeEmbedUrl(value))
+			.onElements("iframe")
+
+			.allowAttributes("frameborder")
+			.matching((elementName, attributeName, value) -> {
+				if ("0".equals(value)) {
+					return value;
+				}
+				return null;
+			})
+			.onElements("iframe")
+
+			.allowAttributes("allowfullscreen")
+			.onElements("iframe")
+
 			.allowStyling(POST_CSS)
 			.toFactory();
 
@@ -166,7 +197,7 @@ public class PostService {
 
 	// 搜尋文章：boardId 沒傳就是全站搜尋
 	@Transactional(readOnly = true)
-	public Page<PostDTO> searchPosts(String title, Integer boardId,String sortBy, Pageable pageable) {
+	public Page<PostDTO> searchPosts(String title, Integer boardId, String sortBy, Pageable pageable) {
 
 		String keyword = title == null ? "" : title.trim();
 
@@ -315,6 +346,55 @@ public class PostService {
 		return postRepo.findByBoardIdAndIsDeletedFalse(boardId, sortedPageable);
 	}
 
+	// 只允許 YouTube 的 HTTPS 嵌入網址
+	private static String sanitizeYouTubeEmbedUrl(String value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		try {
+			URI uri = URI.create(value.trim());
+
+			if (!"https".equalsIgnoreCase(uri.getScheme())) {
+				return null;
+			}
+
+			String host = uri.getHost();
+
+			if (host == null) {
+				return null;
+			}
+
+			host = host.toLowerCase();
+
+			boolean isYouTube = "youtube.com".equals(host)
+					|| "www.youtube.com".equals(host)
+					|| "youtube-nocookie.com".equals(host)
+					|| "www.youtube-nocookie.com".equals(host);
+
+			if (!isYouTube) {
+				return null;
+			}
+
+			String path = uri.getPath();
+
+			if (path == null
+					|| !path.matches("/embed/[A-Za-z0-9_-]{11}/?")) {
+				return null;
+			}
+
+			String videoId = path
+					.replaceFirst("^/embed/", "")
+					.replaceFirst("/$", "");
+
+			return "https://www.youtube-nocookie.com/embed/" + videoId;
+
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
 	// 清理文章 HTML，只保留允許的標籤、屬性與文字顏色樣式
 	private String sanitizePostContent(String content) {
 		if (content == null) {
@@ -333,7 +413,10 @@ public class PostService {
 				.replace('\u00A0', ' ')
 				.strip();
 
-		if (plainText.isEmpty()) {
+		boolean hasYouTubeVideo =
+        safeContent.contains("src=\"https://www.youtube-nocookie.com/embed/");
+
+		if (plainText.isEmpty() && !hasYouTubeVideo) {
 			throw new IllegalArgumentException("文章內容不能為空白");
 		}
 

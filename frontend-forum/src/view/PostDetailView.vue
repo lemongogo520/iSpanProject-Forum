@@ -121,76 +121,12 @@
     </template>
 
     <!-- 文章編輯紀錄 -->
-    <v-dialog v-model="historyDialog" max-width="760">
-      <v-card>
-        <v-card-title class="d-flex align-center">
-          <v-icon icon="mdi-history" class="mr-2" />
-          文章編輯紀錄
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <div v-if="historyLoading" class="text-center py-8">
-            <v-progress-circular indeterminate color="primary" />
-          </div>
-
-          <v-alert v-else-if="historyError" type="error" variant="tonal">
-            {{ historyError }}
-          </v-alert>
-
-          <v-alert
-            v-else-if="postHistory.length === 0"
-            type="info"
-            variant="tonal"
-          >
-            這篇文章目前沒有編輯紀錄
-          </v-alert>
-
-          <v-expansion-panels v-else>
-            <v-expansion-panel
-              v-for="(history, index) in postHistory"
-              :key="history.id"
-            >
-              <v-expansion-panel-title>
-                第 {{ postHistory.length - index }} 次編輯
-                <v-spacer />
-                <span class="text-caption text-medium-emphasis">
-                  {{ formatHistoryTime(history.modifyTime) }}
-                </span>
-              </v-expansion-panel-title>
-
-              <v-expansion-panel-text>
-                <div class="text-subtitle-2 mb-1">修改前標題</div>
-                <div class="history-box mb-4">
-                  {{ history.oldTitle || "無" }}
-                </div>
-
-                <div class="text-subtitle-2 mb-1">修改後標題</div>
-                <div class="history-box mb-4">
-                  {{ history.newTitle || "無" }}
-                </div>
-
-                <div class="text-subtitle-2 mb-1">修改前內容</div>
-                <div class="history-box mb-4">
-                  {{ htmlToPlainText(history.oldContent) }}
-                </div>
-
-                <div class="text-subtitle-2 mb-1">修改後內容</div>
-                <div class="history-box">
-                  {{ htmlToPlainText(history.newContent) }}
-                </div>
-              </v-expansion-panel-text>
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="historyDialog = false"> 關閉 </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <PostHistoryDialog
+      v-model="historyDialog"
+      :histories="postHistory"
+      :loading="historyLoading"
+      :error-message="historyError"
+    />
     <!-- 共用刪除確認視窗 -->
     <v-dialog v-model="deleteDialog" max-width="420" persistent>
       <v-card>
@@ -222,13 +158,14 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
+// API匯入
 import {
   getPost as getPostApi,
   getPostHistory as getPostHistoryApi,
   deletePost as deletePostApi,
   increasePostViews as increasePostViewsApi,
 } from "@/api/postApi";
-
 import {
   getComments as getCommentsApi,
   getChildComments as getChildCommentsApi,
@@ -238,8 +175,10 @@ import {
   deleteComment as deleteCommentApi,
 } from "@/api/commentApi";
 
+// components 元件匯入
 import CommentItem from "@/components/CommentItem.vue";
 import PostContent from "@/components/PostContent.vue";
+import PostHistoryDialog from "@/components/PostHistoryDialog.vue";
 
 import { useNotification } from "@/composables/useNotification";
 
@@ -389,20 +328,6 @@ const fetchPostHistory = () => {
 
 const openHistoryDialog = () => {
   historyDialog.value = true;
-};
-
-const htmlToPlainText = (html) => {
-  if (!html) return "無";
-
-  const document = new DOMParser().parseFromString(html, "text/html");
-
-  return document.body.textContent?.trim() || "無";
-};
-
-const formatHistoryTime = (time) => {
-  if (!time) return "";
-
-  return new Date(time).toLocaleString("zh-TW");
 };
 // ======================
 // 取得 Comments
@@ -673,13 +598,5 @@ onMounted(async () => {
   align-items: center;
   padding: 18px 0;
   font-weight: 600;
-}
-.history-box {
-  padding: 12px;
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  border-radius: 6px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  background: rgba(var(--v-theme-surface-variant), 0.35);
 }
 </style>

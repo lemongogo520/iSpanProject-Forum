@@ -8,42 +8,42 @@ const routes = [
   {
       path: "/login",
       name: "Login",
-      component: () => import("../views/login/LoginView.vue"),
+      component: () => import("@/views/login/LoginView.vue"),
   },
   {
       path: "/register",
       name: "Register",
-      component: () => import("../views/login/RegisterView.vue"),
+      component: () => import("@/views/login/RegisterView.vue"),
   },
   {
     path: "/admin/categories",
     name: "categories",
-    component: () => import("../view/AdminCategoryView.vue"),
+    component: () => import("@/views/admin/AdminCategoryView.vue"),
   },
   {
     path: "/categories",
     name: "userCategories",
-    component: () => import("../view/HomeView.vue"),
+    component: () => import("@/views/forum/HomeView.vue"),
   },
   {
     path: "/boards/:boardId",
     name: "board",
-    component: () => import("../view/BoardView.vue"),
+    component: () => import("@/views/forum/BoardView.vue"),
   },
   {
     path: "/post/create",
     name: "PostCreate",
-    component: () => import("../view/PostCreateView.vue"),
+    component: () => import("@/views/post/PostCreateView.vue"),
   },
   {
     path: "/posts/:postId/edit",
     name: "post-edit",
-    component: () => import("@/view/PostCreateView.vue"),
+    component: () => import("@/views/post/PostCreateView.vue"),
   },
   {
     path: "/post/:postId",
     name: "PostDetail",
-    component: () => import("../view/PostDetailView.vue"),
+    component: () => import("@/views/post/PostDetailView.vue"),
   },
 ]
 const router = createRouter({

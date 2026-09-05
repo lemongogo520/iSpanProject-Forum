@@ -26,6 +26,8 @@ public class PostController {
 
 	private final PostService postService;
 
+	private final PostsHistoryService postsHistoryService;
+
 	// 取得全部文章
 	@GetMapping("/api/posts")
 	public List<Posts> findAll() {
@@ -45,11 +47,22 @@ public class PostController {
 		return ResponseEntity.ok(postDTO);
 	}
 
+	// 取得文章編輯紀錄
+	@GetMapping("/api/posts/{id}/history")
+	public ResponseEntity<List<PostsHistoryDTO>> findHistory(
+			@PathVariable Integer id) {
+
+		List<PostsHistoryDTO> history = postsHistoryService.findByPostId(id);
+
+		return ResponseEntity.ok(history);
+	}
+
 	// 根據board找文章有分頁
 	@GetMapping("/api/posts/boards/{boardId}")
-	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId, Pageable pageable) {
+	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId,
+			@RequestParam(defaultValue = "latest") String sortBy, Pageable pageable) {
 
-		return postService.findByBoardId(boardId, pageable);
+		return postService.findByBoardId(boardId, sortBy, pageable);
 	}
 
 	// 根據board找文章
@@ -61,10 +74,13 @@ public class PostController {
 
 	// 用posttitle找文章
 	@GetMapping("/api/posts/search")
-	public Page<PostDTO> search(@RequestParam String title, @RequestParam(required = false) Integer boardId,
+	public Page<PostDTO> search(
+			@RequestParam String title,
+			@RequestParam(required = false) Integer boardId,
+			@RequestParam(defaultValue = "latest") String sortBy,
 			Pageable pageable) {
 
-		return postService.searchPosts(title, boardId, pageable);
+		return postService.searchPosts(title, boardId, sortBy, pageable);
 	}
 
 	// 新增文章

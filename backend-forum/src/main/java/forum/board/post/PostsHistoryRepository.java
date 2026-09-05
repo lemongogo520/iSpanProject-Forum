@@ -8,4 +8,8 @@ public interface PostsHistoryRepository extends JpaRepository<PostsHistory,Integ
 
     List<PostsHistory> findByPostId(Integer postId);
 
+    // 看文章修改紀錄
+	List<PostsHistory> findByPostIdOrderByModifyTimeDesc(Integer postId);
+
+
 }

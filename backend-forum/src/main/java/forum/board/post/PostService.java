@@ -34,7 +34,6 @@ public class PostService {
 
 	private final PostsHistoryService historyService;
 
-
 	// 允許文字顏色、背景色，以及顏色函式
 	private static final CssSchema POST_CSS = CssSchema.withProperties(
 			List.of(
@@ -167,7 +166,7 @@ public class PostService {
 
 	// 搜尋文章：boardId 沒傳就是全站搜尋
 	@Transactional(readOnly = true)
-	public Page<PostDTO> searchPosts(String title, Integer boardId, Pageable pageable) {
+	public Page<PostDTO> searchPosts(String title, Integer boardId,String sortBy, Pageable pageable) {
 
 		String keyword = title == null ? "" : title.trim();
 
@@ -180,9 +179,7 @@ public class PostService {
 		Pageable sortedPageable = PageRequest.of(
 				pageable.getPageNumber(),
 				pageable.getPageSize(),
-				Sort.by(
-						Sort.Order.desc("createTime"),
-						Sort.Order.desc("id")));
+				createPostSort(sortBy));
 
 		Page<Posts> posts;
 
@@ -309,11 +306,11 @@ public class PostService {
 	}
 
 	// 分頁功能
-	public Page<Posts> findByBoardId(Integer boardId, Pageable pageable) {
+	public Page<Posts> findByBoardId(Integer boardId, String sortBy, Pageable pageable) {
 
 		Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(),
 				pageable.getPageSize(),
-				Sort.by(Sort.Direction.DESC, "createTime"));
+				createPostSort(sortBy));
 
 		return postRepo.findByBoardIdAndIsDeletedFalse(boardId, sortedPageable);
 	}
@@ -341,6 +338,31 @@ public class PostService {
 		}
 
 		return safeContent;
+	}
+
+	// 依前端選項建立文章排序規則
+	private Sort createPostSort(String sortBy) {
+
+		if ("views".equals(sortBy)) {
+			// 瀏覽數相同時，較新的文章排前面
+			return Sort.by(
+					Sort.Order.desc("views"),
+					Sort.Order.desc("createTime"),
+					Sort.Order.desc("id"));
+		}
+
+		if ("updated".equals(sortBy)) {
+			// 有修改過的文章依最近修改時間排序
+			return Sort.by(
+					Sort.Order.desc("modifyTime"),
+					Sort.Order.desc("createTime"),
+					Sort.Order.desc("id"));
+		}
+
+		// 預設：最新發布
+		return Sort.by(
+				Sort.Order.desc("createTime"),
+				Sort.Order.desc("id"));
 	}
 
 }

@@ -48,6 +48,19 @@
             @click:clear="clearSearch"
           />
 
+          <v-select
+            v-model="sortBy"
+            :items="sortOptions"
+            item-title="title"
+            item-value="value"
+            label="文章排序"
+            variant="outlined"
+            hide-details
+            :disabled="loading"
+            style="max-width: 180px"
+            @update:model-value="handleSortChange"
+          />
+
           <v-btn type="submit" color="primary" :disabled="loading">
             搜尋
           </v-btn>
@@ -144,13 +157,30 @@ const posts = ref([]);
 const searchKeyword = ref("");
 // 已按下搜尋、實際用來查詢的關鍵字
 const activeKeyword = ref("");
+// 文章排序
+const sortBy = ref("latest");
 
+const sortOptions = [
+  {
+    title: "最新發布",
+    value: "latest",
+  },
+  {
+    title: "最多瀏覽",
+    value: "views",
+  },
+  {
+    title: "最近更新",
+    value: "updated",
+  },
+];
 // 分頁
 const page = ref(1);
 
 const pageSize = ref(10);
 
 const totalPages = ref(0);
+
 
 // 狀態
 const loading = ref(false);
@@ -189,10 +219,11 @@ const fetchPosts = () => {
       page.value - 1,
       pageSize.value,
       boardId,
+      sortBy.value,
     );
   } else {
     // 沒有關鍵字，顯示原本的看板文章
-    request = getPostsByBoard(boardId, page.value - 1, pageSize.value);
+    request = getPostsByBoard(boardId, page.value - 1, pageSize.value, sortBy.value);
   }
 
   return request
@@ -217,6 +248,16 @@ const handleSearch = () => {
   activeKeyword.value = (searchKeyword.value ?? "").trim();
 
   // 換關鍵字時回到第一頁
+  page.value = 1;
+  fetchPosts();
+};
+// ======================
+// 切換文章排序
+// ======================
+const handleSortChange = () => {
+  if (loading.value) return;
+
+  // 切換排序後回到第一頁
   page.value = 1;
   fetchPosts();
 };

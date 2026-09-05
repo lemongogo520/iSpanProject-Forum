@@ -5,6 +5,11 @@ export const getPost = (postId) => {
   return httpClient.get(`/api/posts/${postId}`);
 };
 
+// 取得文章編輯紀錄
+export const getPostHistory = (postId) => {
+  return httpClient.get(`/api/posts/${postId}/history`);
+};
+
 // 修改文章
 export const updatePost = (postId, data) => {
   return httpClient.put(`/api/posts/${postId}`, data);
@@ -16,11 +21,17 @@ export const deletePost = (postId) => {
 };
 
 // 取得看板文章
-export const getPostsByBoard = (boardId, page, size) => {
+export const getPostsByBoard = (
+  boardId,
+  page,
+  size,
+  sortBy = "latest",
+) => {
   return httpClient.get(`/api/posts/boards/${boardId}`, {
     params: {
       page,
       size,
+      sortBy,
     },
   });
 };
@@ -36,11 +47,12 @@ export const increasePostViews = (postId) => {
 };
 
 // 搜尋功能 沒有帶 boardId 時搜尋全站
-export const searchPosts = (title, page, size, boardId = null) => {
+export const searchPosts = (title, page, size, boardId = null,sortBy = "latest",) => {
   const params = {
     title,
     page,
     size,
+    sortBy,
   };
 
   if (boardId !== null) {

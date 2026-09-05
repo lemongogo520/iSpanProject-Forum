@@ -27,6 +27,15 @@
         @edit-post="editPost"
         @delete-post="requestDelete('post')"
       />
+      <div v-if="postHistory.length > 0" class="d-flex justify-end mt-3 mb-4">
+        <v-btn
+          variant="text"
+          prepend-icon="mdi-history"
+          @click="openHistoryDialog"
+        >
+          查看編輯紀錄
+        </v-btn>
+      </div>
       <!-- ====================== -->
       <!-- 留言標題 -->
       <!-- ====================== -->
@@ -111,6 +120,77 @@
       </v-card>
     </template>
 
+    <!-- 文章編輯紀錄 -->
+    <v-dialog v-model="historyDialog" max-width="760">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon icon="mdi-history" class="mr-2" />
+          文章編輯紀錄
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text>
+          <div v-if="historyLoading" class="text-center py-8">
+            <v-progress-circular indeterminate color="primary" />
+          </div>
+
+          <v-alert v-else-if="historyError" type="error" variant="tonal">
+            {{ historyError }}
+          </v-alert>
+
+          <v-alert
+            v-else-if="postHistory.length === 0"
+            type="info"
+            variant="tonal"
+          >
+            這篇文章目前沒有編輯紀錄
+          </v-alert>
+
+          <v-expansion-panels v-else>
+            <v-expansion-panel
+              v-for="(history, index) in postHistory"
+              :key="history.id"
+            >
+              <v-expansion-panel-title>
+                第 {{ postHistory.length - index }} 次編輯
+                <v-spacer />
+                <span class="text-caption text-medium-emphasis">
+                  {{ formatHistoryTime(history.modifyTime) }}
+                </span>
+              </v-expansion-panel-title>
+
+              <v-expansion-panel-text>
+                <div class="text-subtitle-2 mb-1">修改前標題</div>
+                <div class="history-box mb-4">
+                  {{ history.oldTitle || "無" }}
+                </div>
+
+                <div class="text-subtitle-2 mb-1">修改後標題</div>
+                <div class="history-box mb-4">
+                  {{ history.newTitle || "無" }}
+                </div>
+
+                <div class="text-subtitle-2 mb-1">修改前內容</div>
+                <div class="history-box mb-4">
+                  {{ htmlToPlainText(history.oldContent) }}
+                </div>
+
+                <div class="text-subtitle-2 mb-1">修改後內容</div>
+                <div class="history-box">
+                  {{ htmlToPlainText(history.newContent) }}
+                </div>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="historyDialog = false"> 關閉 </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <!-- 共用刪除確認視窗 -->
     <v-dialog v-model="deleteDialog" max-width="420" persistent>
       <v-card>
@@ -144,6 +224,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   getPost as getPostApi,
+  getPostHistory as getPostHistoryApi,
   deletePost as deletePostApi,
   increasePostViews as increasePostViewsApi,
 } from "@/api/postApi";
@@ -218,6 +299,10 @@ const loading = ref(false);
 const errorMessage = ref("");
 
 const deleteDialog = ref(false);
+const historyDialog = ref(false);
+const historyLoading = ref(false);
+const historyError = ref("");
+const postHistory = ref([]);
 const deleteTarget = ref(null);
 const postDeleting = ref(false);
 const deletingCommentId = ref(null);
@@ -280,6 +365,44 @@ const fetchPost = () => {
     .finally(() => {
       loading.value = false;
     });
+};
+// ======================
+// 查詢文章編輯紀錄
+// ======================
+const fetchPostHistory = () => {
+  historyLoading.value = true;
+  historyError.value = "";
+
+  return getPostHistoryApi(postId)
+    .then((response) => {
+      postHistory.value = response.data;
+    })
+    .catch((error) => {
+      console.error("取得文章編輯紀錄失敗：", error);
+      postHistory.value = [];
+      historyError.value = "取得文章編輯紀錄失敗";
+    })
+    .finally(() => {
+      historyLoading.value = false;
+    });
+};
+
+const openHistoryDialog = () => {
+  historyDialog.value = true;
+};
+
+const htmlToPlainText = (html) => {
+  if (!html) return "無";
+
+  const document = new DOMParser().parseFromString(html, "text/html");
+
+  return document.body.textContent?.trim() || "無";
+};
+
+const formatHistoryTime = (time) => {
+  if (!time) return "";
+
+  return new Date(time).toLocaleString("zh-TW");
 };
 // ======================
 // 取得 Comments
@@ -517,8 +640,7 @@ onMounted(async () => {
   try {
     const lastViewed = Number(sessionStorage.getItem(storageKey));
 
-    shouldCount =
-      !lastViewed || Date.now() - lastViewed >= cooldown;
+    shouldCount = !lastViewed || Date.now() - lastViewed >= cooldown;
   } catch (error) {
     console.warn("無法讀取瀏覽紀錄：", error);
   }
@@ -539,6 +661,7 @@ onMounted(async () => {
   }
   // 不論是否計次，都正常取得文章
   fetchPost();
+  fetchPostHistory();
 });
 </script>
 
@@ -550,5 +673,13 @@ onMounted(async () => {
   align-items: center;
   padding: 18px 0;
   font-weight: 600;
+}
+.history-box {
+  padding: 12px;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: rgba(var(--v-theme-surface-variant), 0.35);
 }
 </style>

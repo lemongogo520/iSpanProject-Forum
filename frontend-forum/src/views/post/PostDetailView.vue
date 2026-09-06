@@ -179,7 +179,7 @@ import {
 import CommentItem from "@/components/CommentItem.vue";
 import PostContent from "@/components/PostContent.vue";
 import PostHistoryDialog from "@/components/PostHistoryDialog.vue";
-
+// 通知功能匯入
 import { useNotification } from "@/composables/useNotification";
 
 const { showMessage } = useNotification();
@@ -198,12 +198,9 @@ const postId = route.params.postId;
 // ======================
 const post = ref(null);
 // ======================
-// 全部留言筆數
-// ======================
-const totalCommentElements = ref(0);
-// ======================
 // 主留言Comments
 // ======================
+const totalCommentElements = ref(0);
 const comments = ref([]);
 const commentPage = ref(1);
 const commentPageSize = ref(5);
@@ -234,9 +231,8 @@ const likeCount = ref(0);
 // ======================
 // 狀態
 // ======================
-const loading = ref(false);
-const errorMessage = ref("");
-
+const loading = ref(false);  // 文章是否載入中
+const errorMessage = ref("");  // 文章載入錯誤訊息
 const deleteDialog = ref(false);
 const historyDialog = ref(false);
 const historyLoading = ref(false);
@@ -251,22 +247,22 @@ const deleteDialogMessage = computed(() =>
     ? "確定要刪除這篇文章嗎？刪除後將無法繼續編輯。"
     : "確定要刪除這則留言嗎？",
 );
-
+// 刪除功能
 const isDeleting = computed(
   () => postDeleting.value || deletingCommentId.value !== null,
 );
-
+// 建立刪除目標
 const requestDelete = (type, commentId = null, parentCommentId = null) => {
   deleteTarget.value = { type, commentId, parentCommentId };
   deleteDialog.value = true;
 };
-
+// 關閉與確認刪除
 const closeDeleteDialog = () => {
   if (isDeleting.value) return;
   deleteDialog.value = false;
   deleteTarget.value = null;
 };
-
+// 確認刪除
 const confirmDelete = () => {
   const target = deleteTarget.value;
   if (!target) return;
@@ -277,7 +273,7 @@ const confirmDelete = () => {
     deleteComment(target.commentId, target.parentCommentId);
   }
 };
-
+// 轉接 CommentItem 的刪除事件
 const handleCommentDeleteRequest = (commentId, parentCommentId) => {
   requestDelete("comment", commentId, parentCommentId);
 };
@@ -285,7 +281,6 @@ const handleCommentDeleteRequest = (commentId, parentCommentId) => {
 // 使用者判斷 暫時寫死
 // ======================
 const currentUserId = "10334e31-124a-4a74-b898-4a2c62753cc9";
-
 // ======================
 // 取得 Post
 // ======================
@@ -325,12 +320,12 @@ const fetchPostHistory = () => {
       historyLoading.value = false;
     });
 };
-
+// 開啟文章編輯紀錄對話框
 const openHistoryDialog = () => {
   historyDialog.value = true;
 };
 // ======================
-// 取得 Comments
+// 取得主留言Comments
 // ======================
 const fetchComments = () => {
   getCommentsApi(postId, commentPage.value - 1, commentPageSize.value)
@@ -346,7 +341,7 @@ const fetchComments = () => {
     });
 };
 // ======================
-// 取得子留言
+// 取得子留言ChildComments
 // ======================
 const fetchChildComments = (parentCommentId) => {
   getChildCommentsApi(parentCommentId)
@@ -361,6 +356,7 @@ const fetchChildComments = (parentCommentId) => {
       childComments.value = { ...childComments.value, [parentCommentId]: [] };
     });
 };
+// 展開與收合回覆
 const toggleReplies = (parentCommentId) => {
   const willExpand = !expandedComments.value[parentCommentId];
 
@@ -374,6 +370,7 @@ const toggleReplies = (parentCommentId) => {
     fetchChildComments(parentCommentId);
   }
 };
+// 開始與取消回覆
 const startReply = (commentId) => {
   replyingCommentId.value = commentId;
   replyContent.value = "";
@@ -453,7 +450,7 @@ const isPostOwner = computed(() => {
   return postUserId.toLowerCase() === currentUserId.toLowerCase();
 });
 // ======================
-// 編輯文章
+// 跳轉到編輯文章頁面
 // ======================
 const editPost = () => {
   router.push({
@@ -464,7 +461,7 @@ const editPost = () => {
   });
 };
 // ======================
-// 編輯留言
+// 開始編輯留言與取消編輯
 // ======================
 const startEditComment = (comment) => {
   editingCommentId.value = comment.id;

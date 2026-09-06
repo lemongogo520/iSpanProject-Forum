@@ -54,8 +54,22 @@ public class PostService {
 					"u", "s",
 					"h1", "h2", "h3",
 					"ul", "ol", "li",
-					"blockquote", "pre", "code", "iframe")
+					"blockquote", "pre", "code", "iframe", "img")
 			.allowWithoutAttributes("span")
+			.allowAttributes("class")
+			.matching((elementName, attributeName, value) -> {
+
+				if ("ql-align-center".equals(value)
+						|| "ql-align-right".equals(value)
+						|| "ql-align-justify".equals(value)) {
+
+					return value;
+				}
+
+				return null;
+			})
+			.onElements("p")
+
 			// Quill 1 的程式碼區塊使用此 class
 			.allowAttributes("class")
 			.matching(
@@ -66,7 +80,7 @@ public class PostService {
 						return null;
 					})
 			.onElements("pre")
-			
+
 			// Quill 的 YouTube iframe
 			.allowAttributes("class")
 			.matching((elementName, attributeName, value) -> {
@@ -77,8 +91,8 @@ public class PostService {
 			})
 			.onElements("iframe")
 
-			// 只允許 HTTPS 網址
-			.allowUrlProtocols("https")
+			// YouTube 使用 HTTPS，本機圖片開發環境使用 HTTP
+			.allowUrlProtocols("https", "http")
 			// iframe 的 src 必須通過 YouTube 網址檢查
 			.allowAttributes("src")
 			.matching((elementName, attributeName, value) -> sanitizeYouTubeEmbedUrl(value))
@@ -95,6 +109,13 @@ public class PostService {
 
 			.allowAttributes("allowfullscreen")
 			.onElements("iframe")
+			// 文章圖片
+			.allowAttributes("src")
+			.matching((elementName, attributeName, value) -> sanitizePostImageUrl(value))
+			.onElements("img")
+
+			.allowAttributes("alt")
+			.onElements("img")
 
 			.allowStyling(POST_CSS)
 			.toFactory();
@@ -395,6 +416,51 @@ public class PostService {
 		}
 	}
 
+	// 只允許後端 uploads/img 資料夾中的文章圖片
+	private static String sanitizePostImageUrl(String value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		try {
+			URI uri = URI.create(value.trim());
+
+			String scheme = uri.getScheme();
+			String host = uri.getHost();
+			String path = uri.getPath();
+
+			// 開發環境允許 http 和 https
+			boolean validScheme = "http".equalsIgnoreCase(scheme)
+					|| "https".equalsIgnoreCase(scheme);
+
+			// 目前圖片由本機後端提供
+			boolean validHost = "localhost".equalsIgnoreCase(host)
+					|| "127.0.0.1".equals(host);
+
+			// 後端目前使用 8080
+			boolean validPort = uri.getPort() == 8080;
+
+			// 只允許 uploads/img 中指定格式的檔案
+			boolean validPath = path != null
+					&& path.matches(
+							"/uploads/img/[0-9a-fA-F-]+\\.(jpg|jpeg|png|gif|webp)");
+
+			if (!validScheme
+					|| !validHost
+					|| !validPort
+					|| !validPath) {
+
+				return null;
+			}
+
+			return uri.toString();
+
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
 	// 清理文章 HTML，只保留允許的標籤、屬性與文字顏色樣式
 	private String sanitizePostContent(String content) {
 		if (content == null) {
@@ -413,8 +479,8 @@ public class PostService {
 				.replace('\u00A0', ' ')
 				.strip();
 
-		boolean hasYouTubeVideo =
-        safeContent.contains("src=\"https://www.youtube-nocookie.com/embed/");
+		boolean hasYouTubeVideo = safeContent.contains(
+				"src=\"https://www.youtube-nocookie.com/embed/");
 
 		if (plainText.isEmpty() && !hasYouTubeVideo) {
 			throw new IllegalArgumentException("文章內容不能為空白");

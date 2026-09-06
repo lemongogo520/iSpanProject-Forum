@@ -21,12 +21,7 @@ export const deletePost = (postId) => {
 };
 
 // 取得看板文章
-export const getPostsByBoard = (
-  boardId,
-  page,
-  size,
-  sortBy = "latest",
-) => {
+export const getPostsByBoard = (boardId, page, size, sortBy = "latest") => {
   return httpClient.get(`/api/posts/boards/${boardId}`, {
     params: {
       page,
@@ -47,7 +42,13 @@ export const increasePostViews = (postId) => {
 };
 
 // 搜尋功能 沒有帶 boardId 時搜尋全站
-export const searchPosts = (title, page, size, boardId = null,sortBy = "latest",) => {
+export const searchPosts = (
+  title,
+  page,
+  size,
+  boardId = null,
+  sortBy = "latest",
+) => {
   const params = {
     title,
     page,
@@ -60,4 +61,13 @@ export const searchPosts = (title, page, size, boardId = null,sortBy = "latest",
   }
 
   return httpClient.get("/api/posts/search", { params });
+};
+
+// 上傳文章圖片
+export const uploadPostImage = (file) => {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  return httpClient.post("/api/posts/images", formData);
 };

@@ -158,6 +158,34 @@ const formatDate = (date) => {
   margin: 20px auto;
   border: 0;
 }
+:deep(.post-content img) {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 16px 0;
+}
+
+:deep(.post-content .ql-align-center img) {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+:deep(.post-content .ql-align-right img) {
+  margin-left: auto;
+  margin-right: 0;
+}
+:deep(.post-content .ql-align-center) {
+  text-align: center;
+}
+
+:deep(.post-content .ql-align-right) {
+  text-align: right;
+}
+
+:deep(.post-content .ql-align-justify) {
+  text-align: justify;
+}
 @media (max-width: 600px) {
   :deep(.post-content iframe.ql-video) {
     width: 100%;

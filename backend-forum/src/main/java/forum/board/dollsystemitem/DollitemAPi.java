@@ -64,7 +64,5 @@ public class DollitemAPi {
         List<DollItem> checkItemByAdmin = itemService.checkItemByAdmin(categoryId);
         return ResponseEntity.status(HttpStatus.OK).body(checkItemByAdmin);
     }
-    
-    
-    
+      
 }

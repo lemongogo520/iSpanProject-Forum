@@ -23,7 +23,7 @@ const routes = [
   {
     path: "/categories",
     name: "userCategories",
-    component: () => import("@/views/forum/HomeView.vue"),
+    component: () => import("@/views/forum/CategoryListView.vue"),
   },
   {
     path: "/boards/:boardId",

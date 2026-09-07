@@ -361,11 +361,12 @@ onMounted(() => {
   }
 }
 :deep(.ql-editor img) {
-  display: block;
+  display: inline-block;
   width: auto;
   max-width: 100%;
   height: auto;
-  margin: 16px 0;
+  margin: 0;
+  vertical-align: middle;
 }
 
 :deep(.ql-editor .ql-align-center img) {

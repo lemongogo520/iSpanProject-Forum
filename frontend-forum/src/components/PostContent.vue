@@ -1,10 +1,10 @@
 <template>
   <section>
-    <!-- 文章內容 -->
-    <v-card elevation="1" class="post-card">
-      <v-row no-gutters>
-        <!-- 作者區 -->
-        <v-col cols="12" md="2" class="author-area">
+    <!-- 作者和文章分成兩張卡片 -->
+    <v-row align="start">
+      <!-- 作者卡片 -->
+      <v-col cols="12" md="2" class="author-column">
+        <v-card elevation="1" class="author-area rounded-lg">
           <v-avatar size="90" class="mb-4">
             <v-icon icon="mdi-account" size="55" />
           </v-avatar>
@@ -14,10 +14,12 @@
           </div>
 
           <div class="text-caption text-medium-emphasis mt-1">使用者</div>
-        </v-col>
+        </v-card>
+      </v-col>
 
-        <!-- 文章內容區 -->
-        <v-col cols="12" md="10" class="pa-6">
+      <!-- 文章卡片 -->
+      <v-col cols="12" md="10">
+        <v-card elevation="1" class="post-card pa-6 rounded-lg">
           <div class="text-subtitle-2 text-medium-emphasis mb-4">
             {{ formatDate(post.createTime) }}
           </div>
@@ -29,21 +31,22 @@
 
             {{ post.title }}
           </v-card-title>
+
           <v-divider class="my-4" />
 
           <v-card-text class="px-0 post-content" v-html="post.content" />
 
           <!-- 暫時保留的標籤 -->
           <div class="d-flex align-center flex-wrap ga-2 mt-6">
-            <span class="font-weight-bold mr-2"> 探索主題 </span>
+            <span class="font-weight-bold mr-2">探索主題</span>
 
             <v-chip size="small">電腦</v-chip>
             <v-chip size="small">遊戲</v-chip>
             <v-chip size="small">科技</v-chip>
           </div>
-        </v-col>
-      </v-row>
-    </v-card>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- 按讚與文章操作 -->
     <div class="reaction-area">
@@ -159,11 +162,12 @@ const formatDate = (date) => {
   border: 0;
 }
 :deep(.post-content img) {
-  display: block;
+  display: inline-block;
   width: auto;
   max-width: 100%;
   height: auto;
-  margin: 16px 0;
+  margin: 0;
+  vertical-align: middle;
 }
 
 :deep(.post-content .ql-align-center img) {
@@ -191,6 +195,13 @@ const formatDate = (date) => {
     width: 100%;
     height: calc((100vw - 72px) * 0.5625) !important;
     margin: 12px auto;
+  }
+}
+/* 電腦版：作者卡片跟隨畫面捲動 */
+@media (min-width: 960px) {
+  .author-column {
+    position: sticky;
+    top: 80px;
   }
 }
 </style>

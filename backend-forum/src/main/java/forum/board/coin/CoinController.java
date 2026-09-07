@@ -1,6 +1,7 @@
 package forum.board.coin;
 
 import java.time.Instant;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.servlet.http.HttpSession;
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @Controller
 public class CoinController {
@@ -79,11 +83,17 @@ public class CoinController {
     }
 
     /*
-     * 查詢目前登入會員的交易紀錄。
+     * 分頁查詢目前登入會員的交易紀錄。
      */
     @ResponseBody
     @GetMapping("/api/coins/transactions")
     public ResponseEntity<?> getTransactions(
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size,
+
             HttpSession session) {
 
         UUID userId = getLoginUserId(session);
@@ -97,14 +107,35 @@ public class CoinController {
                     ));
         }
 
-        List<TransactionResponse> response =
-                coinService.getTransactions(userId)
+        Page<CoinTransaction> transactionPage =
+                coinService.getTransactions(
+                    userId,
+                    page,
+                    size
+                );
+
+        List<TransactionResponse> content =
+                transactionPage.getContent()
                     .stream()
                     .map(this::toTransactionResponse)
                     .toList();
 
+        TransactionPageResponse response =
+                new TransactionPageResponse(
+                    content,
+                    transactionPage.getNumber(),
+                    transactionPage.getSize(),
+                    transactionPage.getTotalElements(),
+                    transactionPage.getTotalPages(),
+                    transactionPage.isFirst(),
+                    transactionPage.isLast()
+                );
+
         return ResponseEntity.ok(response);
     }
+    
+    
+    
     
     /*
      * 管理員替指定會員加幣或扣幣。
@@ -299,7 +330,12 @@ public class CoinController {
 
         return null;
     }
-
+    
+   
+    
+    //DTO
+    
+    
     /*
      * 將 Entity 轉成前端需要的資料。
      */
@@ -339,6 +375,17 @@ public class CoinController {
             String description,
             Instant createTime) {
     }
+    
+    public record TransactionPageResponse(
+            List<TransactionResponse> content,
+            int page,
+            int size,
+            long totalElements,
+            int totalPages,
+            boolean first,
+            boolean last) {
+    }
+    
 
     /*
      * 一般訊息回傳格式。

@@ -45,6 +45,13 @@ const routes = [
     name: "PostDetail",
     component: () => import("../view/PostDetailView.vue"),
   },
+{
+  path: '/shop',
+  name: 'shop',
+  component: () =>
+    import('../views/ShopView.vue')
+}
+
 ]
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

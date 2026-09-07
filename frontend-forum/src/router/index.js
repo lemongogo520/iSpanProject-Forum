@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   {
@@ -14,6 +15,11 @@ const routes = [
       path: "/register",
       name: "Register",
       component: () => import("../views/login/RegisterView.vue"),
+  },
+  {
+      path: "/home",
+      name: "Homepage",
+      component: () => import("../views/HomepageView.vue"),
   },
   {
     path: "/api/admin/categories",
@@ -49,6 +55,30 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+})
+
+router.beforeEach(async (to) => {
+
+  const authStore = useAuthStore()
+
+  // 登入、註冊頁不用檢查
+  if (
+    to.path === '/login' ||
+    to.path === '/register'
+  ) {
+    return true
+  }
+
+  // 其他頁面只檢查一次
+  const isLogin = await authStore.checkLogin()
+
+  // 沒登入 → 登入頁
+  if (!isLogin) {
+    return '/login'
+  }
+
+  // 有登入 → 正常進入
+  return true
 })
 
 export default router;

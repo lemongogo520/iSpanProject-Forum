@@ -102,8 +102,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import httpClient from '@/api/httpClient'
+import { useAuthStore } from '@/stores/auth'
 
+const authStore = useAuthStore()
 const router = useRouter()
 
 // ========================
@@ -148,49 +150,46 @@ const passwordRule = (value) => {
 // ========================
 
 const handleLogin = async () => {
-
   loginError.value = ''
-
-  // Vuetify 表單驗證
   const { valid } = await loginForm.value.validate()
 
-  if (!valid) {
-    return
-  }
+  if (!valid) {return}
 
   loading.value = true
 
-  try {
-
-    const response = await axios.post(
-      '/login',
-      {
-        account: account.value,
-        password: password.value,
-        remember: remember.value
-      }
-    )
-
-    console.log('登入成功:', response.data)
-
-    // 登入成功後前往首頁
-    router.push('/')
-
-  } catch (error) {
-
-    console.error('登入失敗:', error)
-
-    if (error.response?.data?.message) {
-      loginError.value = error.response.data.message
-    } else {
-      loginError.value = '帳號或密碼錯誤'
+  httpClient({
+    method: 'post',
+    url: '/api/login',
+    data: {
+      account: account.value,
+      password: password.value,
+      remember: remember.value
     }
+  })
+    .then(response => {
+      console.log('登入成功:', response.data)
+      loginError.value = ''
+      // 登入成功後前往首頁
+      authStore.setLogin() 
 
-  } finally {
+      router.push('/home')
+    })
+    .catch(error => {
 
-    loading.value = false
+      console.error('登入失敗:', error)
 
-  }
+      if (error.response?.data?.message) {
+        loginError.value = error.response.data.message
+      } else {
+        loginError.value = '帳號或密碼錯誤'
+      }
+
+    })
+    .finally(() => {
+
+      loading.value = false
+
+    })
 }
 
 

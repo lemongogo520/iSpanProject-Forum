@@ -5,6 +5,8 @@ import forum.board.users.UsersService;
 
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -12,18 +14,25 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import forum.board.enums.LogType;
 import forum.board.exception.PasswordErrorException;
+import forum.board.response.ErrorResponse;
+import forum.board.response.SuccessResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+
+@RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class LoginController {
 	private final UsersService usersService;
 	
@@ -59,55 +68,65 @@ public class LoginController {
 
 
     @PostMapping("/login")
-    public String login(@Valid @ModelAttribute LoginDTO loginDTO
-    			, BindingResult result
-    			, HttpSession session
-    			, Model model
-    			, HttpServletResponse response
-    			, HttpServletRequest request
-    			,@CookieValue(value = "remember_token", required = false) String rememberToken) {
+    public ResponseEntity<?> login(
+            @Valid @RequestBody LoginDTO loginDTO,
+            BindingResult result,
+            HttpSession session,
+            HttpServletResponse response,
+            HttpServletRequest request,
+            @CookieValue(
+                    value = "remember_token",
+                    required = false
+            ) String rememberToken) {
 
-    	
-        if(result.hasErrors()) {
-            model.addAttribute("error", result.getFieldError().getDefaultMessage());
-            return "login";
+        // DTO 驗證失敗
+        if (result.hasErrors()) {
+            return ResponseEntity.badRequest().body(
+            		new ErrorResponse(result.getFieldError().getDefaultMessage()));
         }
-        
+
         try {
-        	usersService.checkPassword(loginDTO);
-        }
-        catch(PasswordErrorException e) {
-        	
-            model.addAttribute(
-                    "error",
-                    e.getMessage()
-                );
+            // 驗證帳號密碼
+            usersService.checkPassword(loginDTO);
 
-            return "login";
+        } catch (PasswordErrorException e) {
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+            		new ErrorResponse(e.getMessage()));
         }
-        
-        UUID user_id = usersService.getUsersByAccount(loginDTO.getAccount()).getId();
-        
-        loginService.insertLoginLog(request, user_id, LogType.LOGIN);
-        
-        if(loginDTO.isRemember()) {
-            String loginToken = loginService.generateLoginToken(request, loginDTO.getAccount(), rememberToken);
-            
-            Cookie cookie = new Cookie("remember_token", loginToken);
+
+        // 取得使用者
+        UUID userId = usersService.getUsersByAccount(loginDTO.getAccount()).getId();
+
+        // 登入紀錄
+        loginService.insertLoginLog(request, userId, LogType.LOGIN);
+
+        // 記住我
+        if (loginDTO.isRemember()) {
+
+            String loginToken = loginService.generateLoginToken(
+                    request,
+                    loginDTO.getAccount(),
+                    rememberToken
+            );
+
+            Cookie cookie = new Cookie(
+                    "remember_token",
+                    loginToken
+            );
+
             cookie.setHttpOnly(true);
-            cookie.setMaxAge(60 * 60 * 24 * 7); // 7天
+            cookie.setMaxAge(60 * 60 * 24 * 7);
             cookie.setPath("/");
+
             response.addCookie(cookie);
         }
-        
-        session.setAttribute("loginUserId", user_id);	
 
-        return "redirect:/home";
-    }
+        // Session 登入
+        session.setAttribute("loginUserId", userId);
 
-    @GetMapping("/index")
-    public String index() {
-        return "home/homepage";
+        return ResponseEntity.ok().body(new SuccessResponse("登入成功"));
     }
+    
 }
     

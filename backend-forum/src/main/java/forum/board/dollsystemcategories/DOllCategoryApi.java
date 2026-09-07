@@ -58,9 +58,9 @@ public class DOllCategoryApi {
     }
 
     @PatchMapping("/api/dollcategory/{id}")
-    public ResponseEntity<Void> updateCategory(@PathVariable Integer id, @RequestBody DollCategory newDollCategory) {
+    public ResponseEntity<Void> updateCategory(@PathVariable Integer id, @RequestBody DollCategoryDTO requestDTO) {
 
-        categoryService.updateCategory(id, newDollCategory.getTypeName(), newDollCategory.getZIndex());
+        categoryService.updateCategory(id, requestDTO.getTypeName(), requestDTO.getZIndex());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 

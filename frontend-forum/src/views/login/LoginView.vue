@@ -104,9 +104,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import httpClient from '@/api/httpClient'
 import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const userStore = useUserStore()
 
 // ========================
 // 表單資料
@@ -167,10 +169,10 @@ const handleLogin = async () => {
     }
   })
     .then(response => {
-      console.log('登入成功:', response.data)
       loginError.value = ''
       // 登入成功後前往首頁
       authStore.setLogin() 
+      userStore.setAccount(account.value)
 
       router.push('/home')
     })

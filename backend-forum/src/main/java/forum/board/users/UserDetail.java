@@ -1,4 +1,4 @@
-package forum.board.userdetail;
+package forum.board.users;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -15,9 +15,6 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
-
-import forum.board.users.Users;
-
 import java.time.LocalDate;
 import java.time.Instant;
 

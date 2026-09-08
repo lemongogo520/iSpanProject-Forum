@@ -36,51 +36,71 @@
 
           <v-card-text class="px-0 post-content" v-html="post.content" />
 
-          <!-- 暫時保留的標籤 -->
-          <div class="d-flex align-center flex-wrap ga-2 mt-6">
-            <span class="font-weight-bold mr-2">探索主題</span>
+          <!-- 暫時隱藏標籤 -->
+          <!--
+<div class="d-flex align-center flex-wrap ga-2 mt-6">
+  <span class="font-weight-bold mr-2">探索主題</span>
 
-            <v-chip size="small">電腦</v-chip>
-            <v-chip size="small">遊戲</v-chip>
-            <v-chip size="small">科技</v-chip>
+  <v-chip size="small">電腦</v-chip>
+  <v-chip size="small">遊戲</v-chip>
+  <v-chip size="small">科技</v-chip>
+</div>
+-->
+
+          <!-- 按讚與文章操作 -->
+          <div class="reaction-area">
+            <!-- 按讚按鈕 -->
+            <v-btn
+              class="like-button"
+              :class="{
+                'like-button-active': likedByCurrentUser,
+              }"
+              variant="tonal"
+              rounded="pill"
+              :color="likedByCurrentUser ? 'deep-orange' : 'grey-darken-1'"
+              :prepend-icon="
+                likedByCurrentUser ? 'mdi-thumb-up' : 'mdi-thumb-up-outline'
+              "
+              :loading="likeUpdating"
+              :disabled="likeUpdating"
+              @click="emit('toggle-like')"
+            >
+              <span class="font-weight-bold">
+                {{ likeCount }}
+              </span>
+            </v-btn>
+            <v-spacer />
+
+            <!-- 只有文章作者顯示 -->
+            <v-menu v-if="isPostOwner">
+              <template #activator="{ props: menuProps }">
+                <v-btn
+                  v-bind="menuProps"
+                  icon="mdi-dots-vertical"
+                  variant="text"
+                />
+              </template>
+
+              <v-list>
+                <v-list-item
+                  title="編輯文章"
+                  prepend-icon="mdi-pencil-outline"
+                  @click="emit('edit-post')"
+                />
+
+                <v-list-item
+                  title="刪除文章"
+                  prepend-icon="mdi-delete-outline"
+                  base-color="error"
+                  :disabled="postDeleting"
+                  @click="emit('delete-post')"
+                />
+              </v-list>
+            </v-menu>
           </div>
         </v-card>
       </v-col>
     </v-row>
-
-    <!-- 按讚與文章操作 -->
-    <div class="reaction-area">
-      <v-btn variant="text" prepend-icon="mdi-thumb-up-outline">
-        {{ likeCount }}
-      </v-btn>
-
-      <v-btn variant="text" prepend-icon="mdi-thumb-down-outline"> - </v-btn>
-
-      <v-spacer />
-
-      <!-- 只有文章作者顯示 -->
-      <v-menu v-if="isPostOwner">
-        <template #activator="{ props: menuProps }">
-          <v-btn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" />
-        </template>
-
-        <v-list>
-          <v-list-item
-            title="編輯文章"
-            prepend-icon="mdi-pencil-outline"
-            @click="emit('edit-post')"
-          />
-
-          <v-list-item
-            title="刪除文章"
-            prepend-icon="mdi-delete-outline"
-            base-color="error"
-            :disabled="postDeleting"
-            @click="emit('delete-post')"
-          />
-        </v-list>
-      </v-menu>
-    </div>
   </section>
 </template>
 
@@ -105,9 +125,18 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  likedByCurrentUser: {
+    type: Boolean,
+    default: false,
+  },
+
+  likeUpdating: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(["edit-post", "delete-post"]);
+const emit = defineEmits(["toggle-like", "edit-post", "delete-post"]);
 
 const formatDate = (date) => {
   if (!date) {
@@ -125,6 +154,54 @@ const formatDate = (date) => {
 </script>
 
 <style scoped>
+.like-button {
+  min-width: 72px;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.like-button:hover {
+  transform: translateY(-2px);
+}
+
+.like-button-active {
+  color: #ff6d00 !important;
+  background-color: #fff3e0 !important;
+  box-shadow: 0 3px 10px rgba(255, 109, 0, 0.3);
+  animation: like-pop 0.35s ease;
+}
+
+.like-button-active :deep(.v-icon) {
+  transform: rotate(-8deg) scale(1.15);
+}
+
+@keyframes like-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.18) rotate(-3deg);
+  }
+
+  75% {
+    transform: scale(0.96);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .like-button,
+  .like-button-active {
+    transition: none;
+    animation: none;
+  }
+}
 .post-card {
   overflow: hidden;
 }
@@ -150,8 +227,9 @@ const formatDate = (date) => {
 .reaction-area {
   display: flex;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #e0e0e0;
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
 }
 
 :deep(.post-content iframe.ql-video) {

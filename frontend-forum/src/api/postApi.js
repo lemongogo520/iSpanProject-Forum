@@ -71,3 +71,13 @@ export const uploadPostImage = (file) => {
 
   return httpClient.post("/api/posts/images", formData);
 };
+
+// 取得文章按讚數量與目前使用者的按讚狀態
+export const getPostLikeStatus = (postId) => {
+  return httpClient.get(`/api/posts/${postId}/like`);
+};
+
+// 新增或取消按讚
+export const togglePostLike = (postId) => {
+  return httpClient.put(`/api/posts/${postId}/like`);
+};

@@ -225,6 +225,7 @@ const fetchEditingPost = () => {
 
       title.value = post.title ?? "";
       content.value = post.content ?? "";
+      postType.value = post.postType ?? "討論";
 
       // 依照後端實際回傳的 Board 欄位調整
       // 建議 PostDTO 直接回傳 boardId；同時保留舊結構作為備援

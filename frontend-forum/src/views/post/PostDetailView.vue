@@ -22,8 +22,11 @@
       <PostContent
         :post="post"
         :like-count="likeCount"
+        :liked-by-current-user="likedByCurrentUser"
+        :like-updating="likeUpdating"
         :is-post-owner="isPostOwner"
         :post-deleting="postDeleting"
+        @toggle-like="handleToggleLike"
         @edit-post="editPost"
         @delete-post="requestDelete('post')"
       />
@@ -165,6 +168,8 @@ import {
   getPostHistory as getPostHistoryApi,
   deletePost as deletePostApi,
   increasePostViews as increasePostViewsApi,
+  getPostLikeStatus as getPostLikeStatusApi,
+  togglePostLike as togglePostLikeApi,
 } from "@/api/postApi";
 import {
   getComments as getCommentsApi,
@@ -228,11 +233,13 @@ const commentSubmitting = ref(false);
 // 按讚
 // ======================
 const likeCount = ref(0);
+const likedByCurrentUser = ref(false);
+const likeUpdating = ref(false);
 // ======================
 // 狀態
 // ======================
-const loading = ref(false);  // 文章是否載入中
-const errorMessage = ref("");  // 文章載入錯誤訊息
+const loading = ref(false); // 文章是否載入中
+const errorMessage = ref(""); // 文章載入錯誤訊息
 const deleteDialog = ref(false);
 const historyDialog = ref(false);
 const historyLoading = ref(false);
@@ -290,7 +297,6 @@ const fetchPost = () => {
   getPostApi(postId)
     .then((response) => {
       post.value = response.data;
-      likeCount.value = response.data.likes || 0;
     })
     .catch((error) => {
       console.log("文章取得失敗:", error);
@@ -354,6 +360,48 @@ const fetchChildComments = (parentCommentId) => {
     .catch((error) => {
       console.error("取得子留言失敗：", error);
       childComments.value = { ...childComments.value, [parentCommentId]: [] };
+    });
+};
+
+// ======================
+// 取得按讚狀態
+// ======================
+const fetchLikeStatus = () => {
+  return getPostLikeStatusApi(postId)
+    .then((response) => {
+      likeCount.value = response.data.likeCount ?? 0;
+
+      likedByCurrentUser.value = response.data.likedByCurrentUser ?? false;
+    })
+    .catch((error) => {
+      console.error("取得按讚狀態失敗：", error);
+
+      likeCount.value = 0;
+      likedByCurrentUser.value = false;
+    });
+};
+// ======================
+// 新增或取消按讚
+// ======================
+const handleToggleLike = () => {
+  if (likeUpdating.value) {
+    return;
+  }
+
+  likeUpdating.value = true;
+
+  togglePostLikeApi(postId)
+    .then((response) => {
+      likeCount.value = response.data.likeCount ?? 0;
+      likedByCurrentUser.value = response.data.likedByCurrentUser ?? false;
+    })
+    .catch((error) => {
+      console.error("按讚操作失敗：", error);
+
+      showMessage(error.response?.data ?? "按讚操作失敗，請稍後再試", "error");
+    })
+    .finally(() => {
+      likeUpdating.value = false;
     });
 };
 // 展開與收合回覆
@@ -584,6 +632,7 @@ onMounted(async () => {
   // 不論是否計次，都正常取得文章
   fetchPost();
   fetchPostHistory();
+  fetchLikeStatus();
 });
 </script>
 

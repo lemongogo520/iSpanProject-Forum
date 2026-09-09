@@ -55,6 +55,14 @@ public class FriendshipService {
 
 	}
 
+	private void validateRequester(FriendshipEntity friendship, UUID currentUserId) {
+		// 只能取消自己送的好友邀請 
+		if (!friendship.getRequester().getId().equals(currentUserId)) { 
+			throw new BusinessException( "沒有權限操作此好友邀請" ); }
+
+
+	}
+
 	
 	/*發送好友邀請*/
 	public void sendFriendRequest(UUID requesterId, UUID addresseeId) {
@@ -159,6 +167,14 @@ public class FriendshipService {
 			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null, null);
 		}).toList();
 	}
+
+	/* 取消好友邀請 */
+    public void cancelFriendRequest(Long friendshipId, UUID currentUserId) {
+		findUser(currentUserId);
+        FriendshipEntity friendship = findPendingFriendship(friendshipId);
+		validateRequester(friendship, currentUserId);
+		fRepo.delete(friendship);
+    }
 
 
 	

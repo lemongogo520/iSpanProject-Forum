@@ -113,6 +113,20 @@ public class FriendshipController {
 		
 	}
 
+	/* 
+	取消好友邀請
+	/api/friendship/request/cancel
+	*/
+	@PatchMapping ("/request/{friendshipId}/cancel")
+	public ResponseEntity<Object> cancelFriendRequest(@PathVariable Long friendshipId
+		, HttpSession session) {
+		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
+		fService.cancelFriendRequest(friendshipId, loginUserId);
+		
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
+	
+
 
 	
 	

@@ -4,11 +4,11 @@ import java.util.UUID;
 
 public record FriendResponseDTO(
 
-        UUID userId,
-
-        String username
-
-        // String displayName,
+        UUID userId
+        
+        ,String username
+        
+        ,String displayName
 
         // String avatarUrl
 

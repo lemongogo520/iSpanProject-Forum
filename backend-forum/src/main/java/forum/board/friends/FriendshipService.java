@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import forum.board.conversation.ConversationUserRepository;
 import forum.board.friends.FriendshipEntity.FriendshipStatus;
 import forum.board.friends.dto.FriendResponseDTO;
+import forum.board.friends.exception.BusinessException;
+import forum.board.friends.exception.ResourceNotFoundException;
 import forum.board.users.Users;
 
 import lombok.RequiredArgsConstructor;
@@ -27,10 +29,15 @@ public class FriendshipService {
 		return a.compareTo(b)<0?new UUID[] {a,b} : new UUID[] {b,a};
 	}
 
+	private Users findUser(UUID userId){
+		return uRepo.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
+	}
+
 	private FriendshipEntity findPendingFriendship(Long friendshipId) {
-		FriendshipEntity friendship = fRepo.findById(friendshipId).orElseThrow(()->new RuntimeException("找不到好友邀請"));
+		FriendshipEntity friendship = fRepo.findById(friendshipId).orElseThrow(()->new ResourceNotFoundException("找不到好友邀請"));
 		if(friendship.getStatus() != FriendshipStatus.PENDING){
-			throw new RuntimeException("此好友邀請目前不是待處理狀態");
+			throw new BusinessException("此好友邀請目前不是待處理狀態");
 		}
 		return friendship;
 	}
@@ -38,13 +45,13 @@ public class FriendshipService {
 	private void validateRequestReceiver(FriendshipEntity friendship, UUID currentUserId) {
 		// requester 不能接受自己的邀請 
 		if (friendship.getRequester().getId().equals(currentUserId)) { 
-			throw new RuntimeException( "不能操作自己發送的邀請" ); }
+			throw new BusinessException( "不能操作自己發送的邀請" ); }
 
 		// 確認目前使用者是好友關係中的接收者
 		boolean isMember = friendship.getUser1().getId().equals(currentUserId)
 					 || friendship.getUser2() .getId() .equals(currentUserId);
 
-		if (!isMember) { throw new RuntimeException( "沒有權限操作此好友邀請" ); }
+		if (!isMember) { throw new BusinessException( "沒有權限操作此好友邀請" ); }
 
 	}
 
@@ -52,35 +59,33 @@ public class FriendshipService {
 	/*發送好友邀請*/
 	public void sendFriendRequest(UUID requesterId, UUID addresseeId) {
 		if(requesterId.equals(addresseeId)) {
-			throw new RuntimeException("不能加自己好友");
+			throw new BusinessException("不能加自己好友");
 		}
 
 		UUID[] pair = normalize(requesterId, addresseeId);
-		Optional<Users> o1 = uRepo.findById(pair[0]);
-		Optional<Users> o2 = uRepo.findById(pair[1]);
+		Users requester = findUser(requesterId);
+		Users user1 = findUser(pair[0]);
+		Users user2 = findUser(pair[1]);
 		
-		if(o1.isEmpty()||o2.isEmpty()) {
-			throw new RuntimeException("用戶不存在");
-		}
-		
-		Optional<FriendshipEntity> relation = fRepo.findByUser1IdAndUser2Id(pair[0], pair[1]);
-		if(relation.isPresent()) {
+		Optional<FriendshipEntity> friendship = fRepo.findByUser1IdAndUser2Id(pair[0], pair[1]);
+		if(friendship.isPresent()) {
 			//有一邊有寄送過邀請或其他狀態
-			FriendshipEntity f = relation.get();
+			FriendshipEntity f = friendship.get();
 			if(f.getStatus()==FriendshipStatus.ACCEPTED)
 			{
-				throw new RuntimeException("已經是好友了");
+				throw new BusinessException("已經是好友了");
 			}
 			if(f.getStatus() == FriendshipStatus.PENDING)
 			{
-				throw new RuntimeException("已有待處理的請求");
+				throw new BusinessException("已有待處理的請求");
 			}
+			return ;
 		}
 		// Empty 雙方之間沒有寄送過邀請或其他狀態
 		FriendshipEntity f = new FriendshipEntity();
-		f.setUser1(uRepo.getReferenceById(pair[0]));
-		f.setUser2(uRepo.getReferenceById(pair[1]));
-		f.setRequester(uRepo.findById(requesterId).get());
+		f.setUser1(user1);
+		f.setUser2(user2);
+		f.setRequester(requester);
 		f.setStatus(FriendshipStatus.PENDING);
 		fRepo.save(f);
 	}
@@ -100,30 +105,23 @@ public class FriendshipService {
 
 		// requester 不能接受自己的邀請 
 		if (friendship.getRequester().getId().equals(currentUserId)) { 
-			throw new RuntimeException( "不能接受自己的邀請" ); }
+			throw new BusinessException( "不能接受自己的邀請" ); }
 
 		// 確認目前使用者是好友關係中的其中一人 
 		boolean isMember = friendship.getUser1().getId().equals(currentUserId)
 					 || friendship.getUser2() .getId() .equals(currentUserId);
 
-		if (!isMember) { throw new RuntimeException( "拒絕存取" ); }
+		if (!isMember) { throw new BusinessException( "拒絕存取" ); }
 		fRepo.delete(friendship);
 
 	}
 	
 	/* 取得好友列表 */
 	public List<FriendResponseDTO> getFriendsList(UUID currentUserId){
-		Optional<Users> userOp = uRepo.findById(currentUserId);
-		if(userOp.isEmpty()) {
-			throw new RuntimeException("用戶不存在");
-		}
-
-		List<FriendshipEntity> friends = fRepo.findFriends(currentUserId, FriendshipStatus.ACCEPTED);
-		if(friends.isEmpty()) {
-			throw new RuntimeException("還沒有好友");
-		}
-
-		return friends.stream().map(friendship ->{
+		findUser(currentUserId);
+		List<FriendshipEntity> friendsList = fRepo.findFriends(currentUserId, FriendshipStatus.ACCEPTED);
+		
+		return friendsList.stream().map(friendship ->{
 			Users friend;
 			if(friendship.getUser1().getId().equals(currentUserId)){
 				friend = friendship.getUser2();
@@ -131,7 +129,7 @@ public class FriendshipService {
 				friend = friendship.getUser1();
 			}
 
-			return new FriendResponseDTO(friend.getId(), friend.getAccount());
+			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null);
 		}).toList();
 	}
 	

@@ -37,7 +37,7 @@ public interface PostsRepository extends JpaRepository<Posts, Integer> {
 	Page<Posts>findByTitleContainingAndIsDeletedFalse(String title,Pageable pageable);
 	
 
-// 指定看板的標題搜尋，排除已刪除文章
+	// 指定看板的標題搜尋，排除已刪除文章
 	Page<Posts> findByBoardIdAndTitleContainingAndIsDeletedFalse(Integer boardId,String title,Pageable pageable);
 
 }

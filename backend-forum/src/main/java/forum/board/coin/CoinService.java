@@ -1,6 +1,7 @@
 package forum.board.coin;
 
 import java.util.List;
+
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +12,9 @@ import forum.board.users.UsersRepository;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+
 
 @Service
 public class CoinService {
@@ -85,6 +89,45 @@ public class CoinService {
         return transactionRepository
                 .findByWalletIdOrderByCreateTimeDesc(wallet.getId());
     }
+    
+    
+    /**
+     * 分頁查詢會員交易紀錄。
+     */
+    @Transactional
+    public Page<CoinTransaction> getTransactions(
+            UUID userId,
+            int page,
+            int size) {
+
+        CoinWallet wallet =
+                getOrCreateWallet(userId);
+
+        /*
+         * 頁碼不能小於 0。
+         */
+        int safePage = Math.max(page, 0);
+
+        /*
+         * 每頁最少 1 筆、最多 100 筆。
+         */
+        int safeSize =
+                Math.min(Math.max(size, 1), 100);
+
+        PageRequest pageable =
+                PageRequest.of(
+                    safePage,
+                    safeSize
+                );
+
+        return transactionRepository
+                .findByWallet_IdOrderByCreateTimeDesc(
+                    wallet.getId(),
+                    pageable
+                );
+    }
+    
+    
 
     /**
      * 會員轉帳。
@@ -221,6 +264,216 @@ public class CoinService {
 
         return DAILY_REWARD_AMOUNT;
     }
+    
+    
+    /**
+     * 商城購買扣款。
+     *
+     * @param userId      購買會員 ID
+     * @param amount      商品售價
+     * @param referenceId 商城訂單 ID
+     * @param description 商品說明
+     * @return 扣款後餘額
+     */
+    @Transactional
+    public Long deductForPurchase(
+            UUID userId,
+            Long amount,
+            UUID referenceId,
+            String description) {
+
+        if (userId == null) {
+            throw new IllegalArgumentException(
+                "會員 ID 不能為空"
+            );
+        }
+
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException(
+                "商品價格必須大於 0"
+            );
+        }
+
+        if (referenceId == null) {
+            throw new IllegalArgumentException(
+                "商城訂單編號不能為空"
+            );
+        }
+
+        if (description != null &&
+            description.length() > 200) {
+
+            throw new IllegalArgumentException(
+                "交易說明不能超過 200 個字"
+            );
+        }
+
+        CoinWallet wallet =
+                getOrCreateWallet(userId);
+
+        /*
+         * 防止同一張訂單重複扣款。
+         */
+        boolean alreadyDeducted =
+                transactionRepository
+                    .existsByWalletIdAndTransactionTypeAndReferenceId(
+                        wallet.getId(),
+                        TransactionType.PURCHASE,
+                        referenceId
+                    );
+
+        if (alreadyDeducted) {
+            throw new IllegalArgumentException(
+                "這張訂單已經完成扣款"
+            );
+        }
+
+        if (wallet.getBalance() < amount) {
+            throw new IllegalArgumentException(
+                "虛擬幣餘額不足"
+            );
+        }
+
+        long balanceAfter =
+                wallet.getBalance() - amount;
+
+        wallet.setBalance(balanceAfter);
+
+        walletRepository.save(wallet);
+
+        String transactionDescription =
+                normalizeDescription(description);
+
+        if (transactionDescription == null) {
+            transactionDescription = "商城購買";
+        }
+
+        CoinTransaction transaction =
+                createTransaction(
+                    wallet,
+                    TransactionType.PURCHASE,
+                    amount,
+                    balanceAfter,
+                    referenceId,
+                    null,
+                    transactionDescription
+                );
+
+        transactionRepository.save(transaction);
+
+        return balanceAfter;
+    }
+    
+    /**
+     * 商城訂單退款。
+     *
+     * 退款金額直接讀取原本的 PURCHASE 紀錄，
+     * 避免商城自行傳入錯誤金額。
+     *
+     * @param userId      退款會員 ID
+     * @param referenceId 原商城訂單 ID
+     * @param description 退款說明
+     * @return 退款後餘額
+     */
+    @Transactional
+    public Long refundPurchase(
+            UUID userId,
+            UUID referenceId,
+            String description) {
+
+        if (userId == null) {
+            throw new IllegalArgumentException(
+                "會員 ID 不能為空"
+            );
+        }
+
+        if (referenceId == null) {
+            throw new IllegalArgumentException(
+                "商城訂單編號不能為空"
+            );
+        }
+
+        if (description != null &&
+            description.length() > 200) {
+
+            throw new IllegalArgumentException(
+                "退款說明不能超過 200 個字"
+            );
+        }
+
+        CoinWallet wallet =
+                getOrCreateWallet(userId);
+
+        /*
+         * 尋找原本的商城扣款紀錄。
+         */
+        CoinTransaction purchaseTransaction =
+                transactionRepository
+                    .findByWalletIdAndTransactionTypeAndReferenceId(
+                        wallet.getId(),
+                        TransactionType.PURCHASE,
+                        referenceId
+                    )
+                    .orElseThrow(() ->
+                        new IllegalArgumentException(
+                            "找不到原始購買紀錄"
+                        )
+                    );
+
+        /*
+         * 防止同一張訂單重複退款。
+         */
+        boolean alreadyRefunded =
+                transactionRepository
+                    .existsByWalletIdAndTransactionTypeAndReferenceId(
+                        wallet.getId(),
+                        TransactionType.PURCHASE_REFUND,
+                        referenceId
+                    );
+
+        if (alreadyRefunded) {
+            throw new IllegalArgumentException(
+                "這張訂單已經完成退款"
+            );
+        }
+
+        /*
+         * 從原始購買紀錄取得退款金額。
+         */
+        long refundAmount =
+                purchaseTransaction.getAmount();
+
+        long balanceAfter =
+                wallet.getBalance() + refundAmount;
+
+        wallet.setBalance(balanceAfter);
+
+        walletRepository.save(wallet);
+
+        String transactionDescription =
+                normalizeDescription(description);
+
+        if (transactionDescription == null) {
+            transactionDescription = "商城退款";
+        }
+
+        CoinTransaction refundTransaction =
+                createTransaction(
+                    wallet,
+                    TransactionType.PURCHASE_REFUND,
+                    refundAmount,
+                    balanceAfter,
+                    referenceId,
+                    null,
+                    transactionDescription
+                );
+
+        transactionRepository.save(refundTransaction);
+
+        return balanceAfter;
+    }
+    
+    
     
     //管理員加扣幣    
     @Transactional
@@ -408,4 +661,145 @@ public class CoinService {
 
         return description.trim();
     }
+    
+    @Transactional
+    public void purchase(
+            UUID userId,
+            UUID orderId,
+            long amount) {
+
+        // 1. 金額檢查
+        if (amount <= 0) {
+            throw new IllegalArgumentException(
+                    "購買金額必須大於 0");
+        }
+
+        // 2. 取得會員錢包
+        CoinWallet wallet = getOrCreateWallet(userId);
+
+        // 3. 檢查點數是否足夠
+        if (wallet.getBalance() < amount) {
+            throw new RuntimeException("點數不足");
+        }
+
+        // 4. 防止同一張訂單重複扣款
+        boolean alreadyProcessed =
+                transactionRepository
+                    .existsByWalletIdAndTransactionTypeAndReferenceId(
+                        wallet.getId(),
+                        TransactionType.PURCHASE,
+                        orderId
+                    );
+
+        if (alreadyProcessed) {
+            throw new RuntimeException(
+                    "此訂單已經扣款，請勿重複操作");
+        }
+
+        // 5. 扣除點數
+        wallet.setBalance(
+                wallet.getBalance() - amount
+        );
+
+        walletRepository.save(wallet);
+
+        // 6. 建立交易紀錄
+        CoinTransaction transaction =
+                new CoinTransaction();
+
+        // 注意：你的 Entity 是 CoinWallet 關聯
+        transaction.setWallet(wallet);
+
+        transaction.setTransactionType(
+                TransactionType.PURCHASE
+        );
+
+        // 你的設計規定 amount 一律存正數
+        transaction.setAmount(amount);
+
+        // 此筆交易完成後的餘額
+        transaction.setBalanceAfter(
+                wallet.getBalance()
+        );
+
+        // 對應商城 ShopOrder ID
+        transaction.setReferenceId(orderId);
+
+        transaction.setDescription(
+                "商城商品購買"
+        );
+
+        transactionRepository.save(transaction);
+    }
+    
+    
+    @Transactional
+    public void refund(
+            UUID userId,
+            UUID orderId,
+            long amount) {
+
+        // 1. 金額檢查
+        if (amount <= 0) {
+            throw new IllegalArgumentException(
+                    "退款金額必須大於 0"
+            );
+        }
+
+        // 2. 取得會員錢包
+        CoinWallet wallet =
+                getOrCreateWallet(userId);
+
+        // 3. 防止同一訂單重複退款
+        boolean alreadyRefunded =
+                transactionRepository
+                        .existsByWalletIdAndTransactionTypeAndReferenceId(
+                                wallet.getId(),
+                                TransactionType.REFUND,
+                                orderId
+                        );
+
+        if (alreadyRefunded) {
+            throw new RuntimeException(
+                    "此訂單已經退款，請勿重複操作"
+            );
+        }
+
+        // 4. 點數加回
+        wallet.setBalance(
+                wallet.getBalance() + amount
+        );
+
+        walletRepository.save(wallet);
+
+        // 5. 建立退款交易紀錄
+        CoinTransaction transaction =
+                new CoinTransaction();
+
+        transaction.setWallet(wallet);
+
+        transaction.setTransactionType(
+                TransactionType.REFUND
+        );
+
+        // 你的 CoinTransaction 設計：
+        // amount 固定存正數
+        transaction.setAmount(amount);
+
+        // 退款後餘額
+        transaction.setBalanceAfter(
+                wallet.getBalance()
+        );
+
+        // 對應原本的 ShopOrder ID
+        transaction.setReferenceId(orderId);
+
+        transaction.setDescription(
+                "商城商品退款"
+        );
+
+        transactionRepository.save(transaction);
+    }
+    
+    
 }

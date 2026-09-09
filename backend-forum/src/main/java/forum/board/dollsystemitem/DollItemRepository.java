@@ -1,15 +1,18 @@
 package forum.board.dollsystemitem;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
-import java.util.Optional;
+
 
 public interface DollItemRepository extends JpaRepository<DollItem,Integer> {
 
-    @Query("from DollItem i where i.category.id= :categoryId")
-    Optional<DollItem>findByCategory(Integer categoryId);
+    //篩選上架的部件
+    List<DollItem> findByIsActiveTrue();
 
-    List<DollItem> findByIsDefaultTrue();
+    //篩選特定圖層且上架的部件
+    List<DollItem> findByCategoryIdAndIsActiveTrue(Integer categoryId);
+
+    //篩選特定圖層全部部件
+    List<DollItem> findByCategoryId(Integer categoryId);
 }

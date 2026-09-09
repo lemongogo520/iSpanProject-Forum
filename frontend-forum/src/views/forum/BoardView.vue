@@ -34,91 +34,130 @@
           </v-card-subtitle>
         </v-card-item>
       </v-card>
-      <!-- 看板內搜尋 -->
-      <v-form class="mb-4" @submit.prevent="handleSearch">
-        <div class="d-flex align-center ga-2">
-          <v-text-field
-            v-model="searchKeyword"
-            label="搜尋此看板的文章標題"
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            hide-details
-            clearable
-            :disabled="loading"
-            @click:clear="clearSearch"
+      <!-- 左側文章、右側聊天室 -->
+      <div class="board-layout">
+        <main class="board-main">
+          <!-- 看板內搜尋 -->
+          <v-form class="mb-4" @submit.prevent="handleSearch">
+            <div class="d-flex align-center ga-2">
+              <v-text-field
+                v-model="searchKeyword"
+                label="搜尋此看板的文章標題"
+                prepend-inner-icon="mdi-magnify"
+                variant="outlined"
+                hide-details
+                clearable
+                :disabled="loading"
+                @click:clear="clearSearch"
+              />
+
+              <v-select
+                v-model="sortBy"
+                :items="sortOptions"
+                item-title="title"
+                item-value="value"
+                label="文章排序"
+                variant="outlined"
+                hide-details
+                :disabled="loading"
+                style="max-width: 180px"
+                @update:model-value="handleSortChange"
+              />
+
+              <v-btn type="submit" color="primary" :disabled="loading">
+                搜尋
+              </v-btn>
+            </div>
+          </v-form>
+          <!-- 發表文章 -->
+          <div class="d-flex justify-end mb-4">
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-pencil"
+              @click="createPost"
+            >
+              發表文章
+            </v-btn>
+          </div>
+
+          <!-- 文章列表 -->
+          <v-card
+            v-for="post in posts"
+            :key="post.id"
+            class="mb-3 rounded-lg"
+            hover
+            @click="openPost(post.id)"
+          >
+            <v-card-item>
+              <v-card-title>
+                <v-chip
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                  class="me-2"
+                >
+                  {{ post.postType || "討論" }}
+                </v-chip>
+
+                {{ post.title }}
+              </v-card-title>
+
+              <v-card-subtitle class="mt-2">
+                瀏覽：{{ post.views }}
+              </v-card-subtitle>
+            </v-card-item>
+          </v-card>
+
+          <!-- 沒有文章 -->
+          <v-card
+            v-if="posts.length === 0"
+            class="pa-8 text-center"
+            variant="tonal"
+          >
+            <v-icon icon="mdi-forum-outline" size="50" class="mb-3" />
+
+            <div class="text-h6">
+              {{ activeKeyword ? "找不到符合條件的文章" : "目前沒有文章" }}
+            </div>
+
+            <div class="text-body-2 text-medium-emphasis mt-2">
+              {{
+                activeKeyword
+                  ? "請嘗試其他關鍵字"
+                  : "成為第一個發表文章的人吧！"
+              }}
+            </div>
+          </v-card>
+
+          <!-- 分頁 -->
+          <v-pagination
+            v-if="totalPages > 1"
+            v-model="page"
+            :length="totalPages"
+            class="mt-6"
+            @update:model-value="fetchPosts"
           />
+        </main>
 
-          <v-btn type="submit" color="primary" :disabled="loading">
-            搜尋
-          </v-btn>
-        </div>
-      </v-form>
-      <!-- 發表文章 -->
-      <div class="d-flex justify-end mb-4">
-        <v-btn color="primary" prepend-icon="mdi-pencil" @click="createPost">
-          發表文章
-        </v-btn>
+        <!-- 右側聊天室 -->
+        <aside class="board-chat-column">
+          <BoardChatRoom :board-id="boardId" :board-name="board.name" />
+        </aside>
       </div>
-
-      <!-- 文章列表 -->
-      <v-card
-        v-for="post in posts"
-        :key="post.id"
-        class="mb-3 rounded-lg"
-        hover
-        @click="openPost(post.id)"
-      >
-        <v-card-item>
-          <v-card-title>
-            {{ post.title }}
-          </v-card-title>
-
-          <v-card-subtitle class="mt-2">
-            瀏覽：{{ post.views }}
-          </v-card-subtitle>
-        </v-card-item>
-      </v-card>
-
-      <!-- 沒有文章 -->
-      <v-card
-        v-if="posts.length === 0"
-        class="pa-8 text-center"
-        variant="tonal"
-      >
-        <v-icon icon="mdi-forum-outline" size="50" class="mb-3" />
-
-        <div class="text-h6">
-          {{ activeKeyword ? "找不到符合條件的文章" : "目前沒有文章" }}
-        </div>
-
-        <div class="text-body-2 text-medium-emphasis mt-2">
-          {{
-            activeKeyword ? "請嘗試其他關鍵字" : "成為第一個發表文章的人吧！"
-          }}
-        </div>
-      </v-card>
-
-      <!-- 分頁 -->
-      <v-pagination
-        v-if="totalPages > 1"
-        v-model="page"
-        :length="totalPages"
-        class="mt-6"
-        @update:model-value="fetchPosts"
-      />
     </template>
   </v-container>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
-
 import { useRoute, useRouter } from "vue-router";
 
 import httpClient from "@/services/httpClient";
 import { getPostsByBoard, searchPosts as searchPostsApi } from "@/services/postService";
 
 import { useNotification } from "@/composables/useNotification";
+
+import BoardChatRoom from "@/components/BoardChatRoom.vue";
 const { showMessage } = useNotification();
 // Router
 const route = useRoute();
@@ -140,7 +179,23 @@ const posts = ref([]);
 const searchKeyword = ref("");
 // 已按下搜尋、實際用來查詢的關鍵字
 const activeKeyword = ref("");
+// 文章排序
+const sortBy = ref("latest");
 
+const sortOptions = [
+  {
+    title: "最新發布",
+    value: "latest",
+  },
+  {
+    title: "最多瀏覽",
+    value: "views",
+  },
+  {
+    title: "最近更新",
+    value: "updated",
+  },
+];
 // 分頁
 const page = ref(1);
 
@@ -185,10 +240,16 @@ const fetchPosts = () => {
       page.value - 1,
       pageSize.value,
       boardId,
+      sortBy.value,
     );
   } else {
     // 沒有關鍵字，顯示原本的看板文章
-    request = getPostsByBoard(boardId, page.value - 1, pageSize.value);
+    request = getPostsByBoard(
+      boardId,
+      page.value - 1,
+      pageSize.value,
+      sortBy.value,
+    );
   }
 
   return request
@@ -213,6 +274,16 @@ const handleSearch = () => {
   activeKeyword.value = (searchKeyword.value ?? "").trim();
 
   // 換關鍵字時回到第一頁
+  page.value = 1;
+  fetchPosts();
+};
+// ======================
+// 切換文章排序
+// ======================
+const handleSortChange = () => {
+  if (loading.value) return;
+
+  // 切換排序後回到第一頁
   page.value = 1;
   fetchPosts();
 };
@@ -279,3 +350,32 @@ onMounted(() => {
   fetchPosts();
 });
 </script>
+<style scoped>
+.board-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.board-main {
+  min-width: 0;
+}
+
+.board-chat-column {
+  position: sticky;
+  top: 88px;
+  min-width: 0;
+}
+
+/* 平板與手機改成上下排列 */
+@media (max-width: 959px) {
+  .board-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board-chat-column {
+    position: static;
+  }
+}
+</style>

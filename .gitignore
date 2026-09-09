@@ -22,3 +22,7 @@ Thumbs.db
 
 # Spring Boot
 **/src/main/resources/application-local.properties
+
+# Uploaded images
+/uploads/img/*
+!/uploads/img/.gitkeep

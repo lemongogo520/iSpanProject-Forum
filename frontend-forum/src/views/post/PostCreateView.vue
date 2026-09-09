@@ -23,6 +23,14 @@
       </v-card-title>
 
       <v-form ref="form" @submit.prevent="handleSubmit">
+        <!-- 文章類型：新增這段 -->
+        <v-select
+          v-model="postType"
+          :items="postTypeOptions"
+          label="文章類型"
+          variant="outlined"
+          class="mb-4"
+        />
         <!-- 標題輸入 -->
         <v-text-field
           v-model="title"
@@ -33,19 +41,8 @@
           class="mb-4"
         />
 
-        <!-- 文字編輯器標題提示 -->
-        <div class="text-subtitle-1 text-medium-emphasis mb-2">文章內容</div>
-
-        <!-- 富文字編輯器區塊 -->
-        <v-sheet border class="rounded-lg overflow-hidden mb-6">
-          <QuillEditor
-            v-model:content="content"
-            content-type="html"
-            theme="snow"
-            :options="editorOptions"
-            placeholder="請輸入文章內容..."
-          />
-        </v-sheet>
+        <!-- 文章內容編輯器 -->
+        <PostEditor v-model="content" />
 
         <!-- 按鈕 -->
         <div class="d-flex justify-end">
@@ -69,8 +66,7 @@ import {
   getPost as getPostApi,
 } from "@/services/postService";
 
-import { QuillEditor } from "@vueup/vue-quill";
-import "@vueup/vue-quill/dist/vue-quill.snow.css";
+import PostEditor from "@/components/PostEditor.vue";
 
 import { useNotification } from "@/composables/useNotification";
 const { showMessage } = useNotification();
@@ -99,21 +95,8 @@ const content = ref("");
 const submitting = ref(false);
 const loading = ref(false);
 
-// ======================
-// Quill 工具列
-// ======================
-const editorOptions = {
-  modules: {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ color: [] }, { background: [] }],
-      ["blockquote", "code-block"],
-      ["clean"],
-    ],
-  },
-};
+const postType = ref("討論");
+const postTypeOptions = ["討論", "攻略", "心得", "問題"];
 
 // ======================
 // 取得要編輯的文章
@@ -131,6 +114,7 @@ const fetchEditingPost = () => {
 
       title.value = post.title ?? "";
       content.value = post.content ?? "";
+      postType.value = post.postType ?? "討論";
 
       // 依照後端實際回傳的 Board 欄位調整
       // 建議 PostDTO 直接回傳 boardId；同時保留舊結構作為備援
@@ -168,6 +152,7 @@ const handleSubmit = () => {
   const postData = {
     title: cleanTitle,
     content: content.value,
+    postType: postType.value,
     board: {
       id: boardId.value,
     },
@@ -237,17 +222,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-:deep(.ql-container) {
-  min-height: 350px;
-  font-size: 16px;
-}
-:deep(.ql-toolbar) {
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  background-color: #f5f5f5;
-}
-:deep(.ql-container.ql-snow) {
-  border: none !important;
-}
 </style>

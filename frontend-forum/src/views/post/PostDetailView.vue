@@ -22,11 +22,23 @@
       <PostContent
         :post="post"
         :like-count="likeCount"
+        :liked-by-current-user="likedByCurrentUser"
+        :like-updating="likeUpdating"
         :is-post-owner="isPostOwner"
         :post-deleting="postDeleting"
+        @toggle-like="handleToggleLike"
         @edit-post="editPost"
         @delete-post="requestDelete('post')"
       />
+      <div v-if="postHistory.length > 0" class="d-flex justify-end mt-3 mb-4">
+        <v-btn
+          variant="text"
+          prepend-icon="mdi-history"
+          @click="openHistoryDialog"
+        >
+          查看編輯紀錄
+        </v-btn>
+      </div>
       <!-- ====================== -->
       <!-- 留言標題 -->
       <!-- ====================== -->
@@ -111,6 +123,13 @@
       </v-card>
     </template>
 
+    <!-- 文章編輯紀錄 -->
+    <PostHistoryDialog
+      v-model="historyDialog"
+      :histories="postHistory"
+      :loading="historyLoading"
+      :error-message="historyError"
+    />
     <!-- 共用刪除確認視窗 -->
     <v-dialog v-model="deleteDialog" max-width="420" persistent>
       <v-card>
@@ -142,12 +161,16 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
+// API匯入
 import {
   getPost as getPostApi,
+  getPostHistory as getPostHistoryApi,
   deletePost as deletePostApi,
   increasePostViews as increasePostViewsApi,
+  getPostLikeStatus as getPostLikeStatusApi,
+  togglePostLike as togglePostLikeApi,
 } from "@/services/postService";
-
 import {
   getComments as getCommentsApi,
   getChildComments as getChildCommentsApi,
@@ -157,9 +180,11 @@ import {
   deleteComment as deleteCommentApi,
 } from "@/services/commentService";
 
+// components 元件匯入
 import CommentItem from "@/components/CommentItem.vue";
 import PostContent from "@/components/PostContent.vue";
-
+import PostHistoryDialog from "@/components/PostHistoryDialog.vue";
+// 通知功能匯入
 import { useNotification } from "@/composables/useNotification";
 
 const { showMessage } = useNotification();
@@ -178,12 +203,9 @@ const postId = route.params.postId;
 // ======================
 const post = ref(null);
 // ======================
-// 全部留言筆數
-// ======================
-const totalCommentElements = ref(0);
-// ======================
 // 主留言Comments
 // ======================
+const totalCommentElements = ref(0);
 const comments = ref([]);
 const commentPage = ref(1);
 const commentPageSize = ref(5);
@@ -211,13 +233,18 @@ const commentSubmitting = ref(false);
 // 按讚
 // ======================
 const likeCount = ref(0);
+const likedByCurrentUser = ref(false);
+const likeUpdating = ref(false);
 // ======================
 // 狀態
 // ======================
-const loading = ref(false);
-const errorMessage = ref("");
-
+const loading = ref(false); // 文章是否載入中
+const errorMessage = ref(""); // 文章載入錯誤訊息
 const deleteDialog = ref(false);
+const historyDialog = ref(false);
+const historyLoading = ref(false);
+const historyError = ref("");
+const postHistory = ref([]);
 const deleteTarget = ref(null);
 const postDeleting = ref(false);
 const deletingCommentId = ref(null);
@@ -227,22 +254,22 @@ const deleteDialogMessage = computed(() =>
     ? "確定要刪除這篇文章嗎？刪除後將無法繼續編輯。"
     : "確定要刪除這則留言嗎？",
 );
-
+// 刪除功能
 const isDeleting = computed(
   () => postDeleting.value || deletingCommentId.value !== null,
 );
-
+// 建立刪除目標
 const requestDelete = (type, commentId = null, parentCommentId = null) => {
   deleteTarget.value = { type, commentId, parentCommentId };
   deleteDialog.value = true;
 };
-
+// 關閉與確認刪除
 const closeDeleteDialog = () => {
   if (isDeleting.value) return;
   deleteDialog.value = false;
   deleteTarget.value = null;
 };
-
+// 確認刪除
 const confirmDelete = () => {
   const target = deleteTarget.value;
   if (!target) return;
@@ -253,7 +280,7 @@ const confirmDelete = () => {
     deleteComment(target.commentId, target.parentCommentId);
   }
 };
-
+// 轉接 CommentItem 的刪除事件
 const handleCommentDeleteRequest = (commentId, parentCommentId) => {
   requestDelete("comment", commentId, parentCommentId);
 };
@@ -261,7 +288,6 @@ const handleCommentDeleteRequest = (commentId, parentCommentId) => {
 // 使用者判斷 暫時寫死
 // ======================
 const currentUserId = "10334e31-124a-4a74-b898-4a2c62753cc9";
-
 // ======================
 // 取得 Post
 // ======================
@@ -271,7 +297,6 @@ const fetchPost = () => {
   getPostApi(postId)
     .then((response) => {
       post.value = response.data;
-      likeCount.value = response.data.likes || 0;
     })
     .catch((error) => {
       console.log("文章取得失敗:", error);
@@ -282,7 +307,31 @@ const fetchPost = () => {
     });
 };
 // ======================
-// 取得 Comments
+// 查詢文章編輯紀錄
+// ======================
+const fetchPostHistory = () => {
+  historyLoading.value = true;
+  historyError.value = "";
+
+  return getPostHistoryApi(postId)
+    .then((response) => {
+      postHistory.value = response.data;
+    })
+    .catch((error) => {
+      console.error("取得文章編輯紀錄失敗：", error);
+      postHistory.value = [];
+      historyError.value = "取得文章編輯紀錄失敗";
+    })
+    .finally(() => {
+      historyLoading.value = false;
+    });
+};
+// 開啟文章編輯紀錄對話框
+const openHistoryDialog = () => {
+  historyDialog.value = true;
+};
+// ======================
+// 取得主留言Comments
 // ======================
 const fetchComments = () => {
   getCommentsApi(postId, commentPage.value - 1, commentPageSize.value)
@@ -298,7 +347,7 @@ const fetchComments = () => {
     });
 };
 // ======================
-// 取得子留言
+// 取得子留言ChildComments
 // ======================
 const fetchChildComments = (parentCommentId) => {
   getChildCommentsApi(parentCommentId)
@@ -313,6 +362,49 @@ const fetchChildComments = (parentCommentId) => {
       childComments.value = { ...childComments.value, [parentCommentId]: [] };
     });
 };
+
+// ======================
+// 取得按讚狀態
+// ======================
+const fetchLikeStatus = () => {
+  return getPostLikeStatusApi(postId)
+    .then((response) => {
+      likeCount.value = response.data.likeCount ?? 0;
+
+      likedByCurrentUser.value = response.data.likedByCurrentUser ?? false;
+    })
+    .catch((error) => {
+      console.error("取得按讚狀態失敗：", error);
+
+      likeCount.value = 0;
+      likedByCurrentUser.value = false;
+    });
+};
+// ======================
+// 新增或取消按讚
+// ======================
+const handleToggleLike = () => {
+  if (likeUpdating.value) {
+    return;
+  }
+
+  likeUpdating.value = true;
+
+  togglePostLikeApi(postId)
+    .then((response) => {
+      likeCount.value = response.data.likeCount ?? 0;
+      likedByCurrentUser.value = response.data.likedByCurrentUser ?? false;
+    })
+    .catch((error) => {
+      console.error("按讚操作失敗：", error);
+
+      showMessage(error.response?.data ?? "按讚操作失敗，請稍後再試", "error");
+    })
+    .finally(() => {
+      likeUpdating.value = false;
+    });
+};
+// 展開與收合回覆
 const toggleReplies = (parentCommentId) => {
   const willExpand = !expandedComments.value[parentCommentId];
 
@@ -326,6 +418,7 @@ const toggleReplies = (parentCommentId) => {
     fetchChildComments(parentCommentId);
   }
 };
+// 開始與取消回覆
 const startReply = (commentId) => {
   replyingCommentId.value = commentId;
   replyContent.value = "";
@@ -405,7 +498,7 @@ const isPostOwner = computed(() => {
   return postUserId.toLowerCase() === currentUserId.toLowerCase();
 });
 // ======================
-// 編輯文章
+// 跳轉到編輯文章頁面
 // ======================
 const editPost = () => {
   router.push({
@@ -416,7 +509,7 @@ const editPost = () => {
   });
 };
 // ======================
-// 編輯留言
+// 開始編輯留言與取消編輯
 // ======================
 const startEditComment = (comment) => {
   editingCommentId.value = comment.id;
@@ -517,8 +610,7 @@ onMounted(async () => {
   try {
     const lastViewed = Number(sessionStorage.getItem(storageKey));
 
-    shouldCount =
-      !lastViewed || Date.now() - lastViewed >= cooldown;
+    shouldCount = !lastViewed || Date.now() - lastViewed >= cooldown;
   } catch (error) {
     console.warn("無法讀取瀏覽紀錄：", error);
   }
@@ -539,6 +631,8 @@ onMounted(async () => {
   }
   // 不論是否計次，都正常取得文章
   fetchPost();
+  fetchPostHistory();
+  fetchLikeStatus();
 });
 </script>
 

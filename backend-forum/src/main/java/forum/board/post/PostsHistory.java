@@ -38,13 +38,13 @@ public class PostsHistory {
     @Column(name = "old_title")
     private String oldTitle;
 
-    @Column(name = "old_content")
+    @Column(name = "old_content", columnDefinition = "nvarchar(max)")
     private String oldContent;
 
     @Column(name = "new_title")
     private String newTitle;
 
-    @Column(name = "new_content")
+    @Column(name = "new_content", columnDefinition = "nvarchar(max)")
     private String newContent;
 
     @Column(nullable = false)

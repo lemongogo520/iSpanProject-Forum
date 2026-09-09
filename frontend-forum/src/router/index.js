@@ -22,34 +22,34 @@ const routes = [
       component: () => import("@/views/HomepageView.vue"),
   },
   {
-    path: "/api/admin/categories",
+    path: "/admin/categories",
     name: "categories",
-    component: () => import("@/view/AdminCategoryView.vue"),
+    component: () => import("@/views/admin/AdminCategoryView.vue"),
   },
   {
-    path: "/api/categories",
+    path: "/categories",
     name: "userCategories",
-    component: () => import("@/view/CategoryListView.vue"),
+    component: () => import("@/views/forum/CategoryListView.vue"),
   },
   {
     path: "/boards/:boardId",
     name: "board",
-    component: () => import("@/view/BoardView.vue"),
+    component: () => import("@/views/forum/BoardView.vue"),
   },
   {
     path: "/post/create",
     name: "PostCreate",
-    component: () => import("@/view/PostCreateView.vue"),
+    component: () => import("@/views/post/PostCreateView.vue"),
   },
   {
     path: "/posts/:postId/edit",
     name: "post-edit",
-    component: () => import("@/view/PostCreateView.vue"),
+    component: () => import("@/views/post/PostCreateView.vue"),
   },
   {
     path: "/post/:postId",
     name: "PostDetail",
-    component: () => import("@/view/PostDetailView.vue"),
+    component: () => import("@/views/post/PostDetailView.vue"),
   },
 
 
@@ -58,7 +58,14 @@ const routes = [
     path: '/config/setting',
     name: 'Config',
     component: () => import('@/views/config/ConfigView.vue')
+  },
+  {
+    path: '/shop',
+    name: 'shop',
+    component: () =>
+      import('../views/ShopView.vue')
   }
+
 ]
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

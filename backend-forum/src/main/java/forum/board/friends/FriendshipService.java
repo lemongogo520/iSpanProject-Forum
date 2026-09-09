@@ -83,6 +83,7 @@ public class FriendshipService {
 
 		if (!isMember) { throw new RuntimeException( "拒絕存取" ); }
 		friendship.setStatus( FriendshipStatus.ACCEPTED );
+		fRepo.save(friendship);
 	}
 	
 	/* 拒絕好友邀請 */
@@ -106,7 +107,6 @@ public class FriendshipService {
 
 		if (!isMember) { throw new RuntimeException( "拒絕存取" ); }
 		fRepo.delete(friendship);
-
 
 	}
 	

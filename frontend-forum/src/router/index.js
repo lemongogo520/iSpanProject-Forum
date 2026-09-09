@@ -9,37 +9,37 @@ const routes = [
   {
       path: "/login",
       name: "Login",
-      component: () => import("../views/login/LoginView.vue"),
+      component: () => import("@/views/login/LoginView.vue"),
   },
   {
       path: "/register",
       name: "Register",
-      component: () => import("../views/login/RegisterView.vue"),
+      component: () => import("@/views/login/RegisterView.vue"),
   },
   {
       path: "/home",
       name: "Homepage",
-      component: () => import("../views/HomepageView.vue"),
+      component: () => import("@/views/HomepageView.vue"),
   },
   {
     path: "/api/admin/categories",
     name: "categories",
-    component: () => import("../view/AdminCategoryView.vue"),
+    component: () => import("@/view/AdminCategoryView.vue"),
   },
   {
     path: "/api/categories",
     name: "userCategories",
-    component: () => import("../view/CategoryListView.vue"),
+    component: () => import("@/view/CategoryListView.vue"),
   },
   {
     path: "/boards/:boardId",
     name: "board",
-    component: () => import("../view/BoardView.vue"),
+    component: () => import("@/view/BoardView.vue"),
   },
   {
     path: "/post/create",
     name: "PostCreate",
-    component: () => import("../view/PostCreateView.vue"),
+    component: () => import("@/view/PostCreateView.vue"),
   },
   {
     path: "/posts/:postId/edit",
@@ -49,8 +49,16 @@ const routes = [
   {
     path: "/post/:postId",
     name: "PostDetail",
-    component: () => import("../view/PostDetailView.vue"),
+    component: () => import("@/view/PostDetailView.vue"),
   },
+
+
+  //管理者設定
+  {
+    path: '/config/setting',
+    name: 'Config',
+    component: () => import('@/views/config/ConfigView.vue')
+  }
 ]
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

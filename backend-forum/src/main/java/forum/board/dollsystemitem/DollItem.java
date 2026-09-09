@@ -5,15 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 import java.time.Instant;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import forum.board.dollsystemcategories.DollCategory;
 
 @Entity
-@Table(name="doll_items")
+@Table(name = "doll_items")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,22 +20,22 @@ public class DollItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @JoinColumn(name="category_id")
+    @JoinColumn(name = "category_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private DollCategory category;
 
-    @Column(name="item_name",length = 50)
+    @Column(name = "item_name", length = 50)
     private String name;
 
-    @JsonIgnore
-    @Lob
-    @Column(name="image_file",nullable = false)
-    private byte[] imageFile;
+    // 是否上架
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
 
-    @Column(name="is_default",nullable = false)
-    private boolean isDefault;
+    //圖片路徑
+    @Column(name = "file_path", length = 255)
+    private String filePath;
 
-    @Column(name="created_at",nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at")
@@ -46,7 +43,7 @@ public class DollItem {
 
     @PrePersist
     public void onCreate() {
-        if(createdAt == null) {
+        if (createdAt == null) {
             createdAt = Instant.now();
         }
 

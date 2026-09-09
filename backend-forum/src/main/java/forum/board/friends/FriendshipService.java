@@ -25,6 +25,28 @@ public class FriendshipService {
 		// 1:大於
 		return a.compareTo(b)<0?new UUID[] {a,b} : new UUID[] {b,a};
 	}
+
+	private FriendshipEntity findPendingFriendship(Long friendshipId) {
+		FriendshipEntity friendship = fRepo.findById(friendshipId).orElseThrow(()->new RuntimeException("找不到好友邀請"));
+		if(friendship.getStatus() != FriendshipStatus.PENDING){
+			throw new RuntimeException("此好友邀請目前不是待處理狀態");
+		}
+		return friendship;
+	}
+
+	private void validateRequestReceiver(FriendshipEntity friendship, UUID currentUserId) {
+		// requester 不能接受自己的邀請 
+		if (friendship.getRequester().getId().equals(currentUserId)) { 
+			throw new RuntimeException( "不能操作自己發送的邀請" ); }
+
+		// 確認目前使用者是好友關係中的接收者
+		boolean isMember = friendship.getUser1().getId().equals(currentUserId)
+					 || friendship.getUser2() .getId() .equals(currentUserId);
+
+		if (!isMember) { throw new RuntimeException( "沒有權限操作此好友邀請" ); }
+
+	}
+
 	
 	/*發送好友邀請*/
 	public void sendFriendRequest(UUID requesterId, UUID addresseeId) {
@@ -64,48 +86,18 @@ public class FriendshipService {
 	
 	/* 接受好友邀請 */
 	public void acceptFriendRequest(Long friendshipId, UUID currentUserId) {
-		// Friendship 是否存在 
-		FriendshipEntity friendship = fRepo.findById(friendshipId)
-				.orElseThrow(()->new RuntimeException("找不到好友邀請"));
+		FriendshipEntity friendship = findPendingFriendship(friendshipId);
 
-		// status 是否為 PENDING
-		if(friendship.getStatus()!= FriendshipStatus.PENDING){
-			throw new RuntimeException( "好友關係不是pending" );
-		}
-
-		// requester 不能接受自己的邀請 
-		if (friendship.getRequester().getId().equals(currentUserId)) { 
-			throw new RuntimeException( "不能接受自己的邀請" ); }
-
-		// 確認目前使用者是好友關係中的其中一人 
-		boolean isMember = friendship.getUser1().getId().equals(currentUserId)
-					 || friendship.getUser2() .getId() .equals(currentUserId);
-
-		if (!isMember) { throw new RuntimeException( "拒絕存取" ); }
+		validateRequestReceiver(friendship, currentUserId);
 		friendship.setStatus( FriendshipStatus.ACCEPTED );
 		fRepo.save(friendship);
 	}
 	
 	/* 拒絕好友邀請 */
 	public void rejectFriendRequest(Long friendshipId, UUID currentUserId){
-		// Friendship 是否存在 
-		FriendshipEntity friendship = fRepo.findById(friendshipId)
-				.orElseThrow(()->new RuntimeException("找不到好友邀請"));
+		FriendshipEntity friendship = findPendingFriendship(friendshipId);
 
-		// status 是否為 PENDING
-		if(friendship.getStatus()!= FriendshipStatus.PENDING){
-			throw new RuntimeException( "好友關係不是pending" );
-		}
-
-		// requester 不能接受自己的邀請 
-		if (friendship.getRequester().getId().equals(currentUserId)) { 
-			throw new RuntimeException( "不能接受自己的邀請" ); }
-
-		// 確認目前使用者是好友關係中的其中一人 
-		boolean isMember = friendship.getUser1().getId().equals(currentUserId)
-					 || friendship.getUser2() .getId() .equals(currentUserId);
-
-		if (!isMember) { throw new RuntimeException( "拒絕存取" ); }
+		validateRequestReceiver(friendship, currentUserId);
 		fRepo.delete(friendship);
 
 	}

@@ -43,7 +43,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
@@ -69,6 +68,16 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-thymeleaf-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+    		<groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+    		<artifactId>owasp-java-html-sanitizer</artifactId>
+    		<version>20260313.1</version>
+		</dependency>
+		<dependency>
+    		<groupId>org.jsoup</groupId>
+    		<artifactId>jsoup</artifactId>
+    		<version>1.23.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

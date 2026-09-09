@@ -44,9 +44,12 @@ public class Posts {
 	@JoinColumn(name = "user_id", nullable = false)
 	private Users users;
 
+	@Column(name = "post_type", nullable = false, length = 20)
+	private String postType;
+
 	private String title;
 
-	@Column(columnDefinition = "nvarchar(max)")
+	@Column(name = "content", columnDefinition = "nvarchar(max)")
 	private String content;
 
 	@Column(nullable = false)

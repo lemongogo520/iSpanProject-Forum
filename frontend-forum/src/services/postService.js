@@ -1,8 +1,13 @@
-import httpClient from "./httpClient";
+import httpClient from "@/services/httpClient";
 
 // 取得單篇文章
 export const getPost = (postId) => {
   return httpClient.get(`/api/posts/${postId}`);
+};
+
+// 取得文章編輯紀錄
+export const getPostHistory = (postId) => {
+  return httpClient.get(`/api/posts/${postId}/history`);
 };
 
 // 修改文章
@@ -16,11 +21,12 @@ export const deletePost = (postId) => {
 };
 
 // 取得看板文章
-export const getPostsByBoard = (boardId, page, size) => {
+export const getPostsByBoard = (boardId, page, size, sortBy = "latest") => {
   return httpClient.get(`/api/posts/boards/${boardId}`, {
     params: {
       page,
       size,
+      sortBy,
     },
   });
 };
@@ -36,11 +42,18 @@ export const increasePostViews = (postId) => {
 };
 
 // 搜尋功能 沒有帶 boardId 時搜尋全站
-export const searchPosts = (title, page, size, boardId = null) => {
+export const searchPosts = (
+  title,
+  page,
+  size,
+  boardId = null,
+  sortBy = "latest",
+) => {
   const params = {
     title,
     page,
     size,
+    sortBy,
   };
 
   if (boardId !== null) {
@@ -48,4 +61,23 @@ export const searchPosts = (title, page, size, boardId = null) => {
   }
 
   return httpClient.get("/api/posts/search", { params });
+};
+
+// 上傳文章圖片
+export const uploadPostImage = (file) => {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  return httpClient.post("/api/posts/images", formData);
+};
+
+// 取得文章按讚數量與目前使用者的按讚狀態
+export const getPostLikeStatus = (postId) => {
+  return httpClient.get(`/api/posts/${postId}/like`);
+};
+
+// 新增或取消按讚
+export const togglePostLike = (postId) => {
+  return httpClient.put(`/api/posts/${postId}/like`);
 };

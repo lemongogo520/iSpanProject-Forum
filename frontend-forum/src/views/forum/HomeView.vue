@@ -65,8 +65,12 @@
           hover
         >
           <v-card-item>
-            <v-card-title>{{ post.title }}</v-card-title>
-
+            <v-card-title>
+              <v-chip color="primary" variant="tonal" size="small" class="me-2">
+                {{ post.postType || "討論" }}
+              </v-chip>
+              {{ post.title }}
+            </v-card-title>
             <v-card-subtitle class="mt-2">
               {{ getBoardName(post.boardId) }}
               · {{ post.userName || "使用者" }} · 瀏覽：{{ post.views }}
@@ -149,9 +153,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
-import httpClient from "@/api/httpClient"; // 引入你在 main.js 中設定的 axios 實例
+import httpClient from "@/services/httpClient"; // 引入你在 main.js 中設定的 axios 實例
 
-import { searchPosts as searchPostsApi } from "@/api/postApi";
+import { searchPosts as searchPostsApi } from "@/services/postService";
 // =========================
 // Category
 // =========================

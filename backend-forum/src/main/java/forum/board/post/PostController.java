@@ -1,6 +1,7 @@
 package forum.board.post;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 public class PostController {
 
 	private final PostService postService;
+
+	private final PostsHistoryService postsHistoryService;
+
+	private final PostImageService postImageService;
 
 	// 取得全部文章
 	@GetMapping("/api/posts")
@@ -45,53 +51,65 @@ public class PostController {
 		return ResponseEntity.ok(postDTO);
 	}
 
+	// 取得文章編輯紀錄
+	@GetMapping("/api/posts/{id}/history")
+	public ResponseEntity<List<PostsHistoryDTO>> findHistory(
+			@PathVariable Integer id) {
+
+		List<PostsHistoryDTO> history = postsHistoryService.findByPostId(id);
+
+		return ResponseEntity.ok(history);
+	}
+
 	// 根據board找文章有分頁
 	@GetMapping("/api/posts/boards/{boardId}")
-	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId,Pageable pageable) {
+	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId,
+			@RequestParam(defaultValue = "latest") String sortBy, Pageable pageable) {
 
-	    return postService.findByBoardId(boardId, pageable);
+		return postService.findByBoardId(boardId, sortBy, pageable);
 	}
-	
-	// 根據board找文章
-//	@GetMapping("/api/posts/boards/{boardId}")
-//	public List<Posts> findByBoardId(@PathVariable Integer boardId) {
-//
-//		return postService.findByBoardId(boardId);
-//	}
 
 	// 用posttitle找文章
 	@GetMapping("/api/posts/search")
-	public Page<PostDTO> search(@RequestParam String title,@RequestParam(required = false) Integer boardId,Pageable pageable) {
+	public Page<PostDTO> search(
+			@RequestParam String title,
+			@RequestParam(required = false) Integer boardId,
+			@RequestParam(defaultValue = "latest") String sortBy,
+			Pageable pageable) {
 
-		 return postService.searchPosts(title, boardId, pageable);
+		return postService.searchPosts(title, boardId, sortBy, pageable);
 	}
 
 	// 新增文章
 	@PostMapping("/api/posts")
-	public ResponseEntity<Posts> createPost(@RequestBody Posts post, HttpSession hs) {
+	public ResponseEntity<?> createPost(@RequestBody Posts post, HttpSession hs) {
 
-		// 目前還沒有確認user怎麼寫之後確認後補上!!!!!!!!!!!!!!!!!!!!!!! 
+		// 目前還沒有確認user怎麼寫之後確認後補上!!!!!!!!!!!!!!!!!!!!!!!
 		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
 		// UUID userId = (UUID) hs.getAttribute("loginUserId");
 
-//		if(userId == null) {
-//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//		}
+		// if(userId == null) {
+		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		// }
+		try {
+			Posts result = postService.create(post, userId);
 
-		Posts result = postService.create(post, userId);
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(result);
+			return ResponseEntity.status(HttpStatus.CREATED).body(result);
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
 	}
 
+	// 刪除文章
 	@DeleteMapping("/api/posts/{id}")
 	public ResponseEntity<?> delete(@PathVariable Integer id, HttpSession hs) {
 
 		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
 		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
 
-//		if(userId == null) {
-//		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//	}
+		// if(userId == null) {
+		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		// }
 		try {
 			postService.delete(id, userId);
 
@@ -102,15 +120,16 @@ public class PostController {
 
 	}
 
+	// 更新文章
 	@PutMapping("/api/posts/{id}")
 	public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody Posts post, HttpSession session) {
 
 		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
 		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
 
-//		if(userId == null) {
-//		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//	}
+		// if(userId == null) {
+		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		// }
 
 		try {
 			Posts result = postService.update(id, post, userId);
@@ -120,17 +139,37 @@ public class PostController {
 		}
 
 	}
-	
+
+	// 增加文章瀏覽數
 	@PatchMapping("/api/posts/{id}/views")
 	public ResponseEntity<Void> increaseViews(@PathVariable Integer id) {
-		
+
 		int result = postService.increaseViews(id);
-		
-	    if (result == 0) {
-	        return ResponseEntity.notFound().build();
-	    }
-		
+
+		if (result == 0) {
+			return ResponseEntity.notFound().build();
+		}
+
 		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+
+	// 上傳文章圖片
+	@PostMapping("/api/posts/images")
+	public ResponseEntity<?> uploadPostImage(
+			@RequestParam("file") MultipartFile file) {
+
+		try {
+			String fileName = postImageService.saveImage(file);
+
+			return ResponseEntity.ok(
+					Map.of(
+							"url",
+							"/uploads/img/" + fileName));
+
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest()
+					.body(e.getMessage());
+		}
 	}
 
 }

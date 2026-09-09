@@ -1,10 +1,15 @@
 package forum.board.post;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jsoup.Jsoup;
+import org.owasp.html.CssSchema;
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +34,93 @@ public class PostService {
 	private final BoardRepository boardRepo;
 
 	private final PostsHistoryService historyService;
+
+	// 允許文字顏色、背景色，以及顏色函式
+	private static final CssSchema POST_CSS = CssSchema.withProperties(
+			List.of(
+					"color",
+					"background-color",
+					"rgb()",
+					"rgba()",
+					"hsl()",
+					"hsla()"));
+
+	// 允許文章使用的 HTML 標籤與指定 CSS
+	private static final PolicyFactory POST_HTML_POLICY = new HtmlPolicyBuilder()
+			.allowElements(
+					"p", "br", "span",
+					"strong", "b",
+					"em", "i",
+					"u", "s",
+					"h1", "h2", "h3",
+					"ul", "ol", "li",
+					"blockquote", "pre", "code", "a", "iframe", "img")
+			.allowWithoutAttributes("span")
+			.allowAttributes("class")
+			.matching((elementName, attributeName, value) -> {
+
+				if ("ql-align-center".equals(value)
+						|| "ql-align-right".equals(value)
+						|| "ql-align-justify".equals(value)) {
+
+					return value;
+				}
+
+				return null;
+			})
+			.onElements("p")
+
+			// Quill 1 的程式碼區塊使用此 class
+			.allowAttributes("class")
+			.matching(
+					(elementName, attributeName, value) -> {
+						if ("ql-syntax".equals(value)) {
+							return value;
+						}
+						return null;
+					})
+			.onElements("pre")
+
+			// Quill 的 YouTube iframe
+			.allowAttributes("class")
+			.matching((elementName, attributeName, value) -> {
+				if ("ql-video".equals(value)) {
+					return value;
+				}
+				return null;
+			})
+			.onElements("iframe")
+
+			// YouTube 使用 HTTPS，本機圖片開發環境使用 HTTP
+			.allowUrlProtocols("https", "http")
+			.allowAttributes("href")
+			.onElements("a")
+			// iframe 的 src 必須通過 YouTube 或 Twitch 網址檢查
+			.allowAttributes("src")
+			.matching((elementName, attributeName, value) -> sanitizeVideoEmbedUrl(value))
+			.onElements("iframe")
+
+			.allowAttributes("frameborder")
+			.matching((elementName, attributeName, value) -> {
+				if ("0".equals(value)) {
+					return value;
+				}
+				return null;
+			})
+			.onElements("iframe")
+
+			.allowAttributes("allowfullscreen")
+			.onElements("iframe")
+			// 文章圖片
+			.allowAttributes("src")
+			.matching((elementName, attributeName, value) -> sanitizePostImageUrl(value))
+			.onElements("img")
+
+			.allowAttributes("alt")
+			.onElements("img")
+
+			.allowStyling(POST_CSS)
+			.toFactory();
 
 	// 找所有貼文
 	public List<Posts> findAll() {
@@ -56,6 +148,18 @@ public class PostService {
 		newPost.setUsers(newUser);
 		newPost.setBoard(newBoard);
 		newPost.setViews(0); // 假設有瀏覽數欄位
+
+		String postType = newPost.getPostType();
+
+		// 前端還沒傳類型時，新增文章預設為討論
+		if (postType == null) {
+			postType = "討論";
+		}
+
+		newPost.setPostType(validatePostType(postType));
+
+		newPost.setContent(
+				validatePostContent(newPost.getContent()));
 
 		return postRepo.save(newPost);
 	}
@@ -88,15 +192,15 @@ public class PostService {
 		PostDTO postDTO = new PostDTO();
 
 		postDTO.setId(post.getId());
+		postDTO.setPostType(post.getPostType());
 		postDTO.setTitle(post.getTitle());
-		postDTO.setContent(post.getContent());
+		postDTO.setContent(sanitizePostContent(post.getContent()));
 		postDTO.setViews(post.getViews());
 		postDTO.setCreateTime(post.getCreateTime());
 		postDTO.setModifyTime(post.getModifyTime());
 		postDTO.setIsDeleted(post.getIsDeleted());
 		postDTO.setUserName(post.getUsers().getAccount());
 		postDTO.setBoardId(post.getBoard().getId());
-		// 文章真正的作者，不是目前登入者
 		postDTO.setUserId(post.getUsers().getId());
 
 		return postDTO;
@@ -115,7 +219,8 @@ public class PostService {
 	}
 
 	// 搜尋文章：boardId 沒傳就是全站搜尋
-	public Page<PostDTO> searchPosts(String title,Integer boardId,Pageable pageable) {
+	@Transactional(readOnly = true)
+	public Page<PostDTO> searchPosts(String title, Integer boardId, String sortBy, Pageable pageable) {
 
 		String keyword = title == null ? "" : title.trim();
 
@@ -128,21 +233,37 @@ public class PostService {
 		Pageable sortedPageable = PageRequest.of(
 				pageable.getPageNumber(),
 				pageable.getPageSize(),
-				Sort.by(
-						Sort.Order.desc("createTime"),
-						Sort.Order.desc("id")));
+				createPostSort(sortBy));
 
 		Page<Posts> posts;
 
 		// 全站搜尋
 		if (boardId == null) {
-			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword,sortedPageable);
-		
-		// boardid搜尋
+			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword, sortedPageable);
+
+			// boardid搜尋
 		} else {
-			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId,keyword,sortedPageable);
+			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId, keyword, sortedPageable);
 		}
 		return posts.map(this::toDTO);
+	}
+
+	// 檢查文章類型
+	private String validatePostType(String postType) {
+		if (postType == null || postType.trim().isEmpty()) {
+			throw new IllegalArgumentException("請選擇文章類型");
+		}
+
+		String type = postType.trim();
+
+		if (!type.equals("討論")
+				&& !type.equals("攻略")
+				&& !type.equals("心得")
+				&& !type.equals("問題")) {
+			throw new IllegalArgumentException("不支援的文章類型");
+		}
+
+		return type;
 	}
 
 	// 修改文章
@@ -172,12 +293,23 @@ public class PostService {
 		if (!post.getUsers().getId().equals(loginUser.getId())) {
 			throw new RuntimeException("不能修改別人的文章");
 		}
+		String safeContent = validatePostContent(newPost.getContent());
 
-		historyService.saveUpdateHistory(post, loginUser, newPost.getTitle(), newPost.getContent());
+		String postType = newPost.getPostType();
+
+		// 前端沒傳文章類型時，保留原本的類型
+		if (postType == null) {
+			postType = post.getPostType();
+		}
+
+		String validatedPostType = validatePostType(postType);
+
+		historyService.saveUpdateHistory(post, loginUser, newPost.getTitle(), safeContent);
 
 		// post更新文章
 		post.setTitle(newPost.getTitle());
-		post.setContent(newPost.getContent());
+		post.setContent(safeContent);
+		post.setPostType(validatedPostType);
 		post.setModifyTime(Instant.now());
 
 		return postRepo.save(post);
@@ -228,13 +360,185 @@ public class PostService {
 	}
 
 	// 分頁功能
-	public Page<Posts> findByBoardId(Integer boardId, Pageable pageable) {
+	public Page<Posts> findByBoardId(Integer boardId, String sortBy, Pageable pageable) {
 
 		Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(),
 				pageable.getPageSize(),
-				Sort.by(Sort.Direction.DESC, "createTime"));
+				createPostSort(sortBy));
 
 		return postRepo.findByBoardIdAndIsDeletedFalse(boardId, sortedPageable);
+	}
+
+	// 只允許 YouTube 與 Twitch Clip 的 HTTPS 嵌入網址
+	private static String sanitizeVideoEmbedUrl(String value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		try {
+			URI uri = URI.create(value.trim());
+
+			if (!"https".equalsIgnoreCase(uri.getScheme())
+					|| uri.getUserInfo() != null
+					|| uri.getPort() != -1
+					|| uri.getFragment() != null) {
+
+				return null;
+			}
+
+			String host = uri.getHost();
+
+			if (host == null) {
+				return null;
+			}
+
+			host = host.toLowerCase();
+			String path = uri.getPath();
+
+			// YouTube
+			boolean isYouTube = "youtube.com".equals(host)
+					|| "www.youtube.com".equals(host)
+					|| "youtube-nocookie.com".equals(host)
+					|| "www.youtube-nocookie.com".equals(host);
+
+			if (isYouTube) {
+				if (path == null
+						|| !path.matches("/embed/[A-Za-z0-9_-]{11}/?")) {
+
+					return null;
+				}
+
+				String videoId = path
+						.replaceFirst("^/embed/", "")
+						.replaceFirst("/$", "");
+
+				return "https://www.youtube-nocookie.com/embed/" + videoId;
+			}
+
+			// Twitch Clip
+			if ("clips.twitch.tv".equals(host)
+					&& "/embed".equals(path)) {
+
+				String query = uri.getRawQuery();
+
+				if (query == null
+						|| !query.matches(
+								"clip=[A-Za-z0-9_-]+"
+										+ "&parent=[A-Za-z0-9.-]+"
+										+ "&autoplay=false")) {
+
+					return null;
+				}
+
+				return "https://clips.twitch.tv/embed?" + query;
+			}
+
+			return null;
+
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
+	// 只允許後端 uploads/img 資料夾中的文章圖片
+	private static String sanitizePostImageUrl(String value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		try {
+			URI uri = URI.create(value.trim());
+
+			String scheme = uri.getScheme();
+			String host = uri.getHost();
+			String path = uri.getPath();
+
+			// 開發環境允許 http 和 https
+			boolean validScheme = "http".equalsIgnoreCase(scheme)
+					|| "https".equalsIgnoreCase(scheme);
+
+			// 目前圖片由本機後端提供
+			boolean validHost = "localhost".equalsIgnoreCase(host)
+					|| "127.0.0.1".equals(host);
+
+			// 後端目前使用 8080
+			boolean validPort = uri.getPort() == 8080;
+
+			// 只允許 uploads/img 中指定格式的檔案
+			boolean validPath = path != null
+					&& path.matches(
+							"/uploads/img/[0-9a-fA-F-]+\\.(jpg|jpeg|png|gif|webp)");
+
+			if (!validScheme
+					|| !validHost
+					|| !validPort
+					|| !validPath) {
+
+				return null;
+			}
+
+			return uri.toString();
+
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
+	// 清理文章 HTML，只保留允許的標籤、屬性與文字顏色樣式
+	private String sanitizePostContent(String content) {
+		if (content == null) {
+			return "";
+		}
+
+		return POST_HTML_POLICY.sanitize(content);
+	}
+
+	// 清理後再檢查是否還有文字
+	private String validatePostContent(String content) {
+		String safeContent = sanitizePostContent(content);
+
+		String plainText = Jsoup.parse(safeContent)
+				.text()
+				.replace('\u00A0', ' ')
+				.strip();
+
+		boolean hasEmbeddedVideo = safeContent.contains(
+				"src=\"https://www.youtube-nocookie.com/embed/")
+				|| safeContent.contains(
+						"src=\"https://clips.twitch.tv/embed?");
+
+		if (plainText.isEmpty() && !hasEmbeddedVideo) {
+			throw new IllegalArgumentException("文章內容不能為空白");
+		}
+
+		return safeContent;
+	}
+
+	// 依前端選項建立文章排序規則
+	private Sort createPostSort(String sortBy) {
+
+		if ("views".equals(sortBy)) {
+			// 瀏覽數相同時，較新的文章排前面
+			return Sort.by(
+					Sort.Order.desc("views"),
+					Sort.Order.desc("createTime"),
+					Sort.Order.desc("id"));
+		}
+
+		if ("updated".equals(sortBy)) {
+			// 有修改過的文章依最近修改時間排序
+			return Sort.by(
+					Sort.Order.desc("modifyTime"),
+					Sort.Order.desc("createTime"),
+					Sort.Order.desc("id"));
+		}
+
+		// 預設：最新發布
+		return Sort.by(
+				Sort.Order.desc("createTime"),
+				Sort.Order.desc("id"));
 	}
 
 }

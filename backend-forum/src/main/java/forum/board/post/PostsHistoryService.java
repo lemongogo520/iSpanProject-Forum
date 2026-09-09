@@ -48,10 +48,30 @@ public class PostsHistoryService {
     }
 
     // 管理員查看某文章被修改幾次
-    public List<PostsHistory> findByPostId(Integer postId){
+    public List<PostsHistoryDTO> findByPostId(Integer postId){
 
-    return postsHistoryRepo.findByPostId(postId);
+     return postsHistoryRepo
+            .findByPostIdOrderByModifyTimeDesc(postId)
+            .stream()
+            .filter(history -> "UPDATE".equals(history.getAction()))
+            .map(this::toDTO)
+            .toList();
+    }
 
+    private PostsHistoryDTO toDTO(PostsHistory history) {
+
+    PostsHistoryDTO dto = new PostsHistoryDTO();
+
+    dto.setId(history.getId());
+    dto.setPostId(history.getPostId());
+    dto.setOldTitle(history.getOldTitle());
+    dto.setOldContent(history.getOldContent());
+    dto.setNewTitle(history.getNewTitle());
+    dto.setNewContent(history.getNewContent());
+    dto.setAction(history.getAction());
+    dto.setModifyTime(history.getModifyTime());
+
+    return dto;
 }
 
 }

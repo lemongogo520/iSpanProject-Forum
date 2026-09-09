@@ -1,11 +1,11 @@
-package forum.board.friends;
+package forum.board.friends.dto;
 
 import java.time.Instant;
 import java.util.UUID;
 
 import forum.board.friends.FriendshipEntity.FriendshipStatus;
 
-public record FriendshipResponse(
+public record FriendshipResponseDTO(
 
         Long id,
 

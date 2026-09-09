@@ -1,8 +1,8 @@
-package forum.board.friends;
+package forum.board.friends.dto;
 
 import java.util.UUID;
 
-public record FriendResponse(
+public record FriendResponseDTO(
 
         UUID userId,
 

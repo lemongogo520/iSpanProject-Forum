@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import forum.board.conversation.ConversationUserService;
-
+import forum.board.friends.dto.FriendResponseDTO;
+import forum.board.friends.dto.SendFriendRequestDTO;
 import jakarta.servlet.http.HttpSession;
 
 
@@ -70,12 +71,14 @@ public class FriendshipController {
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
 	
-
+	/*
 	// 取得好友列表
+	/api/friendship/list
+	*/
 	@GetMapping("/list")
-	public ResponseEntity<Object> getFriendList(Model model, HttpSession session) {
+	public ResponseEntity<Object> getFriendList(HttpSession session) {
 		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
-		List<FriendResponse> friendsList = fService.getFriendsList(loginUserId);
+		List<FriendResponseDTO> friendsList = fService.getFriendsList(loginUserId);
 		
 		return ResponseEntity.status(HttpStatus.OK).body(friendsList);
 	}

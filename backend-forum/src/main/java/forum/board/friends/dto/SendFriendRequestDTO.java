@@ -1,4 +1,4 @@
-package forum.board.friends;
+package forum.board.friends.dto;
 
 import java.util.UUID;
 

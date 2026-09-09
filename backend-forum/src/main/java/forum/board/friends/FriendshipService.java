@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import forum.board.conversation.ConversationUserRepository;
 import forum.board.friends.FriendshipEntity.FriendshipStatus;
+import forum.board.friends.dto.FriendResponseDTO;
 import forum.board.users.Users;
 
 import lombok.RequiredArgsConstructor;
@@ -97,13 +98,21 @@ public class FriendshipService {
 	public void rejectFriendRequest(Long friendshipId, UUID currentUserId){
 		FriendshipEntity friendship = findPendingFriendship(friendshipId);
 
-		validateRequestReceiver(friendship, currentUserId);
+		// requester 不能接受自己的邀請 
+		if (friendship.getRequester().getId().equals(currentUserId)) { 
+			throw new RuntimeException( "不能接受自己的邀請" ); }
+
+		// 確認目前使用者是好友關係中的其中一人 
+		boolean isMember = friendship.getUser1().getId().equals(currentUserId)
+					 || friendship.getUser2() .getId() .equals(currentUserId);
+
+		if (!isMember) { throw new RuntimeException( "拒絕存取" ); }
 		fRepo.delete(friendship);
 
 	}
 	
 	/* 取得好友列表 */
-	public List<FriendResponse> getFriendsList(UUID currentUserId){
+	public List<FriendResponseDTO> getFriendsList(UUID currentUserId){
 		Optional<Users> userOp = uRepo.findById(currentUserId);
 		if(userOp.isEmpty()) {
 			throw new RuntimeException("用戶不存在");
@@ -122,7 +131,7 @@ public class FriendshipService {
 				friend = friendship.getUser1();
 			}
 
-			return new FriendResponse(friend.getId(), friend.getAccount());
+			return new FriendResponseDTO(friend.getId(), friend.getAccount());
 		}).toList();
 	}
 	

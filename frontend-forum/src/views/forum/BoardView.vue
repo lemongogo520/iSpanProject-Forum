@@ -152,8 +152,8 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-import httpClient from "@/api/httpClient";
-import { getPostsByBoard, searchPosts as searchPostsApi } from "@/api/postApi";
+import httpClient from "@/services/httpClient";
+import { getPostsByBoard, searchPosts as searchPostsApi } from "@/services/postService";
 
 import { useNotification } from "@/composables/useNotification";
 

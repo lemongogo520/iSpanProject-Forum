@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { searchPosts } from "@/api/postApi";
+import { searchPosts } from "@/services/postService";
 
 export const usePostSearch = () => {
   // 每次呼叫都建立自己的搜尋狀態

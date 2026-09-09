@@ -170,7 +170,7 @@ import {
   increasePostViews as increasePostViewsApi,
   getPostLikeStatus as getPostLikeStatusApi,
   togglePostLike as togglePostLikeApi,
-} from "@/api/postApi";
+} from "@/services/postService";
 import {
   getComments as getCommentsApi,
   getChildComments as getChildCommentsApi,
@@ -178,7 +178,7 @@ import {
   createReply as createReplyApi,
   updateComment as updateCommentApi,
   deleteComment as deleteCommentApi,
-} from "@/api/commentApi";
+} from "@/services/commentService";
 
 // components 元件匯入
 import CommentItem from "@/components/CommentItem.vue";

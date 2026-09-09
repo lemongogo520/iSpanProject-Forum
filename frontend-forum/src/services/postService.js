@@ -1,4 +1,4 @@
-import httpClient from "./httpClient";
+import httpClient from "@/services/httpClient";
 
 // 取得單篇文章
 export const getPost = (postId) => {

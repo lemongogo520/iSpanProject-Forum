@@ -20,7 +20,7 @@
 import { QuillEditor, Quill } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
 
-import { uploadPostImage as uploadPostImageApi } from "@/api/postApi";
+import { uploadPostImage as uploadPostImageApi } from "@/services/postService";
 import { useNotification } from "@/composables/useNotification";
 
 const content = defineModel({

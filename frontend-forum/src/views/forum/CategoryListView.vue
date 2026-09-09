@@ -75,9 +75,9 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import httpClient from "@/api/httpClient";
+import httpClient from "@/services/httpClient";
 // API匯入
-import { getPostsByBoard } from "@/api/postApi";
+import { getPostsByBoard } from "@/services/postService";
 // 搜尋規則匯入
 import { usePostSearch } from "@/composables/usePostSearch";
 // compnents匯入

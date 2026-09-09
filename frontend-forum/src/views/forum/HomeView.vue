@@ -153,9 +153,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
-import httpClient from "@/api/httpClient"; // 引入你在 main.js 中設定的 axios 實例
+import httpClient from "@/services/httpClient"; // 引入你在 main.js 中設定的 axios 實例
 
-import { searchPosts as searchPostsApi } from "@/api/postApi";
+import { searchPosts as searchPostsApi } from "@/services/postService";
 // =========================
 // Category
 // =========================

@@ -64,7 +64,7 @@ import {
   createPost as createPostApi,
   updatePost as updatePostApi,
   getPost as getPostApi,
-} from "@/api/postApi";
+} from "@/services/postService";
 
 import PostEditor from "@/components/PostEditor.vue";
 

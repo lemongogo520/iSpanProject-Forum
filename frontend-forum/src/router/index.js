@@ -58,13 +58,13 @@ const routes = [
     path: '/config/setting',
     name: 'Config',
     component: () => import('@/views/config/ConfigView.vue')
+  },
+  {
+    path: '/shop',
+    name: 'shop',
+    component: () =>
+      import('../views/ShopView.vue')
   }
-{
-  path: '/shop',
-  name: 'shop',
-  component: () =>
-    import('../views/ShopView.vue')
-}
 
 ]
 const router = createRouter({

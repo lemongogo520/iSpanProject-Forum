@@ -1,6 +1,8 @@
 package forum.board.dollsystemitem;
 
 import lombok.RequiredArgsConstructor;
+import forum.board.dollsystemcategories.DollCategory;
+import forum.board.dollsystemcategories.DollCategoryRepository;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,8 +14,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import forum.board.dollsystemcategories.DollCategory;
-import forum.board.dollsystemcategories.DollCategoryRepository;
+
 
 @Service
 @RequiredArgsConstructor
@@ -50,16 +51,17 @@ public class DollItemService {
         String newFilename = UUID.randomUUID().toString().substring(0, 8) + ".png";
 
         //組合相對路徑跟存檔路徑
-        String relativeFilePath = "doll_items" + categoryId.getCode() + "/" + newFilename;
+        String relativeFilePath = "doll_items_" + categoryId.getCode() + "/" + newFilename;
         Path targetFilePath = Paths.get(BASE_UPLOAD_DIR, relativeFilePath);
 
         //把檔案寫到存檔資料夾
         Files.createDirectories(targetFilePath.getParent());
         file.transferTo(targetFilePath.toFile());
+
         DollItem dollItem = new DollItem();
         dollItem.setCategory(categoryId);
         dollItem.setName(dollItemDTO.getName());
-        dollItem.setFilePath(dollItemDTO.getFilePath());
+        dollItem.setFilePath(relativeFilePath);
         dollItem.setIsActive(dollItem.getIsActive() != null ? dollItemDTO.getIsActive() : true);
         return iRepo.save(dollItem);
     }

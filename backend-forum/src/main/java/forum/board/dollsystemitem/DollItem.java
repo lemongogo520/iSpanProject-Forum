@@ -4,10 +4,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import forum.board.dollsystemcategories.DollCategory;
 
 import java.time.Instant;
 
-import forum.board.dollsystemcategories.DollCategory;
+
 
 @Entity
 @Table(name = "doll_items")

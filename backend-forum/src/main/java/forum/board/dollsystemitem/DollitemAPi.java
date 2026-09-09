@@ -42,7 +42,7 @@ public class DollitemAPi {
     }
 
     //更改Dollitem上下架api
-    @PostMapping("/api/dollitems/status/{itemId}")
+    @PatchMapping("/api/dollitems/status/{itemId}")
     public ResponseEntity<?> updateDollItemStatus (@PathVariable Integer itemId, @RequestParam boolean isActive) {
         DollItem updateItemStatus = itemService.updateItemStatus(itemId, isActive);
         

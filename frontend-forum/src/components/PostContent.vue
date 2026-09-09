@@ -234,10 +234,15 @@ const formatDate = (date) => {
 
 :deep(.post-content iframe.ql-video) {
   display: block;
-  width: min(100%, 800px);
-  height: min(56.25vw, 450px) !important;
-  margin: 20px auto;
+  width: 100%;
+  max-width: 800px;
+  aspect-ratio: 16 / 9;
+  height: auto !important;
+  margin: 24px auto;
   border: 0;
+  border-radius: 12px;
+  background-color: #000;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
 }
 :deep(.post-content img) {
   display: inline-block;
@@ -271,8 +276,10 @@ const formatDate = (date) => {
 @media (max-width: 600px) {
   :deep(.post-content iframe.ql-video) {
     width: 100%;
-    height: calc((100vw - 72px) * 0.5625) !important;
-    margin: 12px auto;
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+    margin: 16px auto;
+    border-radius: 8px;
   }
 }
 /* 電腦版：作者卡片跟隨畫面捲動 */

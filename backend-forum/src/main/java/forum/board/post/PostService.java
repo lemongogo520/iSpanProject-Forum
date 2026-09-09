@@ -54,7 +54,7 @@ public class PostService {
 					"u", "s",
 					"h1", "h2", "h3",
 					"ul", "ol", "li",
-					"blockquote", "pre", "code", "iframe", "img")
+					"blockquote", "pre", "code", "a", "iframe", "img")
 			.allowWithoutAttributes("span")
 			.allowAttributes("class")
 			.matching((elementName, attributeName, value) -> {
@@ -93,9 +93,11 @@ public class PostService {
 
 			// YouTube 使用 HTTPS，本機圖片開發環境使用 HTTP
 			.allowUrlProtocols("https", "http")
-			// iframe 的 src 必須通過 YouTube 網址檢查
+			.allowAttributes("href")
+			.onElements("a")
+			// iframe 的 src 必須通過 YouTube 或 Twitch 網址檢查
 			.allowAttributes("src")
-			.matching((elementName, attributeName, value) -> sanitizeYouTubeEmbedUrl(value))
+			.matching((elementName, attributeName, value) -> sanitizeVideoEmbedUrl(value))
 			.onElements("iframe")
 
 			.allowAttributes("frameborder")
@@ -367,8 +369,8 @@ public class PostService {
 		return postRepo.findByBoardIdAndIsDeletedFalse(boardId, sortedPageable);
 	}
 
-	// 只允許 YouTube 的 HTTPS 嵌入網址
-	private static String sanitizeYouTubeEmbedUrl(String value) {
+	// 只允許 YouTube 與 Twitch Clip 的 HTTPS 嵌入網址
+	private static String sanitizeVideoEmbedUrl(String value) {
 
 		if (value == null) {
 			return null;
@@ -377,7 +379,11 @@ public class PostService {
 		try {
 			URI uri = URI.create(value.trim());
 
-			if (!"https".equalsIgnoreCase(uri.getScheme())) {
+			if (!"https".equalsIgnoreCase(uri.getScheme())
+					|| uri.getUserInfo() != null
+					|| uri.getPort() != -1
+					|| uri.getFragment() != null) {
+
 				return null;
 			}
 
@@ -388,28 +394,47 @@ public class PostService {
 			}
 
 			host = host.toLowerCase();
+			String path = uri.getPath();
 
+			// YouTube
 			boolean isYouTube = "youtube.com".equals(host)
 					|| "www.youtube.com".equals(host)
 					|| "youtube-nocookie.com".equals(host)
 					|| "www.youtube-nocookie.com".equals(host);
 
-			if (!isYouTube) {
-				return null;
+			if (isYouTube) {
+				if (path == null
+						|| !path.matches("/embed/[A-Za-z0-9_-]{11}/?")) {
+
+					return null;
+				}
+
+				String videoId = path
+						.replaceFirst("^/embed/", "")
+						.replaceFirst("/$", "");
+
+				return "https://www.youtube-nocookie.com/embed/" + videoId;
 			}
 
-			String path = uri.getPath();
+			// Twitch Clip
+			if ("clips.twitch.tv".equals(host)
+					&& "/embed".equals(path)) {
 
-			if (path == null
-					|| !path.matches("/embed/[A-Za-z0-9_-]{11}/?")) {
-				return null;
+				String query = uri.getRawQuery();
+
+				if (query == null
+						|| !query.matches(
+								"clip=[A-Za-z0-9_-]+"
+										+ "&parent=[A-Za-z0-9.-]+"
+										+ "&autoplay=false")) {
+
+					return null;
+				}
+
+				return "https://clips.twitch.tv/embed?" + query;
 			}
 
-			String videoId = path
-					.replaceFirst("^/embed/", "")
-					.replaceFirst("/$", "");
-
-			return "https://www.youtube-nocookie.com/embed/" + videoId;
+			return null;
 
 		} catch (IllegalArgumentException e) {
 			return null;
@@ -479,10 +504,12 @@ public class PostService {
 				.replace('\u00A0', ' ')
 				.strip();
 
-		boolean hasYouTubeVideo = safeContent.contains(
-				"src=\"https://www.youtube-nocookie.com/embed/");
+		boolean hasEmbeddedVideo = safeContent.contains(
+				"src=\"https://www.youtube-nocookie.com/embed/")
+				|| safeContent.contains(
+						"src=\"https://clips.twitch.tv/embed?");
 
-		if (plainText.isEmpty() && !hasYouTubeVideo) {
+		if (plainText.isEmpty() && !hasEmbeddedVideo) {
 			throw new IllegalArgumentException("文章內容不能為空白");
 		}
 

@@ -41,19 +41,8 @@
           class="mb-4"
         />
 
-        <!-- 文字編輯器標題提示 -->
-        <div class="text-subtitle-1 text-medium-emphasis mb-2">文章內容</div>
-
-        <!-- 富文字編輯器區塊 -->
-        <v-sheet border class="rounded-lg overflow-hidden mb-6">
-          <QuillEditor
-            v-model:content="content"
-            content-type="html"
-            theme="snow"
-            :options="editorOptions"
-            placeholder="請輸入文章內容..."
-          />
-        </v-sheet>
+        <!-- 文章內容編輯器 -->
+        <PostEditor v-model="content" />
 
         <!-- 按鈕 -->
         <div class="d-flex justify-end">
@@ -75,11 +64,9 @@ import {
   createPost as createPostApi,
   updatePost as updatePostApi,
   getPost as getPostApi,
-  uploadPostImage as uploadPostImageApi,
 } from "@/api/postApi";
 
-import { QuillEditor } from "@vueup/vue-quill";
-import "@vueup/vue-quill/dist/vue-quill.snow.css";
+import PostEditor from "@/components/PostEditor.vue";
 
 import { useNotification } from "@/composables/useNotification";
 const { showMessage } = useNotification();
@@ -110,104 +97,6 @@ const loading = ref(false);
 
 const postType = ref("討論");
 const postTypeOptions = ["討論", "攻略", "心得", "問題"];
-
-// ======================
-// Quill 工具列
-// ======================
-// Quill 圖片上傳
-function imageHandler() {
-  // this.quill 是目前這一個 Quill 編輯器
-  const quill = this.quill;
-
-  // 建立一個不顯示在畫面上的選檔欄位
-  const input = document.createElement("input");
-
-  input.setAttribute("type", "file");
-  input.setAttribute(
-    "accept",
-    "image/jpeg,image/png,image/gif,image/webp",
-  );
-
-  input.onchange = async () => {
-    const file = input.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    // 前端先限制 8 MB
-    const maxSize = 8 * 1024 * 1024;
-
-    if (file.size > maxSize) {
-      showMessage("圖片不能超過 8 MB", "warning");
-      return;
-    }
-
-    try {
-      // 呼叫 POST /api/posts/images
-      const response = await uploadPostImageApi(file);
-
-      let imageUrl = response.data.url;
-
-      if (!imageUrl) {
-        throw new Error("後端沒有回傳圖片網址");
-      }
-
-      // 後端目前回傳 /uploads/img/xxx.jpg，
-      // 加上後端網址，避免瀏覽器跑去 localhost:5173 找圖片
-      if (imageUrl.startsWith("/")) {
-        const backendUrl =
-          import.meta.env.VITE_AXIOS_HTTP_BASEURL;
-
-        imageUrl = `${backendUrl}${imageUrl}`;
-      }
-
-      // 取得目前游標位置
-      const range = quill.getSelection(true);
-
-      // 在游標位置插入圖片
-      quill.insertEmbed(
-        range.index,
-        "image",
-        imageUrl,
-        "user",
-      );
-
-      // 將游標移到圖片後面
-      quill.setSelection(range.index + 1);
-
-      showMessage("圖片上傳成功", "success");
-    } catch (error) {
-      console.error("圖片上傳失敗：", error);
-
-      showMessage(
-        error.response?.data ?? "圖片上傳失敗",
-        "error",
-      );
-    }
-  };
-
-  // 打開作業系統的圖片選擇視窗
-  input.click();
-}
-const editorOptions = {
-  modules: {
-    toolbar: {
-      container: [
-        [{ header: [1, 2, 3, false] }],
-        ["bold", "italic", "underline", "strike"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        [{ color: [] }, { background: [] }],
-        [{ align: [] }],
-        ["blockquote", "code-block", "video", "image"],
-        ["clean"],
-      ],
-      handlers: {
-        image: imageHandler,
-      },
-    },
-  },
-};
 
 // ======================
 // 取得要編輯的文章
@@ -333,50 +222,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-:deep(.ql-container) {
-  min-height: 350px;
-  font-size: 16px;
-}
-:deep(.ql-toolbar) {
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  background-color: #f5f5f5;
-}
-:deep(.ql-container.ql-snow) {
-  border: none !important;
-}
-:deep(.ql-editor iframe.ql-video) {
-  display: block !important;
-  width: 100% !important;
-  max-width: 800px !important;
-  height: min(56.25vw, 450px) !important;
-  margin: 16px auto !important;
-  border: 0;
-}
-@media (max-width: 600px) {
-  :deep(.ql-editor iframe.ql-video) {
-    width: 100% !important;
-    height: calc((100vw - 80px) * 0.5625) !important;
-    margin: 12px auto !important;
-  }
-}
-:deep(.ql-editor img) {
-  display: inline-block;
-  width: auto;
-  max-width: 100%;
-  height: auto;
-  margin: 0;
-  vertical-align: middle;
-}
-
-:deep(.ql-editor .ql-align-center img) {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-:deep(.ql-editor .ql-align-right img) {
-  margin-left: auto;
-  margin-right: 0;
-}
 </style>

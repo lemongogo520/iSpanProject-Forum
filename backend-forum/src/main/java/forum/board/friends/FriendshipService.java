@@ -52,14 +52,6 @@ public class FriendshipService {
 			{
 				throw new RuntimeException("已有待處理的請求");
 			}
-			// if(f.getStatus() == FriendshipStatus.BLOCKED)
-			// {
-			// 	throw new RuntimeException("雙方存在封鎖關係，無法發送請求");
-			// }	
-			// rejected 重新送邀請
-			f.setStatus(FriendshipStatus.PENDING);
-			f.setRequester(uRepo.getReferenceById(requesterId));
-			fRepo.save(f);
 		}
 		// Empty 雙方之間沒有寄送過邀請或其他狀態
 		FriendshipEntity f = new FriendshipEntity();

@@ -9,6 +9,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import lombok.RequiredArgsConstructor;
@@ -29,13 +31,12 @@ public class FriendshipController {
 	private final FriendshipService fService;
 	private final ConversationUserService uService;
 	
-	@GetMapping("/request")
-	public ResponseEntity<Object> sendFriendRequest(@RequestParam UUID targetUserId
+	@PostMapping("/request")
+	public ResponseEntity<Object> sendFriendRequest(@RequestBody SendFriendRequestDTO request
 		, HttpSession session) {
 		UUID loginUserId = (UUID)session.getAttribute("loginUserId");	
-		if(loginUserId != null) {
-			fService.sendFriendRequest(loginUserId, targetUserId);
-		}
+		fService.sendFriendRequest(loginUserId, request.targetUserId());
+	
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 

@@ -1,4 +1,4 @@
-import httpClient from "./httpClient";
+import httpClient from "@/services/httpClient";
 
 export const getComments = (postId, page, size) => {
   return httpClient.get(`/api/comments/posts/${postId}`, {

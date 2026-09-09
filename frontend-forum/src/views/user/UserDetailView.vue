@@ -72,7 +72,7 @@
                     />
 
                     <v-checkbox
-                    v-model="form.useNickname"
+                    v-model="form.showNickname"
                     label="站內以暱稱為顯示名稱"
                     hide-details
                     @update:model-value="markDirty"
@@ -234,10 +234,10 @@
 <script setup>
 
 import { ref, reactive, computed, watch } from 'vue'
-import httpClient from '@/api/httpClient'
+import httpClient from '@/services/httpClient'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { userService } from '@/service/userService'
+import { userService } from '@/services/userService'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -312,7 +312,7 @@ const form = reactive({
   account: '',
   name: '',
   nickname: '',
-  useNickname: false,
+  showNickname: false,
 
   birthday: '',
   showBirthday: false,
@@ -417,7 +417,7 @@ async function openDialog() {
       account: user.account ?? '',
       name: user.name ?? '',
       nickname: user.nickname ?? '',
-      useNickname: user.useNickname ?? false,
+      showNickname: user.showNickname ?? false,
 
       birthday: user.birthday ?? '',
       showBirthday: user.showBirthday ?? false,
@@ -489,23 +489,7 @@ async function save() {
     return
   }
 
-
-  /*
-   * TODO:
-   * 這裡之後接你的 API
-   *
-   * 例如：
-   *
-   * await httpClient({
-   *   method: 'put',
-   *   url: '/api/users/detail',
-   *   data: form
-   * })
-   */
-
-
-  console.log('儲存資料：', form)
-
+  await userService.saveUserDetail(form)
 
   /*
    * 更新原始資料
@@ -513,7 +497,6 @@ async function save() {
   originalForm.value = JSON.parse(
     JSON.stringify(form)
   )
-
 
   /*
    * 已經沒有未儲存修改
@@ -539,24 +522,16 @@ async function saveAndClose() {
     return
   }
 
+  await userService.saveUserDetail(form)
 
   /*
-   * TODO:
-   * 呼叫 API
+   * 儲存關閉不需要更新原始資料
    */
-
-  console.log('儲存資料：', form)
-
-
-  /*
-   * 更新原始資料
-   */
-  originalForm.value = JSON.parse(
-    JSON.stringify(form)
-  )
+  // originalForm.value = JSON.parse(
+  //   JSON.stringify(form)
+  // )
 
   isDirty.value = false
-
 
   /*
    * 關閉 Dialog

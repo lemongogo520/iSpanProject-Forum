@@ -31,10 +31,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import httpClient from '@/api/httpClient'
+import httpClient from '@/services/httpClient'
 import UserDetailView from '@/views/user/UserDetailView.vue'
 import { useUserStore } from '@/stores/user'
-import { userService } from '@/service/userService'
+import { userService } from '@/services/userService'
 
 const router = useRouter()
 const userDetailDialog = ref(false)

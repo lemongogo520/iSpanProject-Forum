@@ -67,7 +67,7 @@ import {
   createPost as createPostApi,
   updatePost as updatePostApi,
   getPost as getPostApi,
-} from "@/api/postApi";
+} from "@/services/postService";
 
 import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";

@@ -1,14 +1,17 @@
 package forum.board.users;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import forum.board.common.util.IpUtil;
 import forum.board.exception.*;
 import forum.board.home.RegisterDTO;
 import forum.board.login.LoginDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -107,6 +110,29 @@ public class UsersService {
 	    }
 	
 	    return dto;
+	}
+
+	public UserDetail saveUserDetail(UserDetailDTO dto, UUID userId, HttpServletRequest request) {
+		
+		Users users = getUsersByAccount(dto.getAccount());
+	    Optional<UserDetail> op = userDetailRepository.findByUserId(users.getId());
+	    UserDetail ud = op.get();
+	    ud.setName(dto.getName());
+	    ud.setNickName(dto.getNickname());
+	    ud.setShowNickName(dto.getShowNickname());
+	    ud.setBirthday(dto.getBirthday());
+	    ud.setShowBirthday(dto.getShowBirthday());
+	    ud.setEmail(dto.getEmail());
+	    ud.setShowEmail(dto.getShowEmail());
+	    ud.setPhoto(dto.getPhotoUrl());
+	    ud.setShowPhoto(dto.getShowPhoto());
+		ud.setModifyTime(Instant.now());
+		ud.setModifier(userId);
+		ud.setModifyIp(IpUtil.getClientIp(request));
+		
+		userDetailRepository.save(ud);
+		
+		return null;
 	}
 }
     

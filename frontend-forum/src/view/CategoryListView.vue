@@ -78,7 +78,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import httpClient from '@/api/httpClient' // 引入你在 main.js 中設定的 axios 實例
+import httpClient from '@/services/httpClient' // 引入你在 main.js 中設定的 axios 實例
 
 const categories = ref([]) // 存放大分類與其子看板的完整陣列
 const loading = ref(true)

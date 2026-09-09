@@ -102,7 +102,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import httpClient from '@/api/httpClient'
+import httpClient from '@/services/httpClient'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
 

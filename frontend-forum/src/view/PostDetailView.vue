@@ -146,7 +146,7 @@ import {
   getPost as getPostApi,
   deletePost as deletePostApi,
   increasePostViews as increasePostViewsApi,
-} from "@/api/postApi";
+} from "@/services/postService";
 
 import {
   getComments as getCommentsApi,
@@ -155,7 +155,7 @@ import {
   createReply as createReplyApi,
   updateComment as updateCommentApi,
   deleteComment as deleteCommentApi,
-} from "@/api/commentApi";
+} from "@/services/commentService";
 
 import CommentItem from "@/components/CommentItem.vue";
 import PostContent from "@/components/PostContent.vue";

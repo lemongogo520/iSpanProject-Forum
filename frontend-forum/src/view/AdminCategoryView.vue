@@ -71,7 +71,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import httpClient from '@/api/httpClient' // 引入你在 main.js 中設定的 axios 實例
+import httpClient from '@/services/httpClient' // 引入你在 main.js 中設定的 axios 實例
 
 // 1. 響應式資料與狀態宣告
 const categories = ref([])

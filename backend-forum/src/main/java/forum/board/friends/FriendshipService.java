@@ -150,6 +150,15 @@ public class FriendshipService {
  
     }
 
+	/* 收到的好友邀請 */
+	public List<FriendResponseDTO> getReceivedList(UUID currentUserId){
+		findUser(currentUserId);
+		List<FriendshipEntity> friendshipList = fRepo.findPendingRequests(currentUserId);
+		return friendshipList.stream().map(friendship ->{
+			Users friend = friendship.getRequester();
+			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null, null);
+		}).toList();
+	}
 
 
 	

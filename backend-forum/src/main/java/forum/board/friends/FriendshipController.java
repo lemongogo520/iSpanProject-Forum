@@ -90,14 +90,28 @@ public class FriendshipController {
 	@GetMapping("/request/send/list")
 	public ResponseEntity<Object> getRequestList(HttpSession session) {
 		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
-		List<FriendResponseDTO> RequestList = fService.getRequestList(loginUserId);
-		if(RequestList.isEmpty()) {
+		List<FriendResponseDTO> requestList = fService.getRequestList(loginUserId);
+		if(requestList.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(RequestList);
+		return ResponseEntity.status(HttpStatus.OK).body(requestList);
 		
 	}
 
+	/*
+	// 收到的好友邀請列表
+	/api/friendship/request/received/list
+	*/
+	@GetMapping("/request/received/list")
+	public ResponseEntity<Object> getReceivedList(HttpSession session) {
+		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
+		List<FriendResponseDTO> receivedList = fService.getReceivedList(loginUserId);
+		if(receivedList.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(receivedList);
+		
+	}
 
 
 	

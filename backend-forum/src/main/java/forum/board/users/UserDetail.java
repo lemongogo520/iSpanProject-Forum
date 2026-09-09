@@ -1,4 +1,4 @@
-package forum.board.userdetail;
+package forum.board.users;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -15,9 +15,6 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
-
-import forum.board.users.Users;
-
 import java.time.LocalDate;
 import java.time.Instant;
 
@@ -45,19 +42,19 @@ public class UserDetail {
     @Column(name = "nick_name", nullable = true, columnDefinition = "nvarchar(20)") 
     private String nickName; 
 
-    @Column(name = "show_nick_name", nullable = false, columnDefinition = "bit") 
+    @Column(name = "show_nick_name", nullable = true, columnDefinition = "bit") 
     private Boolean showNickName; 
 
     @Column(name = "birthday", nullable = true, columnDefinition = "date") 
     private LocalDate birthday; 
 
-    @Column(name = "show_birthday", nullable = false, columnDefinition = "bit") 
+    @Column(name = "show_birthday", nullable = true, columnDefinition = "bit") 
     private Boolean showBirthday; 
 
     @Column(name = "email", nullable = true, columnDefinition = "varchar(200)") 
     private String email; 
 
-    @Column(name = "show_email", nullable = false, columnDefinition = "bit") 
+    @Column(name = "show_email", nullable = true, columnDefinition = "bit") 
     private Boolean showEmail; 
 
     @Column(name = "photo", nullable = true, columnDefinition = "varchar(max)") 

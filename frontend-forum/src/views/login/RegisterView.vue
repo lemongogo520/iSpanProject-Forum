@@ -205,8 +205,8 @@ function clearError() {
 // =========================
 // 註冊
 // =========================
-
 async function register() {
+
   registerError.value = ''
 
   const { valid } = await registerForm.value.validate()
@@ -217,27 +217,41 @@ async function register() {
 
   loading.value = true
 
-  try {
-    const response = await httpClient.post('/api/register', {
+  httpClient({
+    method: 'post',
+    url: '/api/register',
+    data: {
       account: account.value.trim(),
       password: password.value,
       confirmPassword: confirmPassword.value
-    })
-
-    console.log('註冊成功:', response.data)
-
-    await router.push('/login')
-  } catch (error) {
-    console.error('註冊失敗:', error)
-
-    if (error.response?.data?.message) {
-      registerError.value = error.response.data.message
-    } else {
-      registerError.value = '註冊失敗，請稍後再試'
     }
-  } finally {
-    loading.value = false
-  }
+  })
+    .then(response => {
+
+      console.log('註冊成功:', response.data)
+
+      registerError.value = ''
+
+      // 註冊成功後前往登入頁
+      router.push('/login')
+
+    })
+    .catch(error => {
+
+      console.error('註冊失敗:', error)
+
+      if (error.response?.data?.message) {
+        registerError.value = error.response.data.message
+      } else {
+        registerError.value = '註冊失敗，請稍後再試'
+      }
+
+    })
+    .finally(() => {
+
+      loading.value = false
+
+    })
 }
 
 // =========================

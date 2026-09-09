@@ -83,6 +83,21 @@ public class FriendshipController {
 		return ResponseEntity.status(HttpStatus.OK).body(friendsList);
 	}
 
+	/*
+	// 送出的好友邀請列表
+	/api/friendship/request/send/list
+	*/
+	@GetMapping("/request/send/list")
+	public ResponseEntity<Object> getRequestList(HttpSession session) {
+		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
+		List<FriendResponseDTO> RequestList = fService.getRequestList(loginUserId);
+		if(RequestList.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(RequestList);
+		
+	}
+
 
 
 	

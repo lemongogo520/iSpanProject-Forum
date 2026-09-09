@@ -10,7 +10,7 @@ public record FriendResponseDTO(
         
         ,String displayName
 
-        // String avatarUrl
+        ,String showPhoto
 
 ) {
 }

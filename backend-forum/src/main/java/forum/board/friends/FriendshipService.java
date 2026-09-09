@@ -129,9 +129,29 @@ public class FriendshipService {
 				friend = friendship.getUser1();
 			}
 
-			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null);
+			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null,null);
 		}).toList();
 	}
+	
+	/* 送出的好友邀請 */
+    public List<FriendResponseDTO> getRequestList(UUID currentUserId) {
+		findUser(currentUserId);
+		List<FriendshipEntity> friendshipList = fRepo.findByRequesterIdAndStatus(currentUserId, FriendshipStatus.PENDING);
+		return friendshipList.stream().map(friendship ->{
+			Users friend;
+			if(friendship.getUser1().getId().equals(currentUserId)){
+				friend = friendship.getUser2();
+			}else{
+				friend = friendship.getUser1();
+			}
+
+			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null, null);
+		}).toList();
+ 
+    }
+
+
+
 	
 	
 }

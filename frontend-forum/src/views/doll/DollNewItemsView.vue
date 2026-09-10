@@ -55,7 +55,7 @@
   </v-container>
 </template>
 <script setup>
-import { addNewDollItem } from "@/service/DollSystemApi/DollNewItemApi";
+import { addNewDollItem } from '@/services/dollSystemApi/dollNewItemApi';
 
 const { categories, isSubmit, formData, submitItem, selectedFile } =
   addNewDollItem();

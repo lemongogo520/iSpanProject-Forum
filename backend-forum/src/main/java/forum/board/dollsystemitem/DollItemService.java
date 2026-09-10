@@ -24,7 +24,7 @@ public class DollItemService {
     private final DollCategoryRepository cRepo;
 
     //放素材的資料夾
-    private final String BASE_UPLOAD_DIR = "C:/DollSystemItems/";
+    private final String BASE_UPLOAD_DIR = "../uploads/sprites/";
 
     // 新增部件
     public DollItem addDollItem(DollItemDTO dollItemDTO, MultipartFile file) throws IOException {
@@ -52,11 +52,15 @@ public class DollItemService {
 
         //組合相對路徑跟存檔路徑
         String relativeFilePath = "doll_items_" + categoryId.getCode() + "/" + newFilename;
-        Path targetFilePath = Paths.get(BASE_UPLOAD_DIR, relativeFilePath);
+
+        //抓取專案啟動時的真實根目錄 (絕對路徑)
+        String projectDir = System.getProperty("user.dir");
+
+        Path targetFilePath = Paths.get(projectDir,BASE_UPLOAD_DIR, relativeFilePath).normalize();
 
         //把檔案寫到存檔資料夾
         Files.createDirectories(targetFilePath.getParent());
-        file.transferTo(targetFilePath.toFile());
+        file.transferTo(targetFilePath.toAbsolutePath().toFile());
 
         DollItem dollItem = new DollItem();
         dollItem.setCategory(categoryId);

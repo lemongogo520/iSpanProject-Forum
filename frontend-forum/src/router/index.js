@@ -51,6 +51,16 @@ const routes = [
     name: "PostDetail",
     component: () => import("@/views/post/PostDetailView.vue"),
   },
+  {
+    path: "/doll/dollCategories",
+    name: "dollCategories",
+    component: () => import("@/views/doll/DollCategoriesView.vue"),
+  },
+  {
+    path: "/doll/dollnewitem",
+    name: "dollnewitem",
+    component: () => import("@/views/doll/DollNewItemsView.vue"),
+  },
 
 
   //管理者設定

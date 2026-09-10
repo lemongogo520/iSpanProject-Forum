@@ -3,10 +3,12 @@ package forum.board.board;
 import org.springframework.web.bind.annotation.RestController;
 
 import forum.board.category.CategoryService;
+import forum.board.userpermission.UserPermissionService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +26,21 @@ public class BoardController {
 
 	private final BoardService boardService;
 
+	private final UserPermissionService userPermissionService;
+
 	// 新增
 	@PostMapping("/api/board")
-	public ResponseEntity<?> postMethodName(@RequestBody Board board) {
+	public ResponseEntity<?> postMethodName(@RequestBody Board board, HttpSession hs) {
 
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
+		}
+
+		if (!userPermissionService.isSystemAdmin(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以新增看板");
+		}
 		Board newboard = boardService.createBoard(board);
 
 		if (newboard == null) {
@@ -65,14 +78,17 @@ public class BoardController {
 
 	// 更新
 	@PutMapping("/api/boards/{id}")
-	public ResponseEntity<?> putMethodName(@PathVariable Integer id, @RequestBody Board board,HttpSession hs) {
-		
-		//管理員權限判斷尚未寫!!!暫時用不林值判斷!!!!!!!!!!!!!!!!!!!!!!!
-	    boolean isAdmin = true;
-	    
-	    if (!isAdmin) {
-	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足無法修改看板資訊");
-	    }
+	public ResponseEntity<?> putMethodName(@PathVariable Integer id, @RequestBody Board board, HttpSession hs) {
+
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
+		}
+
+		if (!userPermissionService.isSystemAdmin(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以修改看板");
+		}
 
 		board.setId(id);
 		Board upBoard = boardService.updateBoard(board);
@@ -87,18 +103,20 @@ public class BoardController {
 	// 刪除
 	@DeleteMapping("/api/boards/delete/{id}")
 	public ResponseEntity<?> deleteBoard(@PathVariable Integer id, HttpSession hs) {
-		
-		//管理員權限判斷尚未寫!!!暫時用布林值判斷!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	    boolean isAdmin = true;
-	    
-	    if (!isAdmin) {
-	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足無法刪除");
-	    }
-		
-	    boardService.delete(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
-	    
+
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
+		}
+
+		if (!userPermissionService.isSystemAdmin(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以新增看板");
+		}
+
+		boardService.delete(id);
+		return ResponseEntity.status(HttpStatus.OK).build();
+
 	}
-	
-	
+
 }

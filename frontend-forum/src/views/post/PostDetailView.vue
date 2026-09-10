@@ -287,7 +287,7 @@ const handleCommentDeleteRequest = (commentId, parentCommentId) => {
 // ======================
 // 使用者判斷 暫時寫死
 // ======================
-const currentUserId = "10334e31-124a-4a74-b898-4a2c62753cc9";
+const currentUserId = ref('')
 // ======================
 // 取得 Post
 // ======================

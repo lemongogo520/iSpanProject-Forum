@@ -69,6 +69,7 @@ public class UsersService {
 	 * @param dto
 	 */
 	public void checkPassword(LoginDTO dto) {
+		
 		String passwordMapping = getUsersByAccount(dto.getAccount()).getPassword();
 		if(!passwordEncoder.matches(dto.getPassword(), passwordMapping)){
             throw new PasswordErrorException("帳號或密碼錯誤");

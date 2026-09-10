@@ -1,6 +1,7 @@
 package forum.board.userpermission;
 
-import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
@@ -9,6 +10,13 @@ import lombok.RequiredArgsConstructor;
 public class UserPermissionService {
 	
 	private final UserPermissionRepository userPermissionRepository;
+
+	public boolean isSystemAdmin(UUID userId) {
+        if (userId == null) {
+            return false;
+        }
+        return userPermissionRepository.existsByUserIdAndPermissions_NameIgnoreCase(userId,"systemadmin");
+    }
 	
 }
     

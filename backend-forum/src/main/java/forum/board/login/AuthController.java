@@ -1,5 +1,6 @@
 package forum.board.login;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -24,8 +25,7 @@ public class AuthController {
         if (userId != null) {
 
             return ResponseEntity.ok(
-                    new SuccessResponse("已登入")
-            );
+                    new SuccessResponse("已登入"));
         }
 
         return ResponseEntity

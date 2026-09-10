@@ -21,7 +21,8 @@ public class LoginInterceptor implements HandlerInterceptor {
         // 沒有 session 或沒有登入
         if(session == null || session.getAttribute("loginUserId") == null) {
 
-            response.sendRedirect("/login");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            
             return false;
         }
 

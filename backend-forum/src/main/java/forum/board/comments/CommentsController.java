@@ -52,9 +52,14 @@ public class CommentsController {
 
 		Users user = opUser.get();
 
-		Comments comment = commentsService.createComments(postId, parentCommentId, newComments, user);
+		try {
+			Comments comment = commentsService.createComments(postId, parentCommentId, newComments, user);
 
-		return ResponseEntity.ok(comment);
+			return ResponseEntity.ok(comment);
+
+		} catch (RuntimeException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
 	}
 
 	// 查看某post底下的主要留言
@@ -144,7 +149,8 @@ public class CommentsController {
 		}
 
 		try {
-			List<CommentsHistory> history = commentsHistoryService.findUpdateHistoryByCommentId(commentId,opUser.get());
+			List<CommentsHistory> history = commentsHistoryService.findUpdateHistoryByCommentId(commentId,
+					opUser.get());
 
 			return ResponseEntity.ok(history);
 

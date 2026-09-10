@@ -87,6 +87,7 @@
         @toggle-replies="toggleReplies"
         @update:editing-content="editingContent = $event"
         @update:reply-content="replyContent = $event"
+        @show-comment-history="openCommentHistory"
       />
       <!-- ====================== -->
       <!-- 留言分頁 -->
@@ -130,6 +131,33 @@
       :loading="historyLoading"
       :error-message="historyError"
     />
+    <!-- 留言編輯紀錄 Dialog -->
+    <v-dialog v-model="commentHistoryDialog" max-width="700">
+      <v-card color="white">
+        <v-card-title>留言編輯紀錄</v-card-title>
+
+        <v-card-text>
+          <v-card
+            v-for="history in commentHistory"
+            :key="history.id"
+            color="white"
+            class="history-card mb-4"
+          >
+            <v-card-text>
+              <div class="font-weight-bold mb-1">修改前</div>
+
+              <div class="history-content">
+                {{ history.oldContent }}
+              </div>
+
+              <div class="history-time">
+                修改時間：{{ formatCommentHistoryDate(history.modifyTime) }}
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
     <!-- 共用刪除確認視窗 -->
     <v-dialog v-model="deleteDialog" max-width="420" persistent>
       <v-card>
@@ -178,6 +206,7 @@ import {
   createReply as createReplyApi,
   updateComment as updateCommentApi,
   deleteComment as deleteCommentApi,
+  getCommentHistory as getCommentHistoryApi,
 } from "@/services/commentService";
 
 // components 元件匯入
@@ -218,6 +247,13 @@ const replyingCommentId = ref(null);
 const replyContent = ref("");
 const replySubmitting = ref(false);
 const expandedComments = ref({});
+// ======================
+// 取得留言記錄
+// ======================
+const commentHistoryDialog = ref(false);
+const commentHistory = ref([]);
+const commentHistoryLoading = ref(false);
+const commentHistoryError = ref("");
 // ======================
 // 更新留言
 // ======================
@@ -287,7 +323,7 @@ const handleCommentDeleteRequest = (commentId, parentCommentId) => {
 // ======================
 // 使用者判斷 暫時寫死
 // ======================
-const currentUserId = ref('')
+const currentUserId = ref("");
 // ======================
 // 取得 Post
 // ======================
@@ -362,7 +398,44 @@ const fetchChildComments = (parentCommentId) => {
       childComments.value = { ...childComments.value, [parentCommentId]: [] };
     });
 };
+// ======================
+// 取得留言編輯紀錄
+// ======================
+const openCommentHistory = (commentId) => {
+  commentHistoryDialog.value = true;
+  commentHistoryLoading.value = true;
+  commentHistoryError.value = "";
+  commentHistory.value = [];
 
+  getCommentHistoryApi(commentId)
+    .then((response) => {
+      commentHistory.value = response.data;
+    })
+    .catch((error) => {
+      console.error("取得留言編輯紀錄失敗：", error);
+
+      commentHistoryError.value =
+        error.response?.data ?? "取得留言編輯紀錄失敗";
+    })
+    .finally(() => {
+      commentHistoryLoading.value = false;
+    });
+};
+// ======================
+// 留言編輯紀錄日期
+// ======================
+const formatCommentHistoryDate = (date) => {
+  if (!date) return "";
+
+  return new Date(date).toLocaleString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
 // ======================
 // 取得按讚狀態
 // ======================
@@ -491,11 +564,11 @@ const isPostOwner = computed(() => {
   // PostDTO 直接回傳 userId，不是 users.id
   const postUserId = post.value?.userId;
 
-  if (!postUserId || !currentUserId) {
+  if (!postUserId || !currentUserId.value) {
     return false;
   }
 
-  return postUserId.toLowerCase() === currentUserId.toLowerCase();
+  return postUserId.toLowerCase() === currentUserId.value.toLowerCase();
 });
 // ======================
 // 跳轉到編輯文章頁面
@@ -644,5 +717,24 @@ onMounted(async () => {
   align-items: center;
   padding: 18px 0;
   font-weight: 600;
+}
+.history-content {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.history-time {
+  margin-top: 8px;
+  color: #757575;
+  font-size: 12px;
+  text-align: right;
+}
+.history-card {
+  background-color: #ffffff !important;
+  color: #212121 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 </style>

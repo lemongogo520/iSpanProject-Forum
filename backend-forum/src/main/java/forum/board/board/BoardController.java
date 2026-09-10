@@ -30,7 +30,7 @@ public class BoardController {
 
 	// 新增
 	@PostMapping("/api/board")
-	public ResponseEntity<?> postMethodName(@RequestBody Board board, HttpSession hs) {
+	public ResponseEntity<?> createBoard(@RequestBody Board board, HttpSession hs) {
 
 		UUID userId = (UUID) hs.getAttribute("loginUserId");
 
@@ -78,7 +78,7 @@ public class BoardController {
 
 	// 更新
 	@PutMapping("/api/boards/{id}")
-	public ResponseEntity<?> putMethodName(@PathVariable Integer id, @RequestBody Board board, HttpSession hs) {
+	public ResponseEntity<?> updateBoard(@PathVariable Integer id, @RequestBody Board board, HttpSession hs) {
 
 		UUID userId = (UUID) hs.getAttribute("loginUserId");
 
@@ -111,7 +111,7 @@ public class BoardController {
 		}
 
 		if (!userPermissionService.isSystemAdmin(userId)) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以新增看板");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以刪除看板");
 		}
 
 		boardService.delete(id);

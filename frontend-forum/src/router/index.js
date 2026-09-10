@@ -1,19 +1,25 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
+  // {
+  //   path: '/',
+  //   redirect: '/login'
+  // },
   {
     path: '/',
-    redirect: '/login'
+    name: 'home',
+    component: () =>
+      import('@/views/HomeView.vue')
   },
   {
-      path: "/login",
-      name: "Login",
-      component: () => import("../views/login/LoginView.vue"),
+    path: "/login",
+    name: "Login",
+    component: () => import("../views/login/LoginView.vue"),
   },
   {
-      path: "/register",
-      name: "Register",
-      component: () => import("../views/login/RegisterView.vue"),
+    path: "/register",
+    name: "Register",
+    component: () => import("../views/login/RegisterView.vue"),
   },
   {
     path: "/api/admin/categories",
@@ -45,12 +51,12 @@ const routes = [
     name: "PostDetail",
     component: () => import("../view/PostDetailView.vue"),
   },
-{
-  path: '/shop',
-  name: 'shop',
-  component: () =>
-    import('../views/ShopView.vue')
-}
+  {
+    path: '/shop',
+    name: 'shop',
+    component: () =>
+      import('@/views/ShopView.vue')
+  }
 
 ]
 const router = createRouter({

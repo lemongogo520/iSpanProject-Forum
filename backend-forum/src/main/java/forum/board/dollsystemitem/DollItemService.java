@@ -87,8 +87,11 @@ public class DollItemService {
     }
 
     // 使用者檢視部件
-    public List<DollItem> checkItemByUser(Integer categoryId) {
-        return iRepo.findByCategoryIdAndIsActiveTrue(categoryId);
+    public List<DollItemResponseDTO> checkItemByUser(Integer categoryId) {
+        List<DollItem> items = iRepo.findByCategoryIdAndIsActiveTrue(categoryId);
+        return items.stream()
+            .map(DollItemResponseDTO::fromEntity)
+            .toList();
     }
 
     // 管理者檢視部件

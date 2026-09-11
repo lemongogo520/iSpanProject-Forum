@@ -52,49 +52,42 @@ function acceptRequest(friendshipId){
 
 function rejectRequest(friendshipId){
     console.log(friendshipId);
-    httpClient({
-        method: 'delete',
+    // httpClient({
+    //     method: 'delete',
     
-        url: `/api/friendship/request/${friendshipId}`,
-    })
-        .then(response => console.log(response))
-        .catch(error => console.log(error));
+    //     url: `/api/friendship/request/${friendshipId}`,
+    // })
+    //     .then(response => console.log(response))
+    //     .catch(error => console.log(error));
 }
 </script>
 
 <style>
-p{
-    padding-left: 20px;
-    font-size:x-large;
-    color: var(--color-title);
-    font-weight: 700;
-}
+    .requests_list{
+        display: flex;
+        gap:20px;
+    }
 
-.requests_list{
-    display: flex;
-    gap:20px;
-}
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-.action-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+    /* 接受 */
+    .accept-btn {
+        background: var(--color-primary); 
+        color:white;
+    }
 
-/* 接受 */
-.accept-btn {
+    /* 拒絕 */
+    .reject-btn {
+        background-color: #d97979;
+        color:white;
+    }
 
-    background: var(--color-primary);
-    color: white;
-}
-
-/* 拒絕 */
-.reject-btn {
-    color: #d97979;
-    border-color: #e8b5b5;
-}
-
-.reject-btn:hover {
-    background: #fff1f1;
-}
+    .accept-btn:hover,.reject-btn:hover {
+        background: #fff1f1;
+        color: #d97979;
+    }
 </style>

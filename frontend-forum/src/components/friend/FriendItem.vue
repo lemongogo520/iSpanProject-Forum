@@ -35,7 +35,7 @@ const props = defineProps({
   margin-left: 16px;
 }
 .name {
-  color: var(--color-text);
+  color: var(--color-title);
   font-weight: 600;
 }
 </style>

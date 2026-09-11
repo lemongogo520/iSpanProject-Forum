@@ -1,6 +1,6 @@
 <template>
-    <div class="friend-list">
-        <p>你的朋友</p>
+    <p>你的朋友</p>
+    <div class="friends-list">
         <FriendItem 
             v-for="friend in friends" 
             :key="friend.id" :friend="friend">
@@ -34,3 +34,5 @@ function getFriendList(){
     
 }
 </script>
+<style>
+</style>

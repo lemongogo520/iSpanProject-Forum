@@ -52,7 +52,7 @@
             </v-avatar>
 
             <span class="username">
-              {{ user.name }}
+             {{ user.name || user.account }}
             </span>
 
             <v-icon class="ml-1">
@@ -62,18 +62,13 @@
         </template>
 
         <v-list min-width="180">
-            <v-list-item @click="openUserDetail">
-            <UserDetailView
-                v-model="userDetailDialog"
-                :account="userStore.account"
-            />
-
+          <v-list-item @click="openUserDetail">
             <template #prepend>
-                <v-icon>mdi-account-circle</v-icon>
+              <v-icon>mdi-account-circle</v-icon>
             </template>
 
             <v-list-item-title>使用者資訊</v-list-item-title>
-            </v-list-item>
+          </v-list-item>
 
           <v-list-item @click="goTo('/friends')">
             <template #prepend>
@@ -92,51 +87,10 @@
           </v-list-item>
         </v-list>
       </v-menu>
+
+      <UserDetailView v-model="userDetailDialog" :account="userStore.account" @saved="reloadPage"/>
     </v-container>
   </v-app-bar>
-
-  <v-dialog v-model="userDialog" max-width="500">
-    <v-card>
-      <v-card-title class="dialog-title">
-        使用者資訊
-      </v-card-title>
-
-      <v-card-text>
-        <div class="user-info">
-          <v-avatar size="90">
-            <v-img
-              v-if="user.avatar"
-              :src="user.avatar"
-              alt="使用者頭像"
-            />
-            <v-icon v-else size="55">
-              mdi-account
-            </v-icon>
-          </v-avatar>
-
-          <div class="user-info-text">
-            <div class="user-name">
-              {{ user.name }}
-            </div>
-
-            <div class="user-account">
-              {{ user.account }}
-            </div>
-          </div>
-        </div>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-spacer />
-        <v-btn
-          variant="text"
-          @click="userDialog = false"
-        >
-          關閉
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
 </template>
 
 <script setup>
@@ -158,7 +112,6 @@ onMounted(async () => {
 
 async function checkUserDetail() {
 
-  console.log(userStore.account)
   try {
     const user = await userService.getUserDetail(userStore.account)
 
@@ -176,7 +129,7 @@ async function checkUserDetail() {
 
 //塞畫面資料
 const user = computed(() => ({
-  name: userStore.account,
+  name: userStore.name,
   account: userStore.account,
   role: userStore.permission
 }))
@@ -202,14 +155,19 @@ function openUserDetail() {
   userDetailDialog.value = true
 }
 
-const userDialog = ref(false)
-
+//設定管理者才有的顯示
 const isAdmin = computed(() => {
   return userStore.permission === 1
 })
 
+//前往路由
 function goTo(path) {
   router.push(path)
+}
+
+//重新整理介面
+function reloadPage() {
+  window.location.reload()
 }
 
 </script>

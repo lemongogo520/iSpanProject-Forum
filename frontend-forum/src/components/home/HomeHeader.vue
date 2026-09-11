@@ -1,209 +1,179 @@
+<script setup>
+import { ref } from "vue";
+import { useDisplay } from "vuetify";
+
+const drawer = ref(false);
+const { mdAndUp } = useDisplay();
+
+const navItems = [
+  { title: "首頁", icon: "mdi-home-outline", to: "/" },
+  { title: "討論區", icon: "mdi-forum-outline", to: "/forum" },
+  { title: "點數", icon: "mdi-star-circle-outline", to: "/coin" },
+  { title: "我的角色", icon: "mdi-account-circle-outline", to: "/avatar" },
+  { title: "商城", icon: "mdi-storefront-outline", to: "/shop" },
+  { title: "任務活動", icon: "mdi-clipboard-check-outline", to: "/tasks" },
+];
+</script>
+
 <template>
+  <v-app-bar class="top-header" color="#0f1f35" height="72" elevation="2">
+    <v-container class="header-container d-flex align-center" max-width="1200">
+      <v-app-bar-nav-icon v-if="!mdAndUp" color="white" aria-label="開啟導覽選單" @click="drawer = !drawer" />
 
-  <header class="top-header">
+      <RouterLink to="/" class="brand">iSpanProject</RouterLink>
 
-    <div class="header-inner">
-
-      <RouterLink
-        to="/"
-        class="brand"
-      >
-        iSpanProject
-      </RouterLink>
-
-
-      <nav class="main-nav">
-
-        <RouterLink
-          to="/"
-          class="nav-link"
+      <nav v-if="mdAndUp" class="main-nav">
+        <v-btn
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          :class="{ 'nav-button--active': $route.path === item.to }"
+          class="nav-button"
+          color="#c8d1de"
+          variant="text"
+          rounded="0"
         >
-          首頁
-        </RouterLink>
-
-        <RouterLink
-          to="/forum"
-          class="nav-link"
-        >
-          討論區
-        </RouterLink>
-
-        <RouterLink
-          to="/coin"
-          class="nav-link"
-        >
-          點數
-        </RouterLink>
-
-        <RouterLink
-          to="/avatar"
-          class="nav-link"
-        >
-          我的角色
-        </RouterLink>
-
-        <RouterLink
-          to="/shop"
-          class="nav-link"
-        >
-          商城
-        </RouterLink>
-
-        <RouterLink
-          to="/tasks"
-          class="nav-link"
-        >
-          任務活動
-        </RouterLink>
-
+          {{ item.title }}
+        </v-btn>
       </nav>
 
+      <v-spacer />
 
       <div class="user-area">
+        <v-avatar color="primary" size="34">
+          <span class="avatar-text">A</span>
+        </v-avatar>
 
-        <div class="avatar">
-          A
-        </div>
-
-        <span>
-          哈囉，Admin
-        </span>
-
+        <span v-if="mdAndUp">哈囉，Admin</span>
       </div>
+    </v-container>
+  </v-app-bar>
 
+  <v-navigation-drawer v-model="drawer" color="#0f1f35" location="left" temporary width="280">
+    <div class="drawer-user">
+      <v-avatar color="primary" size="42">
+        <span class="avatar-text">A</span>
+      </v-avatar>
+
+      <div>
+        <div class="drawer-user-name">Admin</div>
+        <div class="drawer-user-caption">歡迎回來</div>
+      </div>
     </div>
 
-  </header>
+    <v-divider color="#56677c" />
 
+    <v-list nav density="comfortable">
+      <v-list-item
+        v-for="item in navItems"
+        :key="item.to"
+        :title="item.title"
+        :prepend-icon="item.icon"
+        :to="item.to"
+        color="primary"
+        rounded="lg"
+        @click="drawer = false"
+      />
+    </v-list>
+  </v-navigation-drawer>
 </template>
 
-
 <style scoped>
-
 .top-header {
   position: sticky;
   top: 0;
   z-index: 100;
-
-  height: 72px;
-
-  background: #0f1f35;
-
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-
-.header-inner {
-  max-width: 1200px;
+.header-container {
+  width: 100%;
   height: 100%;
-
-  margin: 0 auto;
   padding: 0 24px;
-
-  display: flex;
-  align-items: center;
 }
-
 
 .brand {
-  margin-right: 42px;
-
+  flex-shrink: 0;
+  margin-right: 30px;
   color: white;
-
   font-size: 22px;
   font-weight: 700;
-
   text-decoration: none;
 }
-
 
 .main-nav {
   display: flex;
-  align-items: center;
-  gap: 26px;
-
-  flex: 1;
+  align-items: stretch;
+  height: 100%;
 }
 
-
-.nav-link {
+.nav-button {
   position: relative;
-
-  padding: 25px 0;
-
-  color: #c8d1de;
-
-  text-decoration: none;
-
+  height: 72px !important;
+  padding: 0 14px !important;
   font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-
-.nav-link:hover {
-  color: white;
+.nav-button:hover {
+  color: white !important;
 }
 
-
-.nav-link.router-link-active {
-  color: white;
+.nav-button--active {
+  color: white !important;
 }
 
-
-.nav-link.router-link-active::after {
-  content: '';
-
+.nav-button--active::after {
   position: absolute;
-  left: 0;
-  right: 0;
+  right: 14px;
   bottom: 0;
-
+  left: 14px;
   height: 3px;
-
   background: #3b82f6;
+  content: "";
 }
-
 
 .user-area {
   display: flex;
   align-items: center;
   gap: 10px;
-
   color: #e5ebf3;
-
   font-size: 14px;
+  white-space: nowrap;
 }
 
+.avatar-text {
+  color: white;
+  font-weight: 700;
+}
 
-.avatar {
-  width: 34px;
-  height: 34px;
-
+.drawer-user {
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #3b82f6;
-
-  color: white;
-
-  font-weight: bold;
+  gap: 13px;
+  padding: 24px 20px;
 }
 
+.drawer-user-name {
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+}
 
-@media (max-width: 900px) {
+.drawer-user-caption {
+  margin-top: 2px;
+  color: #9eacbd;
+  font-size: 13px;
+}
 
-  .main-nav {
-    display: none;
+@media (max-width: 959px) {
+  .header-container {
+    padding: 0 12px;
   }
-
 
   .brand {
-    flex: 1;
+    margin-right: 0;
+    font-size: 20px;
   }
-
 }
-
 </style>

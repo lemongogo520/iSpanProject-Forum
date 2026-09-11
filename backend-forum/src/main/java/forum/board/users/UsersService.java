@@ -7,10 +7,15 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import forum.board.coin.CoinService;
 import forum.board.common.util.IpUtil;
 import forum.board.exception.*;
 import forum.board.home.RegisterDTO;
 import forum.board.login.LoginDTO;
+import forum.board.permissions.PermissionsService;
+import forum.board.userpermission.UserPermission;
+import forum.board.userpermission.UserPermissionRepository;
+import forum.board.userpermission.UserPermissionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -19,9 +24,13 @@ import lombok.RequiredArgsConstructor;
 public class UsersService {
 	
 	private final UsersRepository usersRepository;
-
 	private final UserDetailRepository userDetailRepository;
-	
+	private final UserPermissionRepository userPermissionRepository;
+
+    private final UserPermissionService userPermissionService;
+    private final PermissionsService permissionsService;
+    private final CoinService coinService;
+    
     private final PasswordEncoder passwordEncoder;
 	
 	/**
@@ -50,9 +59,25 @@ public class UsersService {
 		userDetail.setUserId(newId);
 		userDetail.setCreateIp(registerIp);
 		userDetail.setCreator(newId);
+		
+		UserPermission userPer = new UserPermission();
+		userPer.setUserId(newId);
+		userPer.setCreateIp(registerIp);
+		userPer.setCreator(newId);
+		userPer.setPermissionId(permissionsService.getPermission("user").getId()); //初始劃為一般使用者
 
         usersRepository.save(user);
         userDetailRepository.save(userDetail);
+        userPermissionRepository.save(userPer);
+	}
+
+	/**
+	 * 透過帳號取得使用者
+	 * @param account
+	 * @return
+	 */
+	public Users getUsersById(UUID userId) {
+		return usersRepository.findById(userId).get();
 	}
 	
 	/**
@@ -62,6 +87,33 @@ public class UsersService {
 	 */
 	public Users getUsersByAccount(String account) {
 		return usersRepository.findByAccount(account).get();
+	}
+
+	/**
+	 * 透過帳號取得使用者完整資料
+	 * @param account
+	 * @return
+	 */
+	public UserDetailDTO getUserInfoByAccount(String account) {
+		
+		UserDetailDTO dto = new UserDetailDTO();
+		Users users = usersRepository.findByAccount(account).get();
+	    UserDetail ud = userDetailRepository.findByUserId(users.getId()).get();
+		dto.setId(users.getId());
+		dto.setAccount(users.getAccount());
+		dto.setPermission(userPermissionService.getPermissionRankByUserId(users.getId()));
+	    dto.setName(ud.getName());
+	    dto.setNickname(ud.getNickName());
+	    dto.setShowNickname(ud.getShowNickName());
+	    dto.setBirthday(ud.getBirthday());
+	    dto.setShowBirthday(ud.getShowBirthday());
+	    dto.setEmail(ud.getEmail());
+	    dto.setShowEmail(ud.getShowEmail());
+	    dto.setPhotoUrl(ud.getPhoto());
+	    dto.setShowPhoto(ud.getShowPhoto());
+	    dto.setCoin(coinService.getBalance(users.getId()));
+		
+		return dto;
 	}
 	
 	/**

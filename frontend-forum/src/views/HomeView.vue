@@ -1,4 +1,5 @@
 <template>
+  <HomeHeader/>
   <div class="home-page">
 
     <!-- ========================= -->
@@ -1761,30 +1762,25 @@ const topics = [
 
 
 @media (max-width: 800px) {
-
   .nav {
     display:
       none;
   }
-
 
   .features {
     grid-template-columns:
       1fr;
   }
 
-
   .content-grid {
     grid-template-columns:
       1fr;
   }
 
-
   .topic-row {
     grid-template-columns:
       90px 1fr;
   }
-
 
   .topic-user,
   .topic-stat,
@@ -1793,12 +1789,10 @@ const topics = [
       none;
   }
 
-
   .hero h1 {
     font-size:
       32px;
   }
-
 }
 
 </style>

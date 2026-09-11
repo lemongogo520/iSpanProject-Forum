@@ -384,12 +384,7 @@ const fetchCategories = async () => {
 
     categories.value = response.data;
   } catch (error) {
-    console.error("取得類別失敗：", error);
-
-    showMessage(
-      getErrorMessage(error, "刪除類別失敗，請確認類別下是否仍有討論版"),
-      "error",
-    );
+    showMessage(getErrorMessage(error, "取得類別失敗"), "error");
   } finally {
     categoryLoading.value = false;
   }
@@ -560,9 +555,7 @@ const fetchBoards = async () => {
 
     boards.value = response.data;
   } catch (error) {
-    console.error("取得討論版失敗：", error);
-
-    alert(getErrorMessage(error, "取得討論版失敗"));
+    showMessage(getErrorMessage(error, "取得討論版失敗"), "error");
   } finally {
     boardLoading.value = false;
   }
@@ -650,18 +643,16 @@ const handleBoardSubmit = async () => {
   try {
     if (isBoardEditMode.value) {
       await updateBoard();
-      alert("討論版修改成功");
+      showMessage("討論版修改成功", "success");
     } else {
       await createBoard();
-      alert("討論版新增成功");
+      showMessage("討論版新增成功", "success");
     }
 
     resetBoardForm();
     await fetchBoards();
   } catch (error) {
-    console.error("儲存討論版失敗：", error);
-
-    alert(getErrorMessage(error, "儲存討論版失敗"));
+    showMessage(getErrorMessage(error, "儲存討論版失敗"), "error");
   }
 };
 // ======================

@@ -229,7 +229,7 @@ const sortOptions = [
   },
   {
     title: "最多點讚",
-    value: "updated",
+    value: "likes",
   },
 ];
 // 分頁

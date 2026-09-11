@@ -163,7 +163,7 @@ const handleLogin = async () => {
     method: 'post',
     url: '/api/login',
     data: {
-      account: account.value,
+      account: account.value.trim(),
       password: password.value,
       remember: remember.value
     }

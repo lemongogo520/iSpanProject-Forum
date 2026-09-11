@@ -84,30 +84,61 @@
           <v-card
             v-for="post in posts"
             :key="post.id"
-            class="mb-3 rounded-lg"
-            hover
+            class="forum-post mb-2"
+            variant="flat"
             @click="openPost(post.id)"
           >
-            <v-card-item>
-              <v-card-title>
-                <v-chip
-                  color="primary"
-                  variant="tonal"
-                  size="small"
-                  class="me-2"
-                >
-                  {{ post.postType || "討論" }}
-                </v-chip>
+            <v-card-text class="post-row pa-3">
+              <!-- 左側縮圖 -->
+              <div class="post-thumbnail">
+                <v-img
+                  :src="getFirstImage(post.content) || defaultPostImage"
+                  width="130"
+                  height="80"
+                  cover
+                />
+              </div>
+              <!-- 中間文章資訊 -->
+              <div class="post-main">
+                <div class="post-heading">
+                  <v-chip color="primary" variant="tonal" size="small">
+                    {{ post.postType || "討論" }}
+                  </v-chip>
 
-                {{ post.title }}
-              </v-card-title>
+                  <div class="post-title">
+                    {{ post.title }}
+                  </div>
+                </div>
 
-              <v-card-subtitle class="mt-2">
-                瀏覽：{{ post.views }}
-              </v-card-subtitle>
-            </v-card-item>
+                <div class="post-excerpt">
+                  {{ getPostExcerpt(post.content) }}
+                </div>
+              </div>
+
+              <!-- 右側統計資訊 -->
+              <div class="post-stats">
+                <div class="stat-row">
+                  <span class="stat-item">
+                    <v-icon icon="mdi-comment-outline" size="15" />
+
+                    {{ post.comments?.length ?? 0 }}
+                  </span>
+
+                  <span class="stat-divider">/</span>
+
+                  <span class="stat-item">
+                    <v-icon icon="mdi-eye-outline" size="15" />
+
+                    {{ post.views ?? 0 }}
+                  </span>
+                </div>
+
+                <div class="post-date">
+                  {{ formatPostDate(post.createTime) }}
+                </div>
+              </div>
+            </v-card-text>
           </v-card>
-
           <!-- 沒有文章 -->
           <v-card
             v-if="posts.length === 0"
@@ -153,11 +184,16 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import httpClient from "@/services/httpClient";
-import { getPostsByBoard, searchPosts as searchPostsApi } from "@/services/postService";
+import {
+  getPostsByBoard,
+  searchPosts as searchPostsApi,
+} from "@/services/postService";
 
 import { useNotification } from "@/composables/useNotification";
 
-import BoardChatRoom from "@/components/BoardChatRoom.vue";
+import BoardChatRoom from "@/components/forum/BoardChatRoom.vue";
+
+import defaultPostImage from "@/assets/images/default-post.png";
 const { showMessage } = useNotification();
 // Router
 const route = useRoute();
@@ -192,7 +228,7 @@ const sortOptions = [
     value: "views",
   },
   {
-    title: "最近更新",
+    title: "最多點讚",
     value: "updated",
   },
 ];
@@ -266,6 +302,25 @@ const fetchPosts = () => {
     });
 };
 // ======================
+// 擷取文章第一張圖片
+// ======================
+const getFirstImage = (content) => {
+  if (!content) return "";
+
+  const document = new DOMParser().parseFromString(content, "text/html");
+
+  return document.querySelector("img")?.src ?? "";
+};
+const getPostExcerpt = (content) => {
+  if (!content) return "這篇文章目前沒有文字摘要";
+
+  const document = new DOMParser().parseFromString(content, "text/html");
+
+  const text = document.body.textContent?.replace(/\s+/g, " ").trim() ?? "";
+
+  return text || "此文章包含圖片或影片內容";
+};
+// ======================
 // 搜尋功能
 // ======================
 const handleSearch = () => {
@@ -311,7 +366,6 @@ const openPost = (postId) => {
 // ======================
 // 發表文章
 // ======================
-
 const createPost = () => {
   // 1. 安全機制：優先從已經從後端拿到的 board 物件中取 id
   const currentBoardId = board.value.id || boardId;
@@ -331,6 +385,15 @@ const createPost = () => {
       console.error("跳轉發文頁失敗：", error);
       showMessage("跳轉失敗，請確認發文頁路由設定", "error");
     });
+};
+const formatPostDate = (date) => {
+  if (!date) return "";
+
+  return new Date(date).toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 };
 // ======================
 // 返回首頁
@@ -376,6 +439,184 @@ onMounted(() => {
 
   .board-chat-column {
     position: static;
+  }
+}
+.post-card {
+  cursor: pointer;
+  background-color: #ffffff;
+  border: 1px solid #e4e7ec;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  border-color: #90caf9;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 10%);
+}
+
+.post-title {
+  color: #212121;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.post-meta {
+  color: #757575;
+  font-size: 13px;
+}
+
+.post-open-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: #1976d2;
+  background-color: #e3f2fd;
+  border-radius: 50%;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.post-card:hover .post-open-icon {
+  color: #ffffff;
+  background-color: #1976d2;
+  transform: translateX(3px);
+}
+
+@media (max-width: 600px) {
+  .post-title {
+    font-size: 15px;
+  }
+
+  .post-meta {
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+}
+.forum-post {
+  cursor: pointer;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.forum-post:hover {
+  background-color: #f8fbff;
+  border-color: #90caf9;
+}
+
+.post-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 104px;
+}
+
+.post-thumbnail {
+  flex-shrink: 0;
+  width: 130px;
+  height: 80px;
+  overflow: hidden;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+}
+.post-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-title {
+  overflow: hidden;
+  color: #18181b;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-excerpt {
+  display: -webkit-box;
+  margin-top: 9px;
+  overflow: hidden;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.post-stats {
+  flex-shrink: 0;
+  min-width: 125px;
+  color: #4b5563;
+  font-size: 13px;
+  text-align: right;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.stat-divider {
+  color: #bdbdbd;
+}
+
+.post-date {
+  margin-top: 7px;
+  color: #757575;
+}
+@media (max-width: 700px) {
+  .post-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .post-thumbnail {
+    width: 90px;
+    height: 65px;
+  }
+
+  .post-main {
+    width: calc(100% - 102px);
+  }
+
+  .post-stats {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding-left: 102px;
+    text-align: left;
+  }
+  .post-date {
+    margin-top: 0;
   }
 }
 </style>

@@ -81,9 +81,9 @@ import { getPostsByBoard } from "@/services/postService";
 // 搜尋規則匯入
 import { usePostSearch } from "@/composables/usePostSearch";
 // compnents匯入
-import PostSearchResults from "@/components/PostSearchResults.vue";
-import ForumSidebar from "@/components/ForumSidebar.vue";
-import ForumCategorySection from "@/components/ForumCategorySection.vue";
+import PostSearchResults from "@/components/post/PostSearchResults.vue";
+import ForumSidebar from "@/components/forum/ForumSidebar.vue";
+import ForumCategorySection from "@/components/forum/ForumCategorySection.vue";
 
 const categories = ref([]); // 存放大分類與其子看板的完整陣列
 const loading = ref(true);

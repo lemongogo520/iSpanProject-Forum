@@ -239,11 +239,16 @@ public class PostService {
 
 		// 全站搜尋
 		if (boardId == null) {
-			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword, sortedPageable);
+			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword,sortedPageable);
 
-			// boardid搜尋
+		  // 指定看板，依按讚數排序
+		} else if ("likes".equals(sortBy)) {
+			Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(),pageable.getPageSize());
+			posts = postRepo.findByBoardIdAndTitleOrderByLikeCount(boardId,keyword,unsortedPageable);
+
+			// 指定看板，使用一般排序
 		} else {
-			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId, keyword, sortedPageable);
+			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId,keyword,sortedPageable);
 		}
 		return posts.map(this::toDTO);
 	}
@@ -362,8 +367,11 @@ public class PostService {
 	// 分頁功能
 	public Page<Posts> findByBoardId(Integer boardId, String sortBy, Pageable pageable) {
 
-		Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(),
-				pageable.getPageSize(),
+		if ("likes".equals(sortBy)) {
+			Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+			return postRepo.findByBoardIdOrderByLikeCount(boardId, unsortedPageable);
+		}
+		Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
 				createPostSort(sortBy));
 
 		return postRepo.findByBoardIdAndIsDeletedFalse(boardId, sortedPageable);
@@ -526,15 +534,6 @@ public class PostService {
 					Sort.Order.desc("createTime"),
 					Sort.Order.desc("id"));
 		}
-
-		if ("updated".equals(sortBy)) {
-			// 有修改過的文章依最近修改時間排序
-			return Sort.by(
-					Sort.Order.desc("modifyTime"),
-					Sort.Order.desc("createTime"),
-					Sort.Order.desc("id"));
-		}
-
 		// 預設：最新發布
 		return Sort.by(
 				Sort.Order.desc("createTime"),

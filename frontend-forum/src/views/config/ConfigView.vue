@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import Sidebar from '@/components/common/Sidebar.vue'
+import Sidebar from '@/components/config/ConfigSidebar.vue'
 </script>
 
 <style scoped>

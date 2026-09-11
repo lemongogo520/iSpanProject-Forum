@@ -52,14 +52,19 @@ const routes = [
     component: () => import("@/views/post/PostDetailView.vue"),
   },
   {
-    path: "/doll/dollCategories",
+    path: "/doll/categories",
     name: "dollCategories",
     component: () => import("@/views/doll/DollCategoriesView.vue"),
   },
   {
-    path: "/doll/dollnewitem",
+    path: "/doll/newitem",
     name: "dollnewitem",
     component: () => import("@/views/doll/DollNewItemsView.vue"),
+  },
+  {
+    path: "/doll/cart",
+    name: "dollcart",
+    component: () => import("@/views/doll/DollCartItemsView.vue"),
   },
 
 

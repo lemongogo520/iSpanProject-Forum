@@ -19,10 +19,7 @@
             class="flex-grow-1 mx-4 mb-4 bg-grey-darken-4 rounded-lg d-flex align-center justify-center border"
             style="border-color: #333 !important"
           >
-            <div class="text-center text-grey-darken-1">
-              <v-icon icon="mdi-account" size="120"></v-icon>
-              <div class="mt-2">紙娃娃渲染區</div>
-            </div>
+            <DollConvas :equippedItems="equippedItems" :baseUrl="baseUrl" />
           </v-sheet>
 
           <v-card-actions class="px-4 pb-4 justify-center gap-2">
@@ -94,6 +91,7 @@
                   class="bg-grey-darken-4 pa-2 hover-card"
                   rounded="lg"
                   ripple
+                  @click="equipItem(item)"
                 >
                   <v-sheet
                     class="bg-grey-darken-3 rounded mb-1 d-flex align-center justify-center overflow-hidden"
@@ -130,8 +128,9 @@
   </v-container>
 </template>
 <script setup>
-import { listUserItems } from "@/service/DollSystemApi/DollUserItemApi";
-import { onMounted } from "vue";
+import { listUserItems } from "@/services/dollSystemApi/dollUserItemApi";
+import DollConvas from "@/components/doll/DollConvas.vue";
+import { ref, onMounted } from "vue";
 const {
   baseUrl,
   itemsByCategory,
@@ -141,6 +140,14 @@ const {
   loadCategories,
 } = listUserItems();
 
+const equippedItems = ref({});
+
+const equipItem = (item) => {
+  if (item?.category?.id) {
+    equippedItems.value[item.category.id] = item;
+    console.log("目前試穿狀態", equippedItems.value);
+  }
+};
 onMounted(() => {
   loadCategories();
 });

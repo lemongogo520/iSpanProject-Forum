@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import forum.board.conversation.ConversationUserService;
 import forum.board.friends.dto.FriendResponseDTO;
+import forum.board.friends.dto.FriendshipResponseDTO;
 import forum.board.friends.dto.SendFriendRequestDTO;
 import jakarta.servlet.http.HttpSession;
 
@@ -90,12 +91,11 @@ public class FriendshipController {
 	@GetMapping("/request/send/list")
 	public ResponseEntity<Object> getRequestList(HttpSession session) {
 		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
-		List<FriendResponseDTO> requestList = fService.getRequestList(loginUserId);
+		List<FriendshipResponseDTO> requestList = fService.getRequestList(loginUserId);
 		if(requestList.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(requestList);
-		
 	}
 
 	/*
@@ -105,7 +105,7 @@ public class FriendshipController {
 	@GetMapping("/request/received/list")
 	public ResponseEntity<Object> getReceivedList(HttpSession session) {
 		UUID loginUserId = (UUID)session.getAttribute("loginUserId");
-		List<FriendResponseDTO> receivedList = fService.getReceivedList(loginUserId);
+		List<FriendshipResponseDTO> receivedList = fService.getReceivedList(loginUserId);
 		if(receivedList.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 		}

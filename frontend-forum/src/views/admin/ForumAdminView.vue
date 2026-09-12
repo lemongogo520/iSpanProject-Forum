@@ -14,11 +14,14 @@
 
         類別管理
       </v-tab>
-
       <v-tab value="boards">
         <v-icon icon="mdi-forum-outline" class="me-2" />
 
         討論版管理
+      </v-tab>
+      <v-tab value="moderators">
+        <v-icon icon="mdi-account-tie" class="me-2" />
+        版主管理
       </v-tab>
     </v-tabs>
     <v-window v-model="activeTab">
@@ -299,6 +302,110 @@
           </div>
         </v-card>
       </v-window-item>
+      <v-window-item value="moderators">
+        <v-card class="admin-card pa-4 mb-5" elevation="0">
+          <v-card-title class="px-0">指定討論版版主</v-card-title>
+
+          <v-card-text class="px-0">
+            <v-select
+              v-model="moderatorBoardId"
+              :items="boards"
+              item-title="name"
+              item-value="id"
+              label="選擇討論版"
+              variant="outlined"
+              density="comfortable"
+              @update:model-value="fetchModerators"
+            />
+
+            <!-- 等 User 組員完成後，改成帳號搜尋元件 -->
+            <v-text-field
+              v-model="moderatorUserId"
+              label="使用者 UUID（暫時）"
+              variant="outlined"
+              density="comfortable"
+              clearable
+            />
+
+            <v-btn
+              color="success"
+              prepend-icon="mdi-account-plus"
+              block
+              :loading="moderatorSaving"
+              :disabled="!moderatorBoardId || !moderatorUserId"
+              @click="addModerator"
+            >
+              設為版主
+            </v-btn>
+          </v-card-text>
+        </v-card>
+
+        <v-card class="admin-card pa-4" elevation="0">
+          <div class="d-flex justify-space-between align-center mb-3">
+            <v-card-title class="px-0">目前版主</v-card-title>
+
+            <v-btn
+              size="small"
+              variant="outlined"
+              prepend-icon="mdi-refresh"
+              :disabled="!moderatorBoardId"
+              @click="fetchModerators"
+            >
+              重新整理
+            </v-btn>
+          </div>
+
+          <v-progress-linear
+            v-if="moderatorLoading"
+            indeterminate
+            color="primary"
+            class="mb-4"
+          />
+
+          <v-list v-if="moderators.length > 0">
+            <v-list-item
+              v-for="moderator in moderators"
+              :key="moderator.id"
+              border
+              class="mb-2 rounded"
+            >
+              <v-list-item-title>
+                {{ moderator.account }}
+              </v-list-item-title>
+
+              <v-list-item-subtitle>
+                討論版：{{ moderator.boardName }}
+              </v-list-item-subtitle>
+
+              <template #append>
+                <v-btn
+                  size="small"
+                  color="error"
+                  variant="tonal"
+                  :loading="removingModeratorId === moderator.userId"
+                  @click="removeModerator(moderator)"
+                >
+                  移除
+                </v-btn>
+              </template>
+            </v-list-item>
+          </v-list>
+
+          <div
+            v-else-if="moderatorBoardId && !moderatorLoading"
+            class="text-medium-emphasis text-center py-5"
+          >
+            此討論版目前沒有版主
+          </div>
+
+          <div
+            v-else-if="!moderatorBoardId"
+            class="text-medium-emphasis text-center py-5"
+          >
+            請先選擇討論版
+          </div>
+        </v-card>
+      </v-window-item>
     </v-window>
   </v-container>
   <DeleteConfirmDialog
@@ -335,6 +442,15 @@ const isCategoryEditMode = ref(false);
 const deleteDialog = ref(false);
 const deleteTarget = ref(null);
 const deleteLoading = ref(false);
+// ======================
+// 版主管理狀態
+// ======================
+const moderatorBoardId = ref(null);
+const moderatorUserId = ref("");
+const moderators = ref([]);
+const moderatorLoading = ref(false);
+const moderatorSaving = ref(false);
+const removingModeratorId = ref(null);
 
 const categoryForm = ref({
   id: null,
@@ -345,7 +461,6 @@ const categoryForm = ref({
 // ======================
 // 討論版狀態
 // ======================
-
 const boards = ref([]);
 const boardLoading = ref(false);
 const isBoardEditMode = ref(false);
@@ -357,11 +472,9 @@ const boardForm = ref({
   description: "",
   rank: 0,
 });
-
 // ======================
 // 錯誤訊息處理
 // ======================
-
 const getErrorMessage = (error, fallback) => {
   const data = error.response?.data;
 
@@ -628,7 +741,6 @@ const updateBoard = async () => {
 // ======================
 // 新增或修改討論版
 // ======================
-
 const handleBoardSubmit = async () => {
   if (!isBoardEditMode.value && !boardForm.value.categoryId) {
     showMessage("請選擇所屬類別", "warning");
@@ -656,9 +768,72 @@ const handleBoardSubmit = async () => {
   }
 };
 // ======================
+// 查詢版主
+// ======================
+const fetchModerators = async () => {
+  moderators.value = [];
+
+  if (!moderatorBoardId.value) {
+    return;
+  }
+
+  moderatorLoading.value = true;
+
+  try {
+    const response = await httpClient.get(
+      `/api/boards/${moderatorBoardId.value}/moderators`,
+    );
+
+    moderators.value = response.data;
+  } catch (error) {
+    showMessage(getErrorMessage(error, "取得版主列表失敗"), "error");
+  } finally {
+    moderatorLoading.value = false;
+  }
+};
+// ======================
+// 新增版主
+// ======================
+const addModerator = async () => {
+  const userId = moderatorUserId.value.trim();
+  if (!moderatorBoardId.value || !userId) {
+    showMessage("請選擇討論版並輸輸入使用者 UUID", "warning");
+    return;
+  }
+  moderatorSaving.value = true;
+  try {
+    await httpClient.post(`/api/boards/${moderatorBoardId.value}/moderators`, {
+      userId,
+    });
+    showMessage("版主新增成功", "success");
+    moderatorUserId.value = "";
+    await fetchModerators();
+  } catch (error) {
+    showMessage(getErrorMessage(error, "新增版主失敗"), "error");
+  } finally {
+    moderatorSaving.value = false;
+  }
+};
+// ======================
+// 移除版主
+// ======================
+const removeModerator = async (moderator) => {
+  removingModeratorId.value = moderator.userId;
+  try {
+    await httpClient.delete(
+      `/api/boards/${moderatorBoardId.value}/moderators/${moderator.userId}`,
+    );
+    showMessage("版主移除成功", "success");
+    await fetchModerators();
+  } catch (error) {
+    showMessage(getErrorMessage(error, "移除版主失敗"), "error");
+  } finally {
+    removingModeratorId.value = null;
+  }
+};
+// ======================
 // 初始載入
 // ======================
-
 onMounted(async () => {
   await Promise.all([fetchCategories(), fetchBoards()]);
 });

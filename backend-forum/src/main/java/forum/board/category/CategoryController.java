@@ -34,15 +34,11 @@ public class CategoryController {
 		UUID userId = (UUID) hs.getAttribute("loginUserId");
 
 		if (userId == null) {
-			return ResponseEntity
-					.status(HttpStatus.UNAUTHORIZED)
-					.body("請先登入");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
 		}
 
-		if (!userPermissionService.isSystemAdmin(userId)) {
-			return ResponseEntity
-					.status(HttpStatus.FORBIDDEN)
-					.body("權限不足：只有系統管理員可以管理分類");
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有論壇管理員可以管理分類");
 		}
 		categoryService.insertCategory(category);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -74,8 +70,8 @@ public class CategoryController {
 		if (userId == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
 		}
-		if (!userPermissionService.isSystemAdmin(userId)) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以管理分類");
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只論壇管理員可以管理分類");
 		}
 
 		category.setId(id);
@@ -97,8 +93,8 @@ public class CategoryController {
 		if (userId == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
 		}
-		if (!userPermissionService.isSystemAdmin(userId)) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以管理分類");
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有論壇管理員可以管理分類");
 		}
 
 		categoryService.delete(id);

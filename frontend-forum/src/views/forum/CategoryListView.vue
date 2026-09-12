@@ -8,8 +8,9 @@
           找到感興趣的看板，開始參與討論。
         </p>
       </header>
+
       <div class="forum-layout">
-        <!-- 左側：搜尋與分類導覽 -->
+        <!-- 左側搜尋與分類導覽 -->
         <ForumSidebar
           v-model:keyword="searchKeyword"
           :categories="categories"
@@ -21,9 +22,9 @@
           @select-category="scrollToCategory"
         />
 
-        <!-- 右側：原本的分類與看板 -->
+        <!-- 右側分類、看板與搜尋結果 -->
         <div class="forum-content">
-          <!-- 搜尋結果 -->
+          <!-- 文章搜尋結果 -->
           <PostSearchResults
             :keyword="activeKeyword"
             :results="searchResults"
@@ -36,7 +37,8 @@
             @clear="clearSearch"
             @change-page="handleSearchPageChange"
           />
-          <!-- 載入中 -->
+
+          <!-- 資料載入中 -->
           <div v-if="loading">
             <v-skeleton-loader
               v-for="n in 3"
@@ -46,7 +48,7 @@
             />
           </div>
 
-          <!-- 分類列表 -->
+          <!-- 分類與看板列表 -->
           <template v-else-if="categories.length > 0">
             <ForumCategorySection
               v-for="category in categories"
@@ -57,106 +59,160 @@
             />
           </template>
 
-          <!-- 沒有分類 -->
+          <!-- 沒有分類資料 -->
           <div v-else class="text-center py-12">
             <v-icon size="56" color="grey-lighten-1" class="mb-4">
               mdi-folder-open-outline
             </v-icon>
 
-            <p class="text-medium-emphasis">目前還沒有任何分類，請稍後再試</p>
+            <p class="text-medium-emphasis">
+              目前還沒有任何分類，請稍後再試
+            </p>
           </div>
         </div>
-        <!-- 結束 forum-content -->
       </div>
-      <!-- 結束 forum-layout -->
     </v-container>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import httpClient from "@/services/httpClient";
-// API匯入
 import { getPostsByBoard } from "@/services/postService";
-// 搜尋規則匯入
 import { usePostSearch } from "@/composables/usePostSearch";
-// compnents匯入
-import PostSearchResults from "@/components/post/PostSearchResults.vue";
-import ForumSidebar from "@/components/forum/ForumSidebar.vue";
 import ForumCategorySection from "@/components/forum/ForumCategorySection.vue";
+import ForumSidebar from "@/components/forum/ForumSidebar.vue";
+import PostSearchResults from "@/components/post/PostSearchResults.vue";
 
-const categories = ref([]); // 存放大分類與其子看板的完整陣列
+// ======================
+// 頁面資料狀態
+// ======================
+
+// 儲存所有類別及其看板和最新文章
+const categories = ref([]);
+
+// 控制首頁資料的載入狀態
 const loading = ref(true);
 
-// 使用你指定的 httpClient 格式獲取資料
-const fetchData = async () => {
-  loading.value = true;
-  try {
-    // 1. 先獲取所有大分類
-    const resCategories = await httpClient({
-      method: "get",
-      url: "/api/categories",
-      data: {},
+// ======================
+// 文章搜尋功能
+// ======================
+
+const {
+  searchKeyword,
+  activeKeyword,
+  searchResults,
+  searchLoading,
+  searchError,
+  searchPage,
+  searchTotalPages,
+  searchTotalElements,
+  fetchSearchResults,
+  clearSearch,
+  handleSearch,
+} = usePostSearch();
+
+// ======================
+// 取得看板最新文章
+// ======================
+
+const fetchBoardLatestPost = (board) => {
+  return getPostsByBoard(board.id, 0, 1, "latest")
+    .then((response) => {
+      return {
+        ...board,
+        latestPost: response.data.content[0] ?? null,
+        latestPostError: false,
+      };
+    })
+    .catch((error) => {
+      console.error(`看板 ${board.id} 最新文章載入失敗：`, error);
+
+      // 單一看板載入失敗時保留看板資料
+      return {
+        ...board,
+        latestPost: null,
+        latestPostError: true,
+      };
     });
-
-    // 將大分類陣列進行權重排序
-    const rawCategories = [...resCategories.data].sort(
-      (a, b) => (a.rank || 0) - (b.rank || 0),
-    );
-
-    // 2. 遍歷每個大分類，對接你的 @GetMapping("/api/boards/category/{categoryId}")
-    for (let cat of rawCategories) {
-      const resBoards = await httpClient({
-        method: "get",
-        url: `/api/boards/category/${cat.id}`, // 動態帶入大分類 ID
-        data: {},
-      });
-
-      cat.boards = await Promise.all(
-        resBoards.data.map(async (board) => {
-          try {
-            // 查詢這個看板的第 0 頁，每頁 1 篇，依最新發布排序
-            const response = await getPostsByBoard(board.id, 0, 1, "latest");
-
-            return {
-              ...board,
-              latestPost: response.data.content[0] ?? null,
-              latestPostError: false,
-            };
-          } catch (error) {
-            console.error(`看板 ${board.id} 最新文章載入失敗：`, error);
-
-            // 最新文章查詢失敗，仍保留看板
-            return {
-              ...board,
-              latestPost: null,
-              latestPostError: true,
-            };
-          }
-        }),
-      );
-    }
-
-    // 3. 把組裝好 boards 的完整資料丟給響應式變數渲染畫面
-    categories.value = rawCategories;
-  } catch (error) {
-    console.error("資料載入失敗，請檢查 API 路由或後端伺服器:", error);
-  } finally {
-    loading.value = false;
-  }
 };
 
-// 根據大分類名稱自動配對精美 Emoji 表情
-const getCategoryIcon = (name) => {
+// ======================
+// 取得類別下的看板
+// ======================
+
+const fetchCategoryBoards = (category) => {
+  return httpClient({
+    method: "get",
+    url: `/api/boards/category/${category.id}`,
+  })
+    .then((response) => {
+      // 同時取得每個看板的最新文章
+      return Promise.all(response.data.map(fetchBoardLatestPost));
+    })
+    .then((boards) => {
+      return {
+        ...category,
+        boards,
+      };
+    });
+};
+
+// ======================
+// 取得論壇首頁資料
+// ======================
+
+const fetchData = () => {
+  loading.value = true;
+
+  return httpClient({
+    method: "get",
+    url: "/api/categories",
+  })
+    .then((response) => {
+      // 依照 rank 由小到大排列類別
+      const sortedCategories = [...response.data].sort(
+        (a, b) => (a.rank ?? 0) - (b.rank ?? 0),
+      );
+
+      // 同時取得每個類別下的看板
+      return Promise.all(sortedCategories.map(fetchCategoryBoards));
+    })
+    .then((categoriesWithBoards) => {
+      categories.value = categoriesWithBoards;
+    })
+    .catch((error) => {
+      console.error(
+        "資料載入失敗，請檢查 API 路由或後端伺服器：",
+        error,
+      );
+      categories.value = [];
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+// ======================
+// 取得類別圖示
+// ======================
+
+const getCategoryIcon = (name = "") => {
   if (name.includes("遊戲")) return "🎮";
   if (name.includes("動漫")) return "🎬";
   if (name.includes("科技")) return "💻";
   if (name.includes("美食")) return "🍕";
   if (name.includes("休閒")) return "🏖️";
+
   return "📌";
 };
 
+// ======================
+// 取得類別樣式
+// ======================
+
 const getCategoryStyle = (name = "") => {
+  // 預設使用藍色系
   let accent = "#2563eb";
   let soft = "#eff6ff";
 
@@ -180,11 +236,19 @@ const getCategoryStyle = (name = "") => {
   };
 };
 
+// ======================
+// 移動到指定類別
+// ======================
+
 const scrollToCategory = (categoryId) => {
   const target = document.getElementById(`category-${categoryId}`);
 
-  if (!target) return;
+  // 找不到類別區塊時停止執行
+  if (!target) {
+    return;
+  }
 
+  // 使用者偏好減少動畫時停用平滑捲動
   const reduceMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
@@ -195,40 +259,43 @@ const scrollToCategory = (categoryId) => {
   });
 };
 
-const {
-  searchKeyword,
-  activeKeyword,
-  searchResults,
-  searchLoading,
-  searchError,
-  searchPage,
-  searchTotalPages,
-  searchTotalElements,
-  fetchSearchResults,
-  clearSearch,
-  handleSearch,
-} = usePostSearch();
+// ======================
+// 取得文章所屬看板名稱
+// ======================
 
-// 取得搜尋文章所屬的看板名稱
 const getBoardName = (boardId) => {
+  // 將每個類別的看板合併成單一陣列
   const allBoards = categories.value.flatMap(
     (category) => category.boards ?? [],
   );
 
-  const board = allBoards.find((item) => String(item.id) === String(boardId));
+  const board = allBoards.find(
+    (item) => String(item.id) === String(boardId),
+  );
 
   return board ? board.name : `看板 ${boardId}`;
 };
 
+// ======================
+// 切換搜尋結果頁碼
+// ======================
+
 const handleSearchPageChange = (page) => {
-  if (searchLoading.value) return;
+  // 搜尋進行中時不允許重複送出請求
+  if (searchLoading.value) {
+    return;
+  }
 
   searchPage.value = page;
   fetchSearchResults();
 };
-onMounted(() => {
-  fetchData();
-});
+
+// ======================
+// 元件生命週期
+// ======================
+
+// 元件載入完成後取得論壇首頁資料
+onMounted(fetchData);
 </script>
 
 <style scoped>
@@ -241,7 +308,7 @@ onMounted(() => {
   margin-bottom: 36px;
 }
 
-/* 左側 200px，右側使用剩餘空間 */
+/* 左側固定 200px，右側使用剩餘空間 */
 .forum-layout {
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
@@ -252,7 +319,8 @@ onMounted(() => {
 .forum-content {
   min-width: 0;
 }
-/* 平板、手機：分類導覽移到上方 */
+
+/* 平板與手機將分類導覽移到上方 */
 @media (max-width: 959px) {
   .forum-layout {
     grid-template-columns: minmax(0, 1fr);

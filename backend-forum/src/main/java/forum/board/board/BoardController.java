@@ -38,8 +38,8 @@ public class BoardController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
 		}
 
-		if (!userPermissionService.isSystemAdmin(userId)) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以新增看板");
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有論壇管理員可以新增看板");
 		}
 		Board newboard = boardService.createBoard(board);
 
@@ -86,8 +86,8 @@ public class BoardController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
 		}
 
-		if (!userPermissionService.isSystemAdmin(userId)) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以修改看板");
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有論壇管理員可以修改看板");
 		}
 
 		board.setId(id);
@@ -110,8 +110,8 @@ public class BoardController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
 		}
 
-		if (!userPermissionService.isSystemAdmin(userId)) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有系統管理員可以刪除看板");
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有論壇管理員可以刪除看板");
 		}
 
 		boardService.delete(id);

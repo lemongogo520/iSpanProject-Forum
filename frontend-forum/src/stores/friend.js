@@ -1,6 +1,4 @@
-import FriendRequestList from "@/components/friend/FriendRequestList.vue";
 import httpClient from "@/services/httpClient";
-import axios from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 

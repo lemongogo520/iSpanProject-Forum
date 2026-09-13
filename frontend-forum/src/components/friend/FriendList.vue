@@ -8,7 +8,8 @@
         <template v-else>
             <FriendItem 
             v-for="friend in friendList" 
-            :key="friend.id" :friend="friend">
+            :key="friend.userId" :friend="friend"
+            @click="emit('select-friend',friend)">
         </FriendItem>
     </template>
     </div>
@@ -24,7 +25,7 @@ const friendstore = useFriendStore();
 const {friendList} = storeToRefs(friendstore);
 const {getFriendList} = friendstore;
 
-
+const emit = defineEmits(['select-friend'])
 
 onMounted(()=>{
     getFriendList();
@@ -32,12 +33,7 @@ onMounted(()=>{
 
 </script>
 <style>
-.empty-text {
-    padding: 24px;
-    text-align: center;
-    color: var(--color-text);
-    font-size: 14px;
-}
+
 .friends-list{
     padding-left: 24px;
     gap: 10px;

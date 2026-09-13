@@ -71,15 +71,10 @@ onMounted(() => {
 </script>
 
 <style>
-.empty-text {
-    padding: 24px;
-    text-align: center;
-    color: var(--color-text);
-    font-size: 14px;
-}
 
 .requests_list {
     width: 100%;
+    flex-direction: column;
 }
 
 .request-scroll {

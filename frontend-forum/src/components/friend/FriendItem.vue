@@ -4,7 +4,8 @@
       :badge="{ color: 'success', location: 'bottom end' }"
       size="default"
     >
-    <img src="@/assets/avatar.jpg" width="100%">
+    <v-img v-if="friend.photo" src="@/assets/avatar.jpg" width="100%"></v-img>
+    <v-icon v-else icon="mdi-account-circle" size="x-large"></v-icon>
       <!-- 紙娃娃頭像 -->
     </v-avatar>
     <div class="friend-info">
@@ -13,12 +14,15 @@
   </div>
 </template>
 <script setup>
+import { VIcon, VImg } from 'vuetify/components';
+
 const props = defineProps({
   friend: {
     type: Object,
     required: true,
   },
 });
+
 </script>
 <style>
 .friend-item {

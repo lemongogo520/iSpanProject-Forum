@@ -199,7 +199,7 @@ const fetchData = () => {
 
 const getCategoryIcon = (name = "") => {
   if (name.includes("遊戲")) return "🎮";
-  if (name.includes("動漫")) return "🎬";
+  if (name.includes("影音")) return "🎬";
   if (name.includes("科技")) return "💻";
   if (name.includes("美食")) return "🍕";
   if (name.includes("休閒")) return "🏖️";

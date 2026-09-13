@@ -368,7 +368,7 @@ const openPost = (postId) => {
 // ======================
 const createPost = () => {
   // 1. 安全機制：優先從已經從後端拿到的 board 物件中取 id
-  const currentBoardId = board.value.id || boardId;
+  const currentBoardId = board.value?.id || boardId;
 
   if (!currentBoardId) {
     showMessage("找不到目前的看板 ID，請重新整理頁面再試一次", "error");

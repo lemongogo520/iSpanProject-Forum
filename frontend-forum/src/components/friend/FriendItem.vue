@@ -3,9 +3,8 @@
     <v-avatar
       :badge="{ color: 'success', location: 'bottom end' }"
       size="default"
-      color="#000000"
-      image="https://p2.itc.cn/q_70/images03/20211223/1ed60e7b9d0f49e9b8e508aff5d61ddd.jpeg"
     >
+    <img src="@/assets/avatar.jpg" width="100%">
       <!-- 紙娃娃頭像 -->
     </v-avatar>
     <div class="friend-info">
@@ -21,18 +20,17 @@ const props = defineProps({
   },
 });
 </script>
-<style scoped>
+<style>
 .friend-item {
   display: flex;
   align-items: center;
   padding: 12px 16px;
   background: var(--color-card);
-  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color 0.2s;
 }
 .friend-info {
-  margin-left: 16px;
+  margin-left: 15px;
 }
 .name {
   color: var(--color-title);

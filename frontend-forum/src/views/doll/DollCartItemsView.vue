@@ -1,45 +1,48 @@
 <template>
-  <v-container fluid class="fill-height bg-grey-darken-4 pa-6">
+  <v-container
+    fluid
+    class="fill-height pa-6"
+    style="background: var(--color-background)"
+  >
     <v-row class="fill-height">
       <!-- 左側：紙娃娃預覽區 (佔 4 欄) -->
       <v-col cols="12" md="4" class="d-flex flex-column">
         <v-card
-          theme="dark"
-          class="flex-grow-1 bg-grey-darken-3 d-flex flex-column"
+          class="flex-grow-1 d-flex flex-column auth-card"
           rounded="lg"
           elevation="6"
         >
-          <v-card-title
-            class="text-center font-weight-bold text-cyan-accent-3 pt-4"
-          >
+          <v-card-title class="text-center font-weight-bold pt-4 auth-title">
             外觀預覽
           </v-card-title>
 
           <v-sheet
-            class="flex-grow-1 mx-4 mb-4 bg-grey-darken-4 rounded-lg d-flex align-center justify-center border"
-            style="border-color: #333 !important"
+            class="flex-grow-1 mx-4 mb-4 rounded-lg d-flex align-center justify-center border"
+            style="
+              background: var(--color-background-light);
+              border-color: var(--color-border) !important;
+            "
           >
             <DollConvas :equippedItems="equippedItems" :baseUrl="baseUrl" />
           </v-sheet>
 
           <v-card-actions class="px-4 pb-4 justify-center gap-2">
             <v-btn
-              variant="tonal"
-              color="grey-lighten-1"
+              variant="outlined"
+              style="
+                color: var(--color-text);
+                border-color: var(--color-border);
+              "
               prepend-icon="mdi-refresh"
               >重置</v-btn
             >
-            <v-btn
-              variant="tonal"
-              color="cyan-accent-3"
-              prepend-icon="mdi-dice-multiple"
-              >隨機</v-btn
-            >
+
             <v-btn
               variant="flat"
-              color="cyan-accent-3"
-              class="text-grey-darken-4 font-weight-bold"
+              class="auth-button font-weight-bold"
               prepend-icon="mdi-content-save"
+              @click="saveEquippedItems"
+              :loading="isSaving"
               >儲存套裝</v-btn
             >
           </v-card-actions>
@@ -89,8 +92,46 @@ const loadEquippedItems = async () => {
 
 const equipItem = (item) => {
   if (item?.category?.id) {
-    equippedItems.value[item.category.id] = item;
-    console.log("目前試穿狀態", equippedItems.value);
+    const categoryId = item.category.id;
+    // 如果目前已經穿著這件裝備，再次點擊就是嘗試「脫下」
+    if (equippedItems.value[categoryId]?.id === item.id) {
+      // 防呆：如果是必須穿戴的部位 (身體、頭)，禁止脫下成空白
+      if (item.category.isRequired) {
+        console.warn(`部位 [${item.category.typeName}] 為必須裝備，無法脫下！`);
+        // 這裡未來可以加個 v-snackbar 提示使用者
+        return;
+      }
+
+      delete equippedItems.value[categoryId];
+      console.log(`已脫下裝備: ${item.name}`);
+    } else {
+      // 如果點擊的是「不同」的裝備，就是直接覆蓋掉舊的 (更換)
+      equippedItems.value[categoryId] = item;
+      console.log(`穿上裝備: ${item.name}`);
+    }
+  }
+};
+
+const isSaving = ref(false);
+
+const saveEquippedItems = async () => {
+  try {
+    isSaving.value = true;
+
+    // 將 { 1: {id: 5, ...}, 2: {id: 8, ...} } 轉成只有 ID 的陣列 [5, 8]
+    const itemIds = Object.values(equippedItems.value).map((item) => item.id);
+
+    // 發送 PUT 請求給後端
+    const response = await httpClient.put("/api/dollitem/newequip", itemIds);
+
+    if (response.status === 200) {
+      alert("套裝儲存成功！");
+    }
+  } catch (error) {
+    console.error("儲存套裝失敗", error);
+    alert("儲存失敗，請確認連線或登入狀態");
+  } finally {
+    isSaving.value = false;
   }
 };
 

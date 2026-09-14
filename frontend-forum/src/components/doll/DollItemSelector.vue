@@ -1,17 +1,16 @@
 <template>
   <v-card
-    theme="dark"
-    class="flex-grow-1 bg-grey-darken-3 d-flex flex-column"
+    class="flex-grow-1 d-flex flex-column auth-card"
     rounded="lg"
     elevation="6"
   >
     <!-- 頂部分類頁籤：綁定 API 回傳的分類清單 -->
     <v-tabs
       v-model="activeCategoryId"
-      color="cyan-accent-3"
+      style="color: var(--color-primary); border-color: var(--color-border);"
       align-tabs="center"
       show-arrows
-      class="border-b border-grey-darken-2"
+      class="border-b"
       @update:model-value="itemsByCategory"
     >
       <v-tab
@@ -30,22 +29,20 @@
     >
       <v-row v-if="dollItems.length > 0">
         <!-- 渲染真實裝備資料 -->
-        <v-col
-          v-for="item in dollItems"
-          :key="item.id"
-          cols="4"
-          sm="3"
-          md="2"
-        >
+        <v-col v-for="item in dollItems" :key="item.id" cols="4" sm="3" md="2">
           <v-card
-            theme="dark"
-            class="bg-grey-darken-4 pa-2 hover-card"
+            class="pa-2 hover-card"
+            style="
+              background: var(--color-background-light);
+              border: 1px solid var(--color-border);
+            "
             rounded="lg"
             ripple
             @click="handleClick(item)"
           >
             <v-sheet
-              class="bg-grey-darken-3 rounded mb-1 d-flex align-center justify-center overflow-hidden"
+              class="rounded mb-1 d-flex align-center justify-center overflow-hidden"
+              style="background: var(--color-background)"
               height="80"
             >
               <!-- 使用雪碧圖技巧顯示裝備縮圖 -->
@@ -56,9 +53,7 @@
                 }"
               ></div>
             </v-sheet>
-            <div
-              class="text-caption text-center text-grey-lighten-1 text-truncate"
-            >
+            <div class="text-caption text-center auth-subtitle text-truncate">
               {{ item.name }}
             </div>
           </v-card>
@@ -67,7 +62,7 @@
 
       <!-- 無裝備時的防呆提示 -->
       <v-row v-else class="fill-height align-center justify-center">
-        <div class="text-grey-darken-1 text-center mt-10">
+        <div class="auth-subtitle text-center mt-10">
           <v-icon icon="mdi-hanger" size="48" class="mb-2"></v-icon>
           <p>此分類目前沒有裝備</p>
         </div>
@@ -90,10 +85,10 @@ const {
 } = listUserItems();
 
 // 宣告傳遞給父層 (DollCartItemsView) 的事件
-const emit = defineEmits(['equip-item']);
+const emit = defineEmits(["equip-item"]);
 
 const handleClick = (item) => {
-  emit('equip-item', item);
+  emit("equip-item", item);
 };
 
 // 元件載入時，發送 API 取資料
@@ -110,8 +105,8 @@ onMounted(() => {
 }
 .hover-card:hover {
   transform: translateY(-2px);
-  border-color: #00d2ff;
-  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.2) !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 4px 12px rgba(139, 188, 224, 0.4) !important;
 }
 
 /* 裝備縮圖的雪碧圖設定 */

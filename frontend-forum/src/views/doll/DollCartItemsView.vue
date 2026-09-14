@@ -48,99 +48,44 @@
 
       <!-- 右側：部位分類與裝備選擇 (佔 8 欄) -->
       <v-col cols="12" md="8" class="d-flex flex-column">
-        <v-card
-          theme="dark"
-          class="flex-grow-1 bg-grey-darken-3 d-flex flex-column"
-          rounded="lg"
-          elevation="6"
-        >
-          <!-- 頂部分類頁籤：綁定 API 回傳的分類清單 -->
-          <v-tabs
-            v-model="activeCategoryId"
-            color="cyan-accent-3"
-            align-tabs="center"
-            show-arrows
-            class="border-b border-grey-darken-2"
-            @update:model-value="itemsByCategory"
-          >
-            <v-tab
-              v-for="category in categories"
-              :key="category.id"
-              :value="category.id"
-            >
-              {{ category.typeName }}
-            </v-tab>
-          </v-tabs>
-
-          <!-- 裝備網格區域 -->
-          <v-card-text
-            class="flex-grow-1 overflow-y-auto pa-4"
-            style="max-height: calc(100vh - 160px)"
-          >
-            <v-row v-if="dollItems.length > 0">
-              <!-- 渲染真實裝備資料 -->
-              <v-col
-                v-for="item in dollItems"
-                :key="item.id"
-                cols="4"
-                sm="3"
-                md="2"
-              >
-                <v-card
-                  theme="dark"
-                  class="bg-grey-darken-4 pa-2 hover-card"
-                  rounded="lg"
-                  ripple
-                  @click="equipItem(item)"
-                >
-                  <v-sheet
-                    class="bg-grey-darken-3 rounded mb-1 d-flex align-center justify-center overflow-hidden"
-                    height="80"
-                  >
-                    <!-- 使用雪碧圖技巧顯示裝備縮圖 -->
-                    <div
-                      class="pixel-sprite-thumbnail"
-                      :style="{
-                        backgroundImage: `url(${baseUrl}${item.filePath})`,
-                      }"
-                    ></div>
-                  </v-sheet>
-                  <div
-                    class="text-caption text-center text-grey-lighten-1 text-truncate"
-                  >
-                    {{ item.name }}
-                  </div>
-                </v-card>
-              </v-col>
-            </v-row>
-
-            <!-- 無裝備時的防呆提示 -->
-            <v-row v-else class="fill-height align-center justify-center">
-              <div class="text-grey-darken-1 text-center mt-10">
-                <v-icon icon="mdi-hanger" size="48" class="mb-2"></v-icon>
-                <p>此分類目前沒有裝備</p>
-              </div>
-            </v-row>
-          </v-card-text>
-        </v-card>
+        <!-- 載入新拆分的元件，並監聽 equip-item 事件 -->
+        <DollItemSelector @equip-item="equipItem" />
       </v-col>
     </v-row>
   </v-container>
 </template>
 <script setup>
-import { listUserItems } from "@/services/dollSystemApi/dollUserItemApi";
-import DollConvas from "@/components/doll/DollConvas.vue";
 import { ref, onMounted } from "vue";
-const {
-  baseUrl,
-  itemsByCategory,
-  dollItems,
-  categories,
-  activeCategoryId,
-  loadCategories,
-} = listUserItems();
+import DollConvas from "@/components/doll/DollConvas.vue";
+import DollItemSelector from "@/components/doll/DollItemSelector.vue";
+import httpClient from "@/services/httpClient";
+
+const baseUrl = "http://localhost:8080/sprites/";
 
 const equippedItems = ref({});
+
+// 取得使用者目前的穿戴紀錄
+const loadEquippedItems = async () => {
+  try {
+    const response = await httpClient.get("/api/dollitem/equipped");
+    const items = response.data;
+
+    if (items && items.length > 0) {
+      // 把從後端抓到的陣列資料，轉換為字典格式 (key: category.id) 塞進 equippedItems
+      const newEquipped = {};
+      items.forEach((item) => {
+        if (item && item.category) {
+          newEquipped[item.category.id] = item;
+        }
+      });
+      equippedItems.value = newEquipped;
+    } else {
+      console.log("目前無穿著紀錄，顯示後端提供的預設裝備");
+    }
+  } catch (error) {
+    console.error("無法取得裝備資料", error);
+  }
+};
 
 const equipItem = (item) => {
   if (item?.category?.id) {
@@ -148,33 +93,13 @@ const equipItem = (item) => {
     console.log("目前試穿狀態", equippedItems.value);
   }
 };
+
 onMounted(() => {
-  loadCategories();
+  loadEquippedItems();
 });
 </script>
 <style scoped>
-.hover-card {
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: 1px solid transparent;
-}
-.hover-card:hover {
-  transform: translateY(-2px);
-  border-color: #00d2ff;
-  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.2) !important;
-}
 .gap-2 {
   gap: 8px;
-}
-
-/* 裝備縮圖的雪碧圖設定 */
-.pixel-sprite-thumbnail {
-  width: 64px;
-  height: 64px;
-  background-position: 0px -128px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  /* 縮圖不需要放太大，1.5倍剛好塞進卡片 */
-  transform: scale(1.5) translateY(-4px);
 }
 </style>

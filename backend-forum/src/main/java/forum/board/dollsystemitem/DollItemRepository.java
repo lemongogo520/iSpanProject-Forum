@@ -15,4 +15,7 @@ public interface DollItemRepository extends JpaRepository<DollItem,Integer> {
 
     //篩選特定圖層全部部件
     List<DollItem> findByCategoryId(Integer categoryId);
+
+    // 取得該圖層的第一個可用部件 (預設裝備)
+    DollItem findFirstByCategoryIdAndIsActiveTrueOrderByIdAsc(Integer categoryId);
 }

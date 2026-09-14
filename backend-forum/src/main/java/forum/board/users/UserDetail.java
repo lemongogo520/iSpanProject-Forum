@@ -60,7 +60,7 @@ public class UserDetail {
     @Column(name = "photo", nullable = true, columnDefinition = "varchar(max)") 
     private String photo; 
     
-    @Column(name = "show_photo", nullable = false, columnDefinition = "bit") 
+    @Column(name = "show_photo", nullable = true, columnDefinition = "bit") 
     private Boolean showPhoto; 
 
     @Column(name = "create_time", nullable = false, columnDefinition = "datetimeoffset(7)") 

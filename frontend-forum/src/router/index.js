@@ -57,6 +57,11 @@ const routes = [
     name: "PostDetail",
     component: () => import("@/views/post/PostDetailView.vue"),
   },
+  {
+    path: "/friend",
+    name: "Friend",
+    component: () => import("@/views/friend/FriendView.vue"),
+  },
 
 
   //管理者設定

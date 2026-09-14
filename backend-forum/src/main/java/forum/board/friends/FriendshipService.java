@@ -137,7 +137,7 @@ public class FriendshipService {
 				friend = friendship.getUser1();
 			}
 
-			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null,null);
+			return new FriendResponseDTO(friend.getId(), friend.getAccount(), friend.getUsersDetail().getName(),friend.getUsersDetail().getPhoto());
 		}).toList();
 	}
 	
@@ -164,7 +164,7 @@ public class FriendshipService {
 		List<FriendshipEntity> friendshipList = fRepo.findPendingRequests(currentUserId);
 		return friendshipList.stream().map(friendship ->{
 			Users friend = friendship.getRequester();
-			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null, null);
+			return new FriendResponseDTO(friend.getId(), friend.getAccount(), friend.getUsersDetail().getName(), friend.getUsersDetail().getPhoto());
 		}).toList();
 	}
 

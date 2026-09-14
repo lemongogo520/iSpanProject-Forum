@@ -1,10 +1,10 @@
-package forum.board.message;
+package forum.board.chat.message;
 
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import forum.board.message.MessagesEntity.ChatType;
+import forum.board.chat.message.MessagesEntity.ChatType;
 import forum.board.users.UsersRepository;
 import lombok.RequiredArgsConstructor;
 

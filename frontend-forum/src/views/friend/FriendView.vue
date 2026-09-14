@@ -5,9 +5,9 @@
             <div class="friend-sidebar">
                 <FriendList @select-friend=selectFriend></FriendList>
             </div>
-            <div class="chat-area">
+            <div class="friend-detail">
                 <ChatRoom v-if="selectedFriend" :friend=selectedFriend></ChatRoom>
-                <div v-else class="empty-text">請選擇一位好友開始聊天</div>
+                <div v-else class="empty-text">請選擇一位好友</div>
             </div>
         </div>
     </div>
@@ -60,12 +60,11 @@ onMounted(() => {
 
 .friend-sidebar {
     width: 30%;
-    background-color: rosybrown;
+
 }
 
-.chat-area {
+.friend-detail {
     width: 70%;
-    background-color: aquamarine;
     min-height: 0;
     min-width: 0;
 }

@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import forum.board.conversation.ConversationUserRepository;
+import forum.board.chat.conversation.FriendshipUserRepository;
 import forum.board.friends.FriendshipEntity.FriendshipStatus;
 import forum.board.friends.dto.FriendResponseDTO;
 import forum.board.friends.dto.FriendshipResponseDTO;
@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FriendshipService {
 	private final FriendshipRepository fRepo;
-	private final ConversationUserRepository uRepo;
+	private final FriendshipUserRepository uRepo;
 	
 	private UUID[] normalize(UUID a, UUID b) {
 		//-1:目前 UUID 值小於目標值

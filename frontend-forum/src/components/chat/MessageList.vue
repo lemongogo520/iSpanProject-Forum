@@ -1,14 +1,14 @@
 <template>
     <div class="message-list">
-        <MessageItem v-for="message in messages" :key="message.id" :message="message"></MessageItem>
+        <MessageItem v-for="message in messages[1]" :key="message.id" :message="message"></MessageItem>
     </div>
 </template>
 <script setup>
-import { useMessageStore } from '@/stores/message.js';
+import { useChatStore } from '@/stores/chat.js';
 import MessageItem from './MessageItem.vue';
 import { storeToRefs } from 'pinia';
-const messageStore = useMessageStore();
-const {messages} = storeToRefs(messageStore);
+const chatStore = useChatStore();
+const {messages} = storeToRefs(chatStore);
 defineProps({
     friend:{
         type: Object,

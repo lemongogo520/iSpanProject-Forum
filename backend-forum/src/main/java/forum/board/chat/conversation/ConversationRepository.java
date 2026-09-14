@@ -1,4 +1,4 @@
-package forum.board.conversation;
+package forum.board.chat.conversation;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

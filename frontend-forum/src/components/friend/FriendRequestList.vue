@@ -90,7 +90,7 @@ onMounted(() => {
 .request-item{
     flex: 0 0 200px;
     padding: 12px;
-    border: 1px solid var(--color-border);
+    border: 2px solid var(--color-border);
     border-radius: 8px;
     box-sizing: border-box;
     background: var(--color-card);

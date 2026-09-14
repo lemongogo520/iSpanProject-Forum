@@ -1,4 +1,4 @@
-package forum.board.conversation;
+package forum.board.chat.conversation;
 
 import java.time.Instant;
 
@@ -45,6 +45,8 @@ public class ConversationEntity {
         DIRECT,
         GROUP
     }
+    
+    private String lastMessage;
 
     @Column(nullable = false, updatable = false)
     private Instant createTime;

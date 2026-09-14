@@ -1,4 +1,4 @@
-package forum.board.conversation;
+package forum.board.chat.conversation;
 
 import java.time.Instant;
 
@@ -22,7 +22,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "conversation_member")
-public class ConversationMember {
+public class ConversationMemberEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;

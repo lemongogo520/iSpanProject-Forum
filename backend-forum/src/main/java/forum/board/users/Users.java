@@ -1,11 +1,15 @@
 package forum.board.users;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PrimaryKeyJoinColumn;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -64,6 +68,11 @@ public class Users {
 
     @Column(name = "modify_ip", nullable = true, columnDefinition = "varchar(20)") 
     private String modifyIp; 
+
+    @JsonIgnore
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "users")
+    @PrimaryKeyJoinColumn 
+	private UserDetail usersDetail;
 
     @PrePersist
     public void onCreate() {

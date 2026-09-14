@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import httpClient from "../../../service/httpClient";
+import httpClient from "../httpClient";
 
 export function listAllCategories() {
   const categories = ref([]);

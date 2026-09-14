@@ -1,6 +1,6 @@
 import { ref } from "vue";
-import httpClient from "../../../service/httpClient";
-import { listAllCategories } from "./DollAllCategoryApi";
+import httpClient from "../httpClient";
+import { listAllCategories } from "./dollAllCategoryApi";
 
 export function listUserItems() {
   //圖片基底網址

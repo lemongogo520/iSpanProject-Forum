@@ -52,7 +52,7 @@
 
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
-import httpClient from '@/api/httpClient'
+import httpClient from '@/services/httpClient'
 import '@/assets/css/config/sidebar.css'
 
 const route = useRoute()

@@ -2,6 +2,9 @@ package forum.board.dollsystemcategories;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import forum.board.login.LoginService;
+import forum.board.users.UsersService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpHeaders;
@@ -10,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class DOllCategoryApi {
 
     private final DollCategoryService categoryService;
+    private final UsersService usersService;
 
     @GetMapping("/api/dollcategory")
     public ResponseEntity<?> categoryById(@RequestParam Integer id) {
@@ -47,18 +52,21 @@ public class DOllCategoryApi {
     }
 
     @PostMapping("/api/newcategory")
-    public ResponseEntity<?> addDollCategory(@RequestBody DollCategoryDTO requestDTO){
+    public ResponseEntity<?> addDollCategory(@RequestBody DollCategoryDTO requestDTO) {
 
         DollCategory newDollCategory = categoryService.inserDollCategory(
-                        requestDTO.getCode(),
-                        requestDTO.getTypeName(),
-                        requestDTO.getZIndex(),
-                        requestDTO.getIsRequired());
+                requestDTO.getCode(),
+                requestDTO.getTypeName(),
+                requestDTO.getZIndex(),
+                requestDTO.getIsRequired());
         return ResponseEntity.status(HttpStatus.CREATED).body(newDollCategory);
     }
 
     @PatchMapping("/api/dollcategory/{id}")
-    public ResponseEntity<Void> updateCategory(@PathVariable Integer id, @RequestBody DollCategory newDollCategory) {
+    public ResponseEntity<Void> updateCategory(
+            @PathVariable Integer id,
+            @RequestBody DollCategory newDollCategory,
+            HttpSession httpSession) {
 
         categoryService.updateCategory(id, newDollCategory.getTypeName(), newDollCategory.getZIndex());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

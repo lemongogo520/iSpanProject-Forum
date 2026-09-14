@@ -1,5 +1,5 @@
 import { onMounted, ref } from "vue";
-import httpClient from "../../../service/httpClient";
+import httpClient from "../httpClient";
 
 export function addNewDollItem() {
   //上傳表單相關變數

@@ -29,8 +29,8 @@ const routes = [
   },
   {
     path: "/admin/categories",
-    name: "categories",
-    component: () => import("@/views/admin/AdminCategoryView.vue"),
+    name: "ForumAdminView",
+    component: () => import("@/views/admin/ForumAdminView.vue"),
   },
   {
     path: "/categories",
@@ -56,6 +56,26 @@ const routes = [
     path: "/post/:postId",
     name: "PostDetail",
     component: () => import("@/views/post/PostDetailView.vue"),
+  },
+  {
+    path: "/doll/categories",
+    name: "dollCategories",
+    component: () => import("@/views/doll/DollCategoriesView.vue"),
+  },
+  {
+    path: "/doll/newitem",
+    name: "dollnewitem",
+    component: () => import("@/views/doll/DollNewItemsView.vue"),
+  },
+  {
+    path: "/doll/cart",
+    name: "dollcart",
+    component: () => import("@/views/doll/DollCartItemsView.vue"),
+  },
+  {
+    path: "/friend",
+    name: "Friend",
+    component: () => import("@/views/friend/FriendView.vue"),
   },
 
 

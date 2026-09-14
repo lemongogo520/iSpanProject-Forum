@@ -19,9 +19,9 @@ public class LoginInterceptor implements HandlerInterceptor {
         HttpSession session = request.getSession(false);
 
         // 沒有 session 或沒有登入
-        if(session == null || session.getAttribute("loginUserId") == null) {
+        if (session == null || session.getAttribute("loginUserId") == null) {
 
-        	response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
 

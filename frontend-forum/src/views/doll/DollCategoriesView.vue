@@ -67,7 +67,7 @@
 </template>
 <script setup>
 import DollCategoriesEditView from "./DollCategoriesEditView.vue";
-import { useDollCategories } from "@/service/DollSystemApi/DollCategoryViewApi.js";
+import { useDollCategories } from "@/services/dollSystemApi/dollCategoryViewApi.js";
 import { onMounted } from "vue";
 const {
   categories,

@@ -1,5 +1,5 @@
 <template>
-  <v-container class="py-8">
+  <v-container fluid class="board-container py-8">
     <!-- 返回 -->
     <v-btn
       variant="text"
@@ -414,27 +414,55 @@ onMounted(() => {
 });
 </script>
 <style scoped>
+.board-container {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding-right: 32px;
+  padding-left: 32px;
+}
 .board-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: 200px minmax(0, 1fr) 320px;
   gap: 24px;
   align-items: start;
 }
 
 .board-main {
+  grid-column: 2;
   min-width: 0;
 }
-
 .board-chat-column {
+  grid-column: 3;
   position: sticky;
-  top: 88px;
+  top: 72px;
   min-width: 0;
 }
 
-/* 平板與手機改成上下排列 */
+/* 中型螢幕：取消左側 200px 保留空間 */
+@media (max-width: 1399px) {
+  .board-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  .board-main {
+    grid-column: 1;
+  }
+
+  .board-chat-column {
+    grid-column: 2;
+  }
+}
+
+/* 平板與手機：文章與聊天室改成上下排列 */
 @media (max-width: 959px) {
   .board-layout {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board-main,
+  .board-chat-column {
+    grid-column: 1;
   }
 
   .board-chat-column {
@@ -456,15 +484,6 @@ onMounted(() => {
   border-color: #90caf9;
   box-shadow: 0 6px 18px rgb(0 0 0 / 10%);
 }
-
-.post-title {
-  color: #212121;
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
 .post-meta {
   color: #757575;
   font-size: 13px;

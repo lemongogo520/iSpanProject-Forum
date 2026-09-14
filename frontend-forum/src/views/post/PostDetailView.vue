@@ -157,7 +157,10 @@ import { useNotification } from "@/composables/useNotification";
 import { useComments } from "@/composables/useComments";
 import { usePostLike } from "@/composables/usePostLike";
 
+import { useUserStore } from "@/stores/user";
 const { showMessage } = useNotification();
+
+const userStore = useUserStore();
 // ======================
 // Router
 // ======================
@@ -321,7 +324,7 @@ const handleCommentDeleteRequest = (commentId, parentCommentId) => {
 // ======================
 // 使用者判斷 暫時寫死
 // ======================
-const currentUserId = ref("");
+const currentUserId = computed(() => userStore.uid ?? "");
 // ======================
 // 取得 Post
 // ======================

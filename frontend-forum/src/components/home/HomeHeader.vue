@@ -1,5 +1,10 @@
 <template>
-  <v-app-bar elevation="2" color="white" height="64">
+  <v-app-bar
+    elevation="2"
+    color="white"
+    :height="isNavbarCompact ? 48 : 64"
+    :class="{ 'navbar-compact': isNavbarCompact }"
+  >
     <v-container fluid class="navbar-container">
       <div class="navbar-left">
         <div class="logo" @click="goTo('/')">
@@ -40,7 +45,7 @@
             variant="text"
             class="user-menu-btn"
           >
-            <v-avatar size="38" class="mr-2">
+            <v-avatar :size="isNavbarCompact ? 30 : 38" class="mr-2 navbar-avatar">
               <v-img
                 v-if="user.avatar"
                 :src="user.avatar"
@@ -94,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import httpClient from '@/services/httpClient'
 import UserDetailView from '@/views/user/UserDetailView.vue'
@@ -104,10 +109,32 @@ import { userService } from '@/services/userService'
 const router = useRouter()
 const userDetailDialog = ref(false)
 const userStore = useUserStore()
+const isNavbarCompact = ref(false)
+let lastScrollY = 0
+
+const handleWindowScroll = () => {
+  const currentScrollY = window.scrollY
+
+  if (currentScrollY <= 12) {
+    isNavbarCompact.value = false
+  } else if (currentScrollY > lastScrollY + 4) {
+    isNavbarCompact.value = true
+  } else if (currentScrollY < lastScrollY - 4) {
+    isNavbarCompact.value = false
+  }
+
+  lastScrollY = currentScrollY
+}
 
 //初始化確認使用者是否有填寫第一次資料
 onMounted(async () => {
+  lastScrollY = window.scrollY
+  window.addEventListener('scroll', handleWindowScroll, { passive: true })
   await checkUserDetail()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleWindowScroll)
 })
 
 async function checkUserDetail() {
@@ -178,6 +205,7 @@ function reloadPage() {
   align-items: center;
   height: 100%;
   padding: 0 24px;
+  transition: padding 0.2s ease;
 }
 
 .navbar-left {
@@ -193,12 +221,37 @@ function reloadPage() {
   cursor: pointer;
   color: #1976d2;
   white-space: nowrap;
+  transition: font-size 0.2s ease, margin-right 0.2s ease;
 }
 
 .user-menu-btn {
   text-transform: none;
   min-width: auto;
   padding: 4px 8px;
+}
+
+.navbar-avatar,
+.username,
+:deep(.v-toolbar__content),
+:deep(.v-btn) {
+  transition: all 0.2s ease;
+}
+
+.navbar-compact .navbar-container {
+  padding-block: 0;
+}
+
+.navbar-compact .logo {
+  margin-right: 12px;
+  font-size: 18px;
+}
+
+.navbar-compact :deep(.v-btn) {
+  min-height: 36px;
+}
+
+.navbar-compact .username {
+  font-size: 14px;
 }
 
 .username {

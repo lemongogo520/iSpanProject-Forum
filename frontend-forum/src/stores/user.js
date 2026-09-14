@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
+    uid: "", 
     account: '',
     name: '',
     permission: '',
@@ -16,7 +17,12 @@ export const useUserStore = defineStore('user', {
       this.permission = permission
     },
 
+     // 新增一個獨立方法
+    setUid(uid) {
+      this.uid = uid ?? "";
+    },
     clearUser() {
+      this.uid = "";
       this.account = '',
       this.name = '',
       this.permission = ''

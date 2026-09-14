@@ -196,6 +196,7 @@ const handleLogin = async () => {
       loginError.value = "";
       // 登入成功後前往首頁
       authStore.setLogin();
+      userStore.setUid(response.data.uid);
       userStore.setAccount(account.value);
       authStore.setLogin() 
       userStore.setAccount(response.data.account

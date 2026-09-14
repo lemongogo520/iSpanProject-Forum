@@ -233,7 +233,7 @@
 
 <script setup>
 
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, } from 'vue'
 import httpClient from '@/services/httpClient'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
@@ -259,7 +259,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'saved'])
 
 watch(
   () => props.modelValue,
@@ -272,13 +272,11 @@ watch(
   }
 )
 
-
 /*
 |--------------------------------------------------------------------------
 | Dialog
 |--------------------------------------------------------------------------
 */
-
 const dialog = computed({
   get() {
     return props.modelValue
@@ -299,13 +297,11 @@ function closeDialog() {
 
 const confirmCloseDialog = ref(false)
 
-
 /*
 |--------------------------------------------------------------------------
 | Form
 |--------------------------------------------------------------------------
 */
-
 const formRef = ref(null)
 
 const form = reactive({
@@ -323,7 +319,6 @@ const form = reactive({
   photoUrl: ''
 })
 
-
 /*
 |--------------------------------------------------------------------------
 | 原始資料
@@ -332,11 +327,9 @@ const form = reactive({
 | 用來判斷使用者是否修改過資料
 |
 */
-
 const originalForm = ref(null)
 
 const isDirty = ref(false)
-
 
 /*
 |--------------------------------------------------------------------------
@@ -400,7 +393,6 @@ const emailRules = [
   }
 ]
 
-
 /*
 |--------------------------------------------------------------------------
 | 開啟 Dialog
@@ -442,24 +434,20 @@ async function openDialog() {
   }
 }
 
-
 /*
 |--------------------------------------------------------------------------
 | 標記資料已修改
 |--------------------------------------------------------------------------
 */
-
 function markDirty() {
   isDirty.value = true
 }
-
 
 /*
 |--------------------------------------------------------------------------
 | 驗證表單
 |--------------------------------------------------------------------------
 */
-
 async function validateForm() {
 
   if (!formRef.value) {
@@ -471,15 +459,12 @@ async function validateForm() {
   return result.valid
 }
 
-
 /*
 |--------------------------------------------------------------------------
 | 儲存
 |--------------------------------------------------------------------------
 */
-
 async function save() {
-
   /*
    * 先驗證
    */
@@ -504,15 +489,12 @@ async function save() {
   isDirty.value = false
 }
 
-
 /*
 |--------------------------------------------------------------------------
 | 儲存並關閉
 |--------------------------------------------------------------------------
 */
-
 async function saveAndClose() {
-
   /*
    * 先驗證
    */
@@ -523,7 +505,8 @@ async function saveAndClose() {
   }
 
   await userService.saveUserDetail(form)
-
+  emit('saved')
+  
   /*
    * 儲存關閉不需要更新原始資料
    */
@@ -539,33 +522,28 @@ async function saveAndClose() {
   dialog.value = false
 }
 
-
 /*
 |--------------------------------------------------------------------------
 | 關閉 Dialog
 |--------------------------------------------------------------------------
 */
-
 async function requestClose() {
-
   /*
    * 沒有修改
    * → 直接關閉
    */
   if (!isDirty.value) {
-
+    emit('saved')
     dialog.value = false
 
     return
   }
-
 
   /*
    * 有修改
    * → 先驗證資料
    */
   const valid = await validateForm()
-
 
   /*
    * 驗證失敗
@@ -575,7 +553,6 @@ async function requestClose() {
     return
   }
 
-
   /*
    * 驗證成功
    * → 詢問是否放棄修改
@@ -583,20 +560,16 @@ async function requestClose() {
   confirmCloseDialog.value = true
 }
 
-
 /*
 |--------------------------------------------------------------------------
 | 確定關閉
 |--------------------------------------------------------------------------
 */
-
 function confirmClose() {
-
   /*
    * 關閉確認 Dialog
    */
   confirmCloseDialog.value = false
-
 
   /*
    * 還原資料
@@ -611,19 +584,16 @@ function confirmClose() {
     )
   }
 
-
   /*
    * 清除修改狀態
    */
   isDirty.value = false
-
 
   /*
    * 關閉主要 Dialog
    */
   dialog.value = false
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -632,7 +602,6 @@ function confirmClose() {
 */
 
 function changePassword() {
-
   /*
    * TODO:
    *
@@ -646,7 +615,6 @@ function changePassword() {
 }
 
 </script>
-
 
 <style scoped>
 

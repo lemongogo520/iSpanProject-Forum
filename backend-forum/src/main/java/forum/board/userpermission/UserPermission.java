@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import lombok.Getter;
@@ -63,4 +64,11 @@ public class UserPermission {
 
     @Column(name = "modify_ip", nullable = true, columnDefinition = "varchar(20)") 
     private String modifyIp; 
+    
+
+    @PrePersist
+    public void onCreate() {
+
+        createTime = Instant.now();
+    }
 }

@@ -10,5 +10,8 @@ public class PermissionsService {
 	
 	private final PermissionsRepository permissionsRepository;
 	
+	public Permissions getPermission(String rankName) {
+		return permissionsRepository.findByName(rankName).get();
+	}
 }
     

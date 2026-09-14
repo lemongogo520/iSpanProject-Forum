@@ -15,6 +15,8 @@ export const userService = {
       }
     })
 
+    console.log(response.data);
+
     return response.data
   }, 
 

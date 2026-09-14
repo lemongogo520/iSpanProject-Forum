@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import forum.board.dollsystemitem.DollItem;
 import forum.board.dollsystemitem.DollItemRepository;
+import forum.board.dollsystemitem.DollItemResponseDTO;
 import forum.board.users.Users;
 import forum.board.users.UsersRepository;
 import jakarta.transaction.Transactional;
@@ -47,6 +48,14 @@ public class DollUserEquipService {
         }).collect(Collectors.toList());
 
         dollUserEquipRepo.saveAll(newEquipItems);
+    }
+
+    //檢視穿著紀錄
+    public List<DollItemResponseDTO> getUserEquip(UUID userId) {
+        List<DollUserEquip> equipList = dollUserEquipRepo.findByUserId(userId);
+        return equipList.stream()
+            .map(newEquip -> DollItemResponseDTO.fromEntity(newEquip.getItem()))
+            .collect(Collectors.toList());
     }
 
 }

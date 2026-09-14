@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface DollUserEquipRepository extends JpaRepository<DollUserEquip,Integer> {
 
-    List<DollUserEquip> findByUserId (Integer userId);
+    List<DollUserEquip> findByUserId (UUID userId);
 
     @Modifying 
     @Query("DELETE FROM DollUserEquip u WHERE u.user.id =:userId") 

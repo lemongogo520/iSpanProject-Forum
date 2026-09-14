@@ -24,6 +24,8 @@ public class RegisterController {
             @Valid @RequestBody RegisterDTO dto,
             HttpServletRequest request) {
 
+    	
+    	System.out.printf("0");
         // 密碼一致驗證
         if (!dto.getPassword().equals(dto.getConfirmPassword())) {
 

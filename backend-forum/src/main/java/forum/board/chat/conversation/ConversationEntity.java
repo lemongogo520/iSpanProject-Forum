@@ -1,6 +1,7 @@
 package forum.board.chat.conversation;
 
 import java.time.Instant;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -45,6 +47,9 @@ public class ConversationEntity {
         DIRECT,
         GROUP
     }
+
+    @OneToMany(mappedBy = "conversation")
+    private List<ConversationMemberEntity> members;
     
     private String lastMessage;
 

@@ -1,20 +1,3 @@
-<script setup>
-import { ref } from "vue";
-import { useDisplay } from "vuetify";
-
-const drawer = ref(false);
-const { mdAndUp } = useDisplay();
-
-const navItems = [
-  { title: "首頁", icon: "mdi-home-outline", to: "/" },
-  { title: "討論區", icon: "mdi-forum-outline", to: "/forum" },
-  { title: "點數", icon: "mdi-star-circle-outline", to: "/coin" },
-  { title: "我的角色", icon: "mdi-account-circle-outline", to: "/avatar" },
-  { title: "商城", icon: "mdi-storefront-outline", to: "/shop" },
-  { title: "任務活動", icon: "mdi-clipboard-check-outline", to: "/tasks" },
-];
-</script>
-
 <template>
   <v-app-bar elevation="2" color="white" height="64">
     <v-container fluid class="navbar-container">

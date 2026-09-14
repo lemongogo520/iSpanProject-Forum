@@ -23,23 +23,23 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api")
 public class AuthController {
 
-	private final UsersService usersService;
-	
+    private final UsersService usersService;
+
     @GetMapping("/auth/me")
     public ResponseEntity<?> checkLogin(HttpSession session) {
 
-	    UUID userId = (UUID) session.getAttribute("loginUserId");
+        UUID userId = (UUID) session.getAttribute("loginUserId");
 
-	    if (userId == null) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	    }
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
-	    Users users = usersService.getUsersById(userId);
+        Users users = usersService.getUsersById(userId);
 
-	    if (users == null) {
-	        session.invalidate();
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	    }
+        if (users == null) {
+            session.invalidate();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         UserDetailDTO dto = usersService.getUserInfoByAccount(users.getAccount());
         Map<String, Object> returnValue = new HashMap<>();
@@ -48,6 +48,6 @@ public class AuthController {
         returnValue.put("name", dto.getName());
         returnValue.put("permission", dto.getPermission());
 
-	    return ResponseEntity.ok(returnValue);
+        return ResponseEntity.ok(returnValue);
     }
 }

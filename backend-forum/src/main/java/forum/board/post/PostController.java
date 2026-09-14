@@ -84,13 +84,10 @@ public class PostController {
 	@PostMapping("/api/posts")
 	public ResponseEntity<?> createPost(@RequestBody Posts post, HttpSession hs) {
 
-		// 目前還沒有確認user怎麼寫之後確認後補上!!!!!!!!!!!!!!!!!!!!!!!
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
-		// UUID userId = (UUID) hs.getAttribute("loginUserId");
-
-		// if(userId == null) {
-		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		// }
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入才能發表文章");
+		}
 		try {
 			Posts result = postService.create(post, userId);
 
@@ -104,12 +101,10 @@ public class PostController {
 	@DeleteMapping("/api/posts/{id}")
 	public ResponseEntity<?> delete(@PathVariable Integer id, HttpSession hs) {
 
-		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
-
-		// if(userId == null) {
-		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		// }
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入才能刪除文章");
+		}
 		try {
 			postService.delete(id, userId);
 
@@ -122,15 +117,12 @@ public class PostController {
 
 	// 更新文章
 	@PutMapping("/api/posts/{id}")
-	public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody Posts post, HttpSession session) {
+	public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody Posts post, HttpSession hs) {
 
-		// 暫時不作session登入判斷!!!!!!之後再寫!!!!!!!!!!!!!!!!!!!!!!!!!
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
-
-		// if(userId == null) {
-		// return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		// }
-
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入才能更新文章");
+		}
 		try {
 			Posts result = postService.update(id, post, userId);
 			return ResponseEntity.ok(result);
@@ -156,7 +148,13 @@ public class PostController {
 	// 上傳文章圖片
 	@PostMapping("/api/posts/images")
 	public ResponseEntity<?> uploadPostImage(
-			@RequestParam("file") MultipartFile file) {
+			@RequestParam("file") MultipartFile file,
+			HttpSession hs) {
+				UUID userId =(UUID) hs.getAttribute("loginUserId");
+
+    if (userId == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入才能上傳文章圖片");
+		}
 
 		try {
 			String fileName = postImageService.saveImage(file);

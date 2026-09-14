@@ -31,9 +31,11 @@ public class CommentsService {
         if (user == null) {
             throw new RuntimeException("權限不足：請先登入後再留言！");
         }
+        // 驗證留言內容是否空白
+        newComments.setContent(validateContent(newComments.getContent()));
 
         // 檢查是否有這篇post
-        Optional<Posts> opPost = postsRepo.findById(postId);
+        Optional<Posts> opPost = postsRepo.findByIdAndIsDeletedFalse(postId);
         if (opPost.isEmpty()) {
             throw new RuntimeException("新增留言失敗！找不到指定的文章 ID: " + postId);
         }
@@ -46,6 +48,10 @@ public class CommentsService {
             }
             Comments parentComment = parentCommentOpt.get();
 
+            if (Boolean.TRUE.equals(
+                    parentComment.getIsDeleted())) {
+                throw new RuntimeException("新增留言失敗！不能回覆已刪除的留言！");
+            }
             if (!parentComment.getPost().getId().equals(postId)) {
 
                 throw new RuntimeException("新增留言失敗！目標留言不屬於此文章！");
@@ -86,7 +92,7 @@ public class CommentsService {
         }
         
         Comments comment = opComment.get();
-        
+
         // 如果已經刪除，不允許修改
         if (Boolean.TRUE.equals(comment.getIsDeleted())) {
             throw new RuntimeException("留言已經刪除！");
@@ -95,11 +101,13 @@ public class CommentsService {
         if (!comment.getUsers().getId().equals(user.getId())) {
             throw new RuntimeException("權限不足：不能修改別人的留言！");
         }
+
+        String validatedContent =validateContent(newContent);
         // 做新增修改紀錄動作
-        commentsHistoryService.updateHistory(comment, newContent, user);
+        commentsHistoryService.updateHistory(comment, validatedContent, user);
 
         // 更新留言
-        comment.setContent(newContent);
+        comment.setContent(validatedContent);
         comment.setModifyTime(Instant.now());
 
         return commentsRepo.save(comment);
@@ -119,9 +127,9 @@ public class CommentsService {
         if (opComment.isEmpty()) {
             throw new RuntimeException("刪除失敗！找不到指定的留言 ID: " + commentId);
         }
-        
+
         Comments comment = opComment.get();
-        
+
         // 如果已經刪除，不允許再次刪除
         if (Boolean.TRUE.equals(comment.getIsDeleted())) {
             throw new RuntimeException("留言已經刪除！");
@@ -133,17 +141,24 @@ public class CommentsService {
         }
         // 管理員權限尚未實作待補能夠刪除使用者的留言
 
-        	// 寫入歷史紀錄
+        // 寫入歷史紀錄
         commentsHistoryService.recordDeleteHistory(comment, user);
-        
+
         // 軟刪除狀態
         comment.setIsDeleted(true);
         comment.setDeletedTime(Instant.now());
 
-        
-
         // 刪除留言
         commentsRepo.save(comment);
+    }
+
+    // 留言空白判斷
+    private String validateContent(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            throw new RuntimeException("留言內容不能為空！");
+        }
+
+        return content.trim();
     }
 
 }

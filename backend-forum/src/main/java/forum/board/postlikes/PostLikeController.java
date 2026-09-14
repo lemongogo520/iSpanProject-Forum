@@ -25,11 +25,8 @@ public class PostLikeController {
 	@GetMapping("/api/posts/{postId}/like")
 	public ResponseEntity<?> getLikeStatus(@PathVariable Integer postId, HttpSession session) {
 
-		// 登入 API 完成後改
-		// UUID userId =(UUID) session.getAttribute("loginUserId");
-
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
-
+		UUID userId = (UUID) session.getAttribute("loginUserId");
+	
 		try {
 			PostLikeDTO result = postLikeService.getLikeStatus(postId, userId);
 
@@ -44,11 +41,12 @@ public class PostLikeController {
 	@PutMapping("/api/posts/{postId}/like")
 	public ResponseEntity<?> toggleLike(@PathVariable Integer postId, HttpSession session) {
 
-		// 登入 API 完成後改
-		// UUID userId =(UUID) session.getAttribute("loginUserId");
-
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
-
+		UUID userId = (UUID) session.getAttribute("loginUserId");
+		 if (userId == null) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body("請先登入才能按讚！");
+    }
 		try {
 			PostLikeDTO result = postLikeService.toggleLike(postId, userId);
 

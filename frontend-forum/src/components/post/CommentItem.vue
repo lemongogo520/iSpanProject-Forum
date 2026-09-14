@@ -72,6 +72,15 @@
             </template>
 
             <v-btn
+              v-if="comment.modifyTime"
+              size="small"
+              variant="text"
+              prepend-icon="mdi-history"
+              @click.stop="emit('show-comment-history', comment.id)"
+            >
+              編輯紀錄
+            </v-btn>
+            <v-btn
               size="small"
               variant="text"
               @click.stop="emit('start-reply', comment.id)"
@@ -129,7 +138,10 @@
           <div v-if="expanded" class="mt-4 ml-6">
             <v-divider class="mb-3" />
 
-            <div v-if="childComments.length === 0" class="text-caption text-grey">
+            <div
+              v-if="childComments.length === 0"
+              class="text-caption text-grey"
+            >
               目前沒有回覆
             </div>
 
@@ -197,13 +209,24 @@
                         variant="text"
                         :disabled="deletingCommentId === child.id"
                         :loading="deletingCommentId === child.id"
-                        @click.stop="emit('delete-comment', child.id, comment.id)"
+                        @click.stop="
+                          emit('delete-comment', child.id, comment.id)
+                        "
                       >
                         刪除
                       </v-btn>
                     </template>
                   </div>
                 </template>
+                <v-btn
+                  v-if="child.modifyTime && !child.isDeleted"
+                  size="small"
+                  variant="text"
+                  prepend-icon="mdi-history"
+                  @click.stop="emit('show-comment-history', child.id)"
+                >
+                  編輯紀錄
+                </v-btn>
               </div>
             </div>
           </div>
@@ -239,6 +262,7 @@ const emit = defineEmits([
   "toggle-replies",
   "update:editing-content",
   "update:reply-content",
+  "show-comment-history",
 ]);
 
 const getUserName = (data) => {

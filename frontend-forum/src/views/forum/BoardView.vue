@@ -7,7 +7,7 @@
       class="mb-4"
       @click="goBack"
     >
-      返回首頁
+      返回討論版
     </v-btn>
 
     <!-- 載入中 -->
@@ -400,7 +400,7 @@ const formatPostDate = (date) => {
 // ======================
 
 const goBack = () => {
-  router.push("/");
+  router.push("/categories");
 };
 
 // ======================

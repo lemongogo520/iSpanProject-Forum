@@ -198,7 +198,8 @@ const handleLogin = async () => {
       authStore.setLogin();
       userStore.setAccount(account.value);
       authStore.setLogin() 
-      userStore.setAccount(response.data.account
+      userStore.setAccount(response.data.uid
+      , response.data.account
       , response.data.name
       , response.data.permission);
 

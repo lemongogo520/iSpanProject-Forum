@@ -1,13 +1,10 @@
 package forum.board.users;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,5 +54,11 @@ public class UsersController {
 		return ResponseEntity.badRequest().body(null);
 	}
 	
+	@GetMapping("/allUsers")
+	public List<UsersDTO> getAllUsers(
+	        @RequestParam List<Integer> types) {
+
+	    return userService.getAllUsersByTypes(types);
+	}
 }
     

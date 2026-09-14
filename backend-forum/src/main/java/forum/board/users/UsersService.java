@@ -1,6 +1,8 @@
 package forum.board.users;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -184,6 +186,31 @@ public class UsersService {
 		ud.setModifyIp(IpUtil.getClientIp(request));
 		
 		userDetailRepository.save(ud);
+		
+		return null;
+	}
+
+	public List<UsersDTO> getAllUsersByTypes(List<Integer> types) {
+
+		if(types.size() != 0) {
+			
+			List<UserDetail> listUsers = new ArrayList<>();
+			
+			if(types.contains(0)) {
+				listUsers = userDetailRepository.findAll();
+			}
+			else {
+				listUsers = userDetailRepository.findByRankIn(types);
+			}
+			
+			List<UsersDTO> dto = new ArrayList<>();
+
+			for (UserDetail user : listUsers) {
+			    dto.add(new UsersDTO(user));
+			}
+			
+	        return dto;
+		}
 		
 		return null;
 	}

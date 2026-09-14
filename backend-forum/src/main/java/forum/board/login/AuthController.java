@@ -43,7 +43,6 @@ public class AuthController {
 
         UserDetailDTO dto = usersService.getUserInfoByAccount(users.getAccount());
         Map<String, Object> returnValue = new HashMap<>();
-        returnValue.put("message", "登入成功");
         returnValue.put("uid", dto.getId());
         returnValue.put("account", dto.getAccount());
         returnValue.put("name", dto.getName());

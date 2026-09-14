@@ -7,8 +7,12 @@ import { useNotification } from "@/composables/useNotification";
 const route = useRoute();
 const { snackbar } = useNotification();
 
-const hideHeaderPaths = ["/login", "/register", "/config/setting"];
-const showHeader = computed(() => !hideHeaderPaths.includes(route.path));
+const hideHeaderPaths = ["/login", "/register"];
+const showHeader = computed(() => {
+  return !hideHeaderPaths.includes(route.path) &&
+         !route.path.startsWith("/config");
+});
+
 </script>
 
 <template>

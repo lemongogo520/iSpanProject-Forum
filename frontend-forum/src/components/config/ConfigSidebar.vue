@@ -23,7 +23,7 @@
         </RouterLink>
       </li>
       <li>
-        <RouterLink to="/home">
+        <RouterLink to="/config/doll">
           紙娃娃設定
         </RouterLink>
       </li>

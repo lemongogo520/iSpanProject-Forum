@@ -82,9 +82,27 @@ const routes = [
   //管理者設定
   {
     path: '/config/setting',
-    name: 'Config',
+    name: 'ConfigSetting',
     component: () => import('@/views/config/ConfigView.vue')
   },
+  {
+    path: '/config/users',
+    name: 'ConfigUsers',
+    component: () => import('@/views/config/ConfigUsersView.vue')
+  },
+  {
+    path: '/config/permissions',
+    name: 'ConfigPermissions',
+    component: () => import('@/views/config/ConfigPermissionsView.vue')
+  },
+  {
+    path: '/config/doll',
+    name: 'ConfigDoll',
+    component: () => import('@/views/config/ConfigDollView.vue')
+  },
+
+
+
   {
     path: '/shop',
     name: 'shop',

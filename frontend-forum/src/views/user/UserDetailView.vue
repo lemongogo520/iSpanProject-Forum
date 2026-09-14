@@ -9,7 +9,7 @@
     <v-card>
 
       <!-- 標題 -->
-      <v-card-title class="text-h5">
+      <v-card-title class="text-h5 bg-blue-lighten-5">
         使用者資訊
       </v-card-title>
 

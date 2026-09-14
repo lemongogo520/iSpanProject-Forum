@@ -29,7 +29,7 @@
         <v-btn
           v-if="isAdmin"
           variant="text"
-          @click="goTo('/admin')"
+          @click="goTo('/config/setting')"
         >
           <v-icon start>mdi-shield-crown</v-icon>
           後台管理

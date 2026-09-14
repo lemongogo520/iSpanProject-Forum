@@ -25,6 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
       userStore.setUid(response.data.uid);
       
       userStore.setAccount(
+        response.data.uid,
         response.data.account,
         response.data.name,
         response.data.permission

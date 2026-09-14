@@ -38,6 +38,7 @@ public class MessagesEntity {
 	@Column(name = "sender",updatable = false, nullable = false)
 	private UUID senderId;
 	
+	@Column(name = "content")
 	private String content;
 	
 	@Column(name = "create_time", nullable = false)

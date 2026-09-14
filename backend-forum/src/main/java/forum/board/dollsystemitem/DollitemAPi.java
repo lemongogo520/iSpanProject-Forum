@@ -51,9 +51,9 @@ public class DollitemAPi {
     
     //使用者檢視Dollitem api
     @GetMapping("/api/dollitems/usercheck/{categoryId}")
-    public ResponseEntity<List<DollItem>> itemByUser (@PathVariable Integer categoryId) {
+    public ResponseEntity<List<DollItemResponseDTO>> itemByUser (@PathVariable Integer categoryId) {
 
-        List<DollItem> itemByUser = itemService.checkItemByUser(categoryId);
+        List<DollItemResponseDTO> itemByUser = itemService.checkItemByUser(categoryId);
         return ResponseEntity.status(HttpStatus.OK).body(itemByUser);
     }
 

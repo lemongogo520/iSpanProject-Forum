@@ -1,5 +1,7 @@
 package forum.board.login;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -10,26 +12,42 @@ import org.springframework.web.bind.annotation.RestController;
 
 import forum.board.response.ErrorResponse;
 import forum.board.response.SuccessResponse;
+import forum.board.users.UserDetailDTO;
+import forum.board.users.Users;
+import forum.board.users.UsersService;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api")
 public class AuthController {
+
+    private final UsersService usersService;
 
     @GetMapping("/auth/me")
     public ResponseEntity<?> checkLogin(HttpSession session) {
 
         UUID userId = (UUID) session.getAttribute("loginUserId");
 
-        if (userId != null) {
-
-            return ResponseEntity.ok(
-                    new SuccessResponse("已登入")
-            );
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(new ErrorResponse("尚未登入"));
+        Users users = usersService.getUsersById(userId);
+
+        if (users == null) {
+            session.invalidate();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UserDetailDTO dto = usersService.getUserInfoByAccount(users.getAccount());
+        Map<String, Object> returnValue = new HashMap<>();
+        returnValue.put("message", "登入成功");
+        returnValue.put("account", dto.getAccount());
+        returnValue.put("name", dto.getName());
+        returnValue.put("permission", dto.getPermission());
+
+        return ResponseEntity.ok(returnValue);
     }
 }

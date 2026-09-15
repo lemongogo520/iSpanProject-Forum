@@ -26,7 +26,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "/images/**",
                         "/uploads/**",
                         "/getfile",
-                        "/api/**");
+                        "/api/**",
+                        "/sprites/**");
     }
 
     @Override
@@ -34,5 +35,8 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:../uploads/");
+
+        registry.addResourceHandler("/sprites/**")
+                .addResourceLocations("file:../uploads/sprites/");
     }
 }

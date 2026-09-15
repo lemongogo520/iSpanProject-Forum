@@ -7,6 +7,8 @@ import lombok.Data;
 @Data
 public class DollCategoryDTO {
 
+    private Integer id;
+
     @NotBlank(message = "分類代碼不能為空")
     private String code;
 

@@ -87,6 +87,7 @@
         @toggle-replies="toggleReplies"
         @update:editing-content="editingContent = $event"
         @update:reply-content="replyContent = $event"
+        @show-comment-history="openCommentHistory"
       />
       <!-- ====================== -->
       <!-- 留言分頁 -->
@@ -98,31 +99,13 @@
         class="my-6"
         @update:model-value="fetchComments"
       />
-      <!-- ====================== -->
       <!-- 發表留言 -->
-      <!-- ====================== -->
-      <v-card class="pa-5 mt-6" elevation="1">
-        <div class="text-h6 mb-4">發表留言</div>
-        <v-textarea
-          v-model="newComment"
-          label="留言內容"
-          placeholder="輸入你的留言..."
-          variant="outlined"
-          rows="4"
-          hide-details
-        />
-        <div class="d-flex justify-end mt-4">
-          <v-btn
-            color="primary"
-            :loading="commentSubmitting"
-            @click="submitComment"
-          >
-            發表留言
-          </v-btn>
-        </div>
-      </v-card>
+      <CommentForm
+        v-model="newComment"
+        :submitting="commentSubmitting"
+        @submit="submitComment"
+      />
     </template>
-
     <!-- 文章編輯紀錄 -->
     <PostHistoryDialog
       v-model="historyDialog"
@@ -130,31 +113,21 @@
       :loading="historyLoading"
       :error-message="historyError"
     />
+    <!-- 留言編輯紀錄 Dialog -->
+    <CommentHistoryDialog
+      v-model="commentHistoryDialog"
+      :histories="commentHistory"
+      :loading="commentHistoryLoading"
+      :error-message="commentHistoryError"
+    />
     <!-- 共用刪除確認視窗 -->
-    <v-dialog v-model="deleteDialog" max-width="420" persistent>
-      <v-card>
-        <v-card-title class="text-h6">確認刪除</v-card-title>
-        <v-card-text>{{ deleteDialogMessage }}</v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            variant="text"
-            :disabled="isDeleting"
-            @click="closeDeleteDialog"
-          >
-            取消
-          </v-btn>
-          <v-btn
-            color="error"
-            variant="flat"
-            :loading="isDeleting"
-            @click="confirmDelete"
-          >
-            確定刪除
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <DeleteConfirmDialog
+      :model-value="deleteDialog"
+      :message="deleteDialogMessage"
+      :loading="isDeleting"
+      @cancel="closeDeleteDialog"
+      @confirm="confirmDelete"
+    />
   </v-container>
 </template>
 
@@ -168,27 +141,23 @@ import {
   getPostHistory as getPostHistoryApi,
   deletePost as deletePostApi,
   increasePostViews as increasePostViewsApi,
-  getPostLikeStatus as getPostLikeStatusApi,
-  togglePostLike as togglePostLikeApi,
 } from "@/services/postService";
-import {
-  getComments as getCommentsApi,
-  getChildComments as getChildCommentsApi,
-  createComment as createCommentApi,
-  createReply as createReplyApi,
-  updateComment as updateCommentApi,
-  deleteComment as deleteCommentApi,
-} from "@/services/commentService";
+
 
 // components 元件匯入
-import CommentItem from "@/components/CommentItem.vue";
-import PostContent from "@/components/PostContent.vue";
-import PostHistoryDialog from "@/components/PostHistoryDialog.vue";
-// 通知功能匯入
+import CommentItem from "@/components/post/CommentItem.vue";
+import PostContent from "@/components/post/PostContent.vue";
+import PostHistoryDialog from "@/components/post/PostHistoryDialog.vue";
+import CommentHistoryDialog from "@/components/post/CommentHistoryDialog.vue";
+import CommentForm from "@/components/post/CommentForm.vue";
+import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog.vue";
+
+// JS匯入
 import { useNotification } from "@/composables/useNotification";
+import { useComments } from "@/composables/useComments";
+import { usePostLike } from "@/composables/usePostLike";
 
 const { showMessage } = useNotification();
-
 // ======================
 // Router
 // ======================
@@ -202,39 +171,95 @@ const postId = route.params.postId;
 // Post
 // ======================
 const post = ref(null);
+const {
 // ======================
 // 主留言Comments
 // ======================
-const totalCommentElements = ref(0);
-const comments = ref([]);
-const commentPage = ref(1);
-const commentPageSize = ref(5);
-const totalCommentPages = ref(0);
+  comments,
+  totalCommentElements,
+  commentPage,
+  commentPageSize,
+  totalCommentPages,
 // ======================
 // 子留言childComment
 // ======================
-const childComments = ref({});
-const replyingCommentId = ref(null);
-const replyContent = ref("");
-const replySubmitting = ref(false);
-const expandedComments = ref({});
-// ======================
-// 更新留言
-// ======================
-const editingCommentId = ref(null);
-const editingContent = ref("");
-const commentUpdating = ref(false);
+  childComments,
+  expandedComments,
 // ======================
 // 新增留言
 // ======================
-const newComment = ref("");
-const commentSubmitting = ref(false);
+  newComment,
+  commentSubmitting,
 // ======================
-// 按讚
+// 新增子留言
 // ======================
-const likeCount = ref(0);
-const likedByCurrentUser = ref(false);
-const likeUpdating = ref(false);
+  replyingCommentId,
+  replyContent,
+  replySubmitting,
+// ======================
+// 更新留言
+// ======================
+  editingCommentId,
+  editingContent,
+  commentUpdating,
+  deletingCommentId,
+// ======================
+// 留言編輯紀錄
+// ======================
+  commentHistoryDialog,
+  commentHistory,
+  commentHistoryLoading,
+  commentHistoryError,
+// ======================
+// 取得主留言Comments
+// ======================
+  fetchComments,
+// ======================
+// 取得子留言ChildComments
+// ======================
+  fetchChildComments,
+// ======================
+// 展開與收合回覆
+// ======================
+  toggleReplies,
+// ======================
+// 開始與取消回覆
+// ======================
+  startReply,
+  cancelReply,
+// ======================
+// 新增子留言
+// ======================
+  submitReply,
+// ======================
+// 發表留言
+// ======================
+  submitComment,
+// ======================
+// 開始編輯留言與取消編輯
+// ======================
+  startEditComment,
+  cancelEditComment,
+// ======================
+// 更新留言
+// ======================
+  updateComment,
+// ======================
+// 刪除留言
+// ======================
+  deleteComment,
+// ======================
+// 取得留言編輯紀錄
+// ======================
+  openCommentHistory,
+} = useComments(postId);
+const {
+  likeCount,
+  likedByCurrentUser,
+  likeUpdating,
+  fetchLikeStatus,
+  handleToggleLike,
+} = usePostLike(postId);
 // ======================
 // 狀態
 // ======================
@@ -247,7 +272,6 @@ const historyError = ref("");
 const postHistory = ref([]);
 const deleteTarget = ref(null);
 const postDeleting = ref(false);
-const deletingCommentId = ref(null);
 
 const deleteDialogMessage = computed(() =>
   deleteTarget.value?.type === "post"
@@ -270,14 +294,24 @@ const closeDeleteDialog = () => {
   deleteTarget.value = null;
 };
 // 確認刪除
-const confirmDelete = () => {
+const confirmDelete = async () => {
   const target = deleteTarget.value;
+
   if (!target) return;
 
   if (target.type === "post") {
     deletePost();
-  } else {
-    deleteComment(target.commentId, target.parentCommentId);
+    return;
+  }
+
+  const success = await deleteComment(
+    target.commentId,
+    target.parentCommentId,
+  );
+
+  if (success) {
+    deleteDialog.value = false;
+    deleteTarget.value = null;
   }
 };
 // 轉接 CommentItem 的刪除事件
@@ -287,7 +321,7 @@ const handleCommentDeleteRequest = (commentId, parentCommentId) => {
 // ======================
 // 使用者判斷 暫時寫死
 // ======================
-const currentUserId = "10334e31-124a-4a74-b898-4a2c62753cc9";
+const currentUserId = ref("");
 // ======================
 // 取得 Post
 // ======================
@@ -331,171 +365,17 @@ const openHistoryDialog = () => {
   historyDialog.value = true;
 };
 // ======================
-// 取得主留言Comments
-// ======================
-const fetchComments = () => {
-  getCommentsApi(postId, commentPage.value - 1, commentPageSize.value)
-    .then((response) => {
-      comments.value = response.data.content;
-      totalCommentPages.value = response.data.totalPages;
-      totalCommentElements.value = response.data.totalElements;
-    })
-    .catch((error) => {
-      console.error("取得留言失敗：", error);
-      comments.value = [];
-      totalCommentPages.value = 0;
-    });
-};
-// ======================
-// 取得子留言ChildComments
-// ======================
-const fetchChildComments = (parentCommentId) => {
-  getChildCommentsApi(parentCommentId)
-    .then((response) => {
-      childComments.value = {
-        ...childComments.value,
-        [parentCommentId]: response.data,
-      };
-    })
-    .catch((error) => {
-      console.error("取得子留言失敗：", error);
-      childComments.value = { ...childComments.value, [parentCommentId]: [] };
-    });
-};
-
-// ======================
-// 取得按讚狀態
-// ======================
-const fetchLikeStatus = () => {
-  return getPostLikeStatusApi(postId)
-    .then((response) => {
-      likeCount.value = response.data.likeCount ?? 0;
-
-      likedByCurrentUser.value = response.data.likedByCurrentUser ?? false;
-    })
-    .catch((error) => {
-      console.error("取得按讚狀態失敗：", error);
-
-      likeCount.value = 0;
-      likedByCurrentUser.value = false;
-    });
-};
-// ======================
-// 新增或取消按讚
-// ======================
-const handleToggleLike = () => {
-  if (likeUpdating.value) {
-    return;
-  }
-
-  likeUpdating.value = true;
-
-  togglePostLikeApi(postId)
-    .then((response) => {
-      likeCount.value = response.data.likeCount ?? 0;
-      likedByCurrentUser.value = response.data.likedByCurrentUser ?? false;
-    })
-    .catch((error) => {
-      console.error("按讚操作失敗：", error);
-
-      showMessage(error.response?.data ?? "按讚操作失敗，請稍後再試", "error");
-    })
-    .finally(() => {
-      likeUpdating.value = false;
-    });
-};
-// 展開與收合回覆
-const toggleReplies = (parentCommentId) => {
-  const willExpand = !expandedComments.value[parentCommentId];
-
-  // 更新展開狀態
-  expandedComments.value = {
-    ...expandedComments.value,
-    [parentCommentId]: willExpand,
-  };
-  // 展開時查詢子留言
-  if (willExpand) {
-    fetchChildComments(parentCommentId);
-  }
-};
-// 開始與取消回覆
-const startReply = (commentId) => {
-  replyingCommentId.value = commentId;
-  replyContent.value = "";
-};
-const cancelReply = () => {
-  replyingCommentId.value = null;
-  replyContent.value = "";
-};
-// ======================
-// 新增子留言
-// ======================
-const submitReply = (parentCommentId) => {
-  const content = replyContent.value.trim();
-
-  if (!content) {
-    showMessage("請輸入回覆內容", "warning");
-    return;
-  }
-
-  replySubmitting.value = true;
-
-  createReplyApi(postId, parentCommentId, content)
-    .then(() => {
-      cancelReply();
-      showMessage("回覆成功");
-
-      expandedComments.value = {
-        ...expandedComments.value,
-        [parentCommentId]: true,
-      };
-
-      fetchChildComments(parentCommentId);
-    })
-    .catch((error) => {
-      showMessage(error.response?.data ?? "回覆失敗", "error");
-    })
-    .finally(() => {
-      replySubmitting.value = false;
-    });
-};
-// ======================
-// 發表留言
-// ======================
-const submitComment = () => {
-  const content = newComment.value.trim();
-  if (!content) {
-    showMessage("請輸入留言內容", "warning");
-    return;
-  }
-
-  commentSubmitting.value = true;
-  createCommentApi(postId, content)
-    .then(() => {
-      newComment.value = "";
-      commentPage.value = 1;
-      showMessage("留言發表成功");
-      fetchComments();
-    })
-    .catch((error) => {
-      showMessage(error.response?.data ?? "留言失敗，請稍後再試", "error");
-    })
-    .finally(() => {
-      commentSubmitting.value = false;
-    });
-};
-// ======================
 // 文章功能-權限判斷
 // ======================
 const isPostOwner = computed(() => {
   // PostDTO 直接回傳 userId，不是 users.id
   const postUserId = post.value?.userId;
 
-  if (!postUserId || !currentUserId) {
+  if (!postUserId || !currentUserId.value) {
     return false;
   }
 
-  return postUserId.toLowerCase() === currentUserId.toLowerCase();
+  return postUserId.toLowerCase() === currentUserId.value.toLowerCase();
 });
 // ======================
 // 跳轉到編輯文章頁面
@@ -507,45 +387,6 @@ const editPost = () => {
       postId,
     },
   });
-};
-// ======================
-// 開始編輯留言與取消編輯
-// ======================
-const startEditComment = (comment) => {
-  editingCommentId.value = comment.id;
-  editingContent.value = comment.content;
-};
-const cancelEditComment = () => {
-  editingCommentId.value = null;
-  editingContent.value = "";
-};
-const updateComment = (commentId, parentCommentId = null) => {
-  const content = editingContent.value.trim();
-
-  if (!content) {
-    showMessage("留言內容不能為空白", "warning");
-    return;
-  }
-
-  commentUpdating.value = true;
-
-  updateCommentApi(commentId, content)
-    .then(() => {
-      cancelEditComment();
-      showMessage("留言修改成功");
-
-      if (parentCommentId !== null) {
-        fetchChildComments(parentCommentId);
-      } else {
-        fetchComments();
-      }
-    })
-    .catch((error) => {
-      showMessage(error.response?.data ?? "修改留言失敗", "error");
-    })
-    .finally(() => {
-      commentUpdating.value = false;
-    });
 };
 // ======================
 // 刪除文章
@@ -567,29 +408,7 @@ const deletePost = () => {
       postDeleting.value = false;
     });
 };
-// ======================
-// 刪除留言
-// ======================
-const deleteComment = (commentId, parentCommentId = null) => {
-  deletingCommentId.value = commentId;
-  deleteCommentApi(commentId)
-    .then(() => {
-      deleteDialog.value = false;
-      deleteTarget.value = null;
-      showMessage("留言刪除成功");
-      if (parentCommentId !== null) {
-        fetchChildComments(parentCommentId);
-      } else {
-        fetchComments();
-      }
-    })
-    .catch((error) => {
-      showMessage(error.response?.data ?? "刪除留言失敗", "error");
-    })
-    .finally(() => {
-      deletingCommentId.value = null;
-    });
-};
+
 // ======================
 // 返回
 // ======================

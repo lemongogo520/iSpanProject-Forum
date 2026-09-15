@@ -55,11 +55,6 @@ public class CommentsHistoryService {
 			throw new RuntimeException("找不到指定的留言");
 		}
 
-		Comments comment = opComment.get();
-		if (!comment.getUsers().getId().equals(user.getId())) {
-			throw new RuntimeException("權限不足：您只能查看自己留言的修改歷史！");
-		}
-
 		return commentsHistoryRepo.findByCommentIdAndActionOrderByModifyTimeDesc(commentId, "UPDATE");
 	}
 

@@ -1,6 +1,6 @@
 import { onMounted, ref } from "vue";
-import httpClient from "../../../service/httpClient";
-import { listAllCategories } from "./DollAllCategoryApi";
+import httpClient from "../httpClient";
+import { listAllCategories } from "./dollAllCategoryApi";
 
 export function useDollCategories() {
     

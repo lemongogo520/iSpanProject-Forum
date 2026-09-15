@@ -1,8 +1,11 @@
 package forum.board.login;
 
+import forum.board.users.UserDetailDTO;
 import forum.board.users.Users;
 import forum.board.users.UsersService;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -96,10 +99,10 @@ public class LoginController {
         }
 
         // 取得使用者
-        UUID userId = usersService.getUsersByAccount(loginDTO.getAccount()).getId();
+        UserDetailDTO dto = usersService.getUserInfoByAccount(loginDTO.getAccount());
 
         // 登入紀錄
-        loginService.insertLoginLog(request, userId, LogType.LOGIN);
+        loginService.insertLoginLog(request, dto.getId(), LogType.LOGIN);
 
         // 記住我
         if (loginDTO.isRemember()) {
@@ -123,9 +126,15 @@ public class LoginController {
         }
 
         // Session 登入
-        session.setAttribute("loginUserId", userId);
+        session.setAttribute("loginUserId", dto.getId());
 
-        return ResponseEntity.ok().body(new SuccessResponse("登入成功"));
+        Map<String, Object> returnValue = new HashMap<>();
+        returnValue.put("message", "登入成功");
+        returnValue.put("account", dto.getAccount());
+        returnValue.put("name", dto.getName());
+        returnValue.put("permission", dto.getPermission());
+
+    	return ResponseEntity.ok(returnValue);	
     }
     
 }

@@ -35,16 +35,15 @@ public class CommentsController {
 	// 新增留言 如果沒加parentCommentId代表為主要留言
 	@PostMapping("/api/comments/posts/{postId}")
 	public ResponseEntity<?> createComments(@PathVariable Integer postId,
-											@RequestParam(required = false) Integer parentCommentId, 
-											@RequestBody Comments newComments,
-											HttpSession session) {
+			@RequestParam(required = false) Integer parentCommentId,
+			@RequestBody Comments newComments,
+			HttpSession session) {
 
-		// 登入API還沒做沒辦法測試等之後做完再補
-		// UUID userId = (UUID) session.getAttribute("loginUserId");
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
+		UUID userId = (UUID) session.getAttribute("loginUserId");
 		if (userId == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("錯誤：必須登入才能發表留言！");
 		}
+
 		Optional<Users> opUser = usersRepo.findById(userId);
 
 		if (opUser.isEmpty()) {
@@ -53,9 +52,14 @@ public class CommentsController {
 
 		Users user = opUser.get();
 
-		Comments comment = commentsService.createComments(postId, parentCommentId, newComments, user);
+		try {
+			Comments comment = commentsService.createComments(postId, parentCommentId, newComments, user);
 
-		return ResponseEntity.ok(comment);
+			return ResponseEntity.ok(comment);
+
+		} catch (RuntimeException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
 	}
 
 	// 查看某post底下的主要留言
@@ -73,10 +77,13 @@ public class CommentsController {
 
 	// 修改留言
 	@PutMapping("/api/comments/{commentId}")
-	public ResponseEntity<?> update(@PathVariable Integer commentId, @RequestBody Comments newComments,HttpSession session) {
+	public ResponseEntity<?> update(@PathVariable Integer commentId, @RequestBody Comments newComments,
+			HttpSession session) {
 
-		// 登入 API 還沒完成，暫時寫死
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
+		UUID userId = (UUID) session.getAttribute("loginUserId");
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("錯誤：必須登入才能修改留言！");
+		}
 
 		Optional<Users> opUser = usersRepo.findById(userId);
 		if (opUser.isEmpty()) {
@@ -99,9 +106,11 @@ public class CommentsController {
 	// 刪除留言
 	@DeleteMapping("/api/comments/{commentId}")
 	public ResponseEntity<?> delete(@PathVariable Integer commentId, HttpSession session) {
-		// 登入 API 還沒完成，暫時寫死
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
 
+		UUID userId = (UUID) session.getAttribute("loginUserId");
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("錯誤：必須登入才能發表留言！");
+		}
 		Optional<Users> opUser = usersRepo.findById(userId);
 
 		if (opUser.isEmpty()) {
@@ -122,19 +131,26 @@ public class CommentsController {
 
 	// 查詢這筆留言的編輯紀錄
 	@GetMapping("/api/comments/{commentId}/history")
-	public ResponseEntity<?> findUpdateHistory(@PathVariable Integer commentId, HttpSession session) {
+	public ResponseEntity<?> findUpdateHistory(@PathVariable Integer commentId, HttpSession hs) {
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
 
-		// 登入 API 還沒完成，暫時寫死
-		UUID userId = UUID.fromString("10334E31-124A-4A74-B898-4A2C62753CC9");
-
-		Optional<Users> opUser = usersRepo.findById(userId);
-		if (opUser.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("錯誤：找不到登入使用者！");
+		if (userId == null) {
+			return ResponseEntity
+					.status(HttpStatus.UNAUTHORIZED)
+					.body("錯誤：必須登入才能查看留言編輯紀錄！");
 		}
 
-		Users user = opUser.get();
+		Optional<Users> opUser = usersRepo.findById(userId);
+
+		if (opUser.isEmpty()) {
+			return ResponseEntity
+					.status(HttpStatus.UNAUTHORIZED)
+					.body("錯誤：找不到登入使用者！");
+		}
+
 		try {
-			List<CommentsHistory> history = commentsHistoryService.findUpdateHistoryByCommentId(commentId, user);
+			List<CommentsHistory> history = commentsHistoryService.findUpdateHistoryByCommentId(commentId,
+					opUser.get());
 
 			return ResponseEntity.ok(history);
 
@@ -146,5 +162,5 @@ public class CommentsController {
 	}
 
 	// 管理員功能之後補做
-	
+
 }

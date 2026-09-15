@@ -66,7 +66,7 @@ import {
   getPost as getPostApi,
 } from "@/services/postService";
 
-import PostEditor from "@/components/PostEditor.vue";
+import PostEditor from "@/components/post/PostEditor.vue";
 
 import { useNotification } from "@/composables/useNotification";
 const { showMessage } = useNotification();

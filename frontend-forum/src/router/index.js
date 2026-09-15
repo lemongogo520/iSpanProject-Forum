@@ -2,9 +2,15 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from '@/stores/auth'
 
 const routes = [
+  // {
+  //   path: '/',
+  //   redirect: '/login'
+  // },
   {
     path: '/',
-    redirect: '/login'
+    name: 'home',
+    component: () =>
+      import('@/views/HomeView.vue')
   },
   {
       path: "/login",
@@ -19,12 +25,12 @@ const routes = [
   {
       path: "/home",
       name: "Homepage",
-      component: () => import("@/views/HomepageView.vue"),
+      component: () => import("@/views/HomeView.vue"),
   },
   {
     path: "/admin/categories",
-    name: "categories",
-    component: () => import("@/views/admin/AdminCategoryView.vue"),
+    name: "ForumAdminView",
+    component: () => import("@/views/admin/ForumAdminView.vue"),
   },
   {
     path: "/categories",
@@ -52,6 +58,21 @@ const routes = [
     component: () => import("@/views/post/PostDetailView.vue"),
   },
   {
+    path: "/doll/categories",
+    name: "dollCategories",
+    component: () => import("@/views/doll/DollCategoriesView.vue"),
+  },
+  {
+    path: "/doll/newitem",
+    name: "dollnewitem",
+    component: () => import("@/views/doll/DollNewItemsView.vue"),
+  },
+  {
+    path: "/doll/cart",
+    name: "dollcart",
+    component: () => import("@/views/doll/DollCartItemsView.vue"),
+  },
+  {
     path: "/friend",
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
@@ -68,7 +89,7 @@ const routes = [
     path: '/shop',
     name: 'shop',
     component: () =>
-      import('../views/ShopView.vue')
+      import('@/views/ShopView.vue')
   }
 
 ]

@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
-  // {
-  //   path: '/',
-  //   redirect: '/login'
-  // },
+  {
+    path: '/',
+    redirect: '/login'
+  },
   {
     path: '/',
     name: 'home',
@@ -56,7 +56,17 @@ const routes = [
     name: 'shop',
     component: () =>
       import('@/views/ShopView.vue')
-  }
+  },
+  {
+    path: "/member/tasks",
+    name: "DailyTasks",
+    component: () => import("@/views/coin/DailyTasksView.vue"),
+  },
+  {
+    path: "/member/transactions",
+    name: "CoinTransactions",
+    component: () => import("@/views/coin/CoinTransactionsView.vue"),
+  },
 
 ]
 const router = createRouter({

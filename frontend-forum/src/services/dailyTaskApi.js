@@ -1,47 +1,48 @@
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8085";
+import httpClient from "@/services/httpClient";
 
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      ...options.headers,
-    },
-  });
+function getData(response) {
+  const data = response.data;
 
-  const contentType = response.headers.get("content-type") || "";
-  const data = contentType.includes("application/json")
-    ? await response.json()
-    : null;
-
-  if (!response.ok) {
-    const error = new Error(
-      data?.message ||
-        (response.status === 401
-          ? "請先登入"
-          : `請求失敗（${response.status}）`)
-    );
-
-    error.status = response.status;
-    throw error;
-  }
-
-  if (data === null) {
-    throw new Error("後端未回傳 JSON，請確認登入狀態與 API 位址");
+  // 避免 API 被導向 HTML 頁面後，誤以為請求成功。
+  if (data === null || typeof data !== "object") {
+    throw new Error("API 未回傳正確資料，請確認登入狀態與後端設定");
   }
 
   return data;
 }
 
-export function getTodayTasks() {
-  return request("/api/coins/tasks/today");
+export async function getTodayTasks() {
+  const response = await httpClient.get("/api/coins/tasks/today");
+  const data = getData(response);
+
+  if (!Array.isArray(data)) {
+    throw new Error("每日任務資料格式不正確");
+  }
+
+  return data;
 }
 
-export function claimTaskReward(taskId) {
-  return request(
-    `/api/coins/tasks/${encodeURIComponent(taskId)}/claim`,
-    { method: "POST" }
+export async function checkInToday() {
+  const response = await httpClient.post("/api/coins/tasks/check-in");
+  const data = getData(response);
+
+  if (!data.id || data.taskType !== "CHECK_IN") {
+    throw new Error("簽到回傳資料格式不正確");
+  }
+
+  return data;
+}
+
+export async function claimTaskReward(taskId) {
+  const response = await httpClient.post(
+    `/api/coins/tasks/${encodeURIComponent(taskId)}/claim`
   );
+
+  const data = getData(response);
+
+  if (data.taskId !== taskId || data.status !== "CLAIMED") {
+    throw new Error("無法確認領獎結果，請重新查詢任務");
+  }
+
+  return data;
 }

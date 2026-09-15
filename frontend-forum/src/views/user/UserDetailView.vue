@@ -60,6 +60,51 @@
               <span v-else class="text-medium-emphasis"> — </span>
             </div>
           </div>
+          <!-- 點數功能入口 -->
+<div class="field-row">
+  <div class="field-label">點數功能</div>
+
+  <div class="field-content points-actions">
+    <v-btn
+      type="button"
+      color="primary"
+      variant="tonal"
+      :loading="pointsNavigating"
+      :disabled="pointsNavigating"
+      @click="goToPointsPage('DailyTasks')"
+    >
+      每日任務
+    </v-btn>
+
+    <v-btn
+      type="button"
+      variant="outlined"
+      :disabled="!transactionsRouteReady || pointsNavigating"
+      @click="goToPointsPage('CoinTransactions')"
+    >
+      點數交易紀錄
+    </v-btn>
+
+    <v-btn
+      type="button"
+      variant="text"
+      :loading="pointsLoading"
+      :disabled="pointsLoading || pointsNavigating"
+      @click="loadPoints"
+    >
+      更新點數
+    </v-btn>
+
+    <div
+      v-if="pointsNavigationError"
+      class="text-body-2 text-error w-100"
+      role="alert"
+    >
+      {{ pointsNavigationError }}
+    </div>
+  </div>
+</div>
+
 
           <!-- 名稱 -->
           <div class="field-row">
@@ -204,6 +249,54 @@ import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
 
 const router = useRouter();
+const pointsNavigating = ref(false);
+const pointsNavigationError = ref("");
+
+const transactionsRouteReady = computed(() =>
+  router.hasRoute("CoinTransactions"),
+);
+
+async function goToPointsPage(routeName) {
+  if (pointsNavigating.value) return;
+
+  pointsNavigationError.value = "";
+
+  if (isDirty.value) {
+    pointsNavigationError.value =
+      "會員資料尚未儲存，請先按「儲存並關閉」，再開啟點數功能。";
+    return;
+  }
+
+  if (!nameExistsInDatabase.value) {
+    pointsNavigationError.value =
+      "請先完成名稱並儲存會員資料，再使用點數功能。";
+    return;
+  }
+
+  if (!router.hasRoute(routeName)) {
+    pointsNavigationError.value = "此功能的頁面尚未設定。";
+    return;
+  }
+
+  pointsNavigating.value = true;
+
+  try {
+    const failure = await router.push({ name: routeName });
+
+    // 已在目的頁時，仍可關閉會員資料視窗。
+    if (failure && router.currentRoute.value.name !== routeName) {
+      pointsNavigationError.value = "未能切換頁面，請稍後再試。";
+      return;
+    }
+
+    dialog.value = false;
+  } catch (error) {
+    console.error("點數頁面導向失敗：", error);
+    pointsNavigationError.value = "無法開啟頁面，請稍後再試。";
+  } finally {
+    pointsNavigating.value = false;
+  }
+}
 const userStore = useUserStore();
 const nameExistsInDatabase = ref(false);
 
@@ -220,10 +313,6 @@ const pointsDisplay = computed(() => {
   return BigInt(pointsBalance.value).toLocaleString("zh-TW");
 });
 
-// 若環境變數有設定，需填後端根網址，不含 /api。
-const pointsApiBase = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"
-).replace(/\/+$/, "");
 
 // 避免短時間重新開啟視窗時，舊請求覆蓋新結果。
 let pointsRequestId = 0;
@@ -426,6 +515,7 @@ const emailRules = [
 */
 
 async function openDialog() {
+  pointsNavigationError.value = "";
   void loadPoints();
   try {
     const user = await userService.getUserDetail(userStore.account);
@@ -668,4 +758,9 @@ function changePassword() {
 .dialog-actions {
   padding: 16px;
 }
+.points-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 </style>

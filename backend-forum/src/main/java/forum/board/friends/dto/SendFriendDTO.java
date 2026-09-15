@@ -5,6 +5,6 @@ import java.util.UUID;
 /**
  * SendFriendRequestDTO
  */
-public record SendFriendRequestDTO(
+public record SendFriendDTO(
     UUID targetUserId
 ) {}

@@ -13,9 +13,12 @@ public interface ConversationRepository extends JpaRepository<ConversationEntity
 
     @Query ("""
             FROM ConversationEntity c 
-            JOIN ConversationMemberEntity m 
-            ON c.id = m.conversation.id 
-            AND m.user.id = :user1Id OR m.user.id = :user2Id
+            JOIN ConversationMemberEntity m1 
+            ON c.id = m1.conversation.id 
+            JOIN ConversationMemberEntity m2 
+            ON c.id = m2.conversation.id 
+            WHERE m1.user.id != m2.user.id
+            AND m1.user.id = :user1Id AND m2.user.id = :user2Id
             """)
     Optional<ConversationEntity> findDirectConversation(UUID user1Id, UUID user2Id);
 

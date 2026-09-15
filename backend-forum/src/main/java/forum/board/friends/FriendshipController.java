@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import forum.board.friends.dto.FriendResponseDTO;
 import forum.board.friends.dto.FriendshipResponseDTO;
-import forum.board.friends.dto.SendFriendRequestDTO;
+import forum.board.friends.dto.SendFriendDTO;
 import jakarta.servlet.http.HttpSession;
 
 
@@ -36,7 +36,7 @@ public class FriendshipController {
 	/api/friendship/request
 	*/
 	@PostMapping("/request")
-	public ResponseEntity<Object> sendFriendRequest(@RequestBody SendFriendRequestDTO request
+	public ResponseEntity<Object> sendFriendRequest(@RequestBody SendFriendDTO request
 		, HttpSession session) {
 		UUID loginUserId = (UUID)session.getAttribute("loginUserId");	
 		fService.sendFriendRequest(loginUserId, request.targetUserId());

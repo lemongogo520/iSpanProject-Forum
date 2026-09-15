@@ -1,24 +1,21 @@
+import httpClient from "@/services/httpClient";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 export const useChatStore = defineStore('chat',()=>{
-    const conversations = ref([
-        {
-            id: 1,
-            type: 'DIRECT',
-            lastMessage: '你好',
-            createTime: '',
-            updateTime:'',
-            members:{
-                id: 1,
-                friend: {
-                    userId: '00000000-0000-4000-8000-000000000002',
-                    name: '老皮'
-                },
-                joinTime: '',
-                lastReadTime: ''
-            },
-        }
-    ]);
+    const conversations = ref([]);
+    const getConversation = (targetUserId) => {
+        return httpClient({
+            method: 'post',
+            url: '/api/chat/direct',
+            data: {
+                targetUserId
+            }
+        })
+            .then(response => {
+                conversations.value = response.data;
+            })
+
+    }
     const messages = ref([
         {
             1: [
@@ -68,6 +65,7 @@ export const useChatStore = defineStore('chat',()=>{
 
     return {
         conversations,
+        getConversation,
         messages,
         activeConversationId,
         getActiveConversation,

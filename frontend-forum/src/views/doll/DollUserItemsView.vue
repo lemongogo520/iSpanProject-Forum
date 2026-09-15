@@ -13,7 +13,7 @@
           elevation="6"
         >
           <v-card-title class="text-center font-weight-bold pt-4 auth-title">
-            外觀預覽
+            我的衣櫃
           </v-card-title>
 
           <v-sheet
@@ -67,28 +67,31 @@ const baseUrl = "http://localhost:8080/sprites/";
 
 const equippedItems = ref({});
 
-// 取得使用者目前的穿戴紀錄
-const loadEquippedItems = async () => {
-  try {
-    const response = await httpClient.get("/api/dollitem/equipped");
-    const items = response.data;
+function loadEquippedItems() {
+  httpClient({
+    method: "get",
 
-    if (items && items.length > 0) {
-      // 把從後端抓到的陣列資料，轉換為字典格式 (key: category.id) 塞進 equippedItems
-      const newEquipped = {};
-      items.forEach((item) => {
-        if (item && item.category) {
-          newEquipped[item.category.id] = item;
-        }
-      });
-      equippedItems.value = newEquipped;
-    } else {
-      console.log("目前無穿著紀錄，顯示後端提供的預設裝備");
-    }
-  } catch (error) {
-    console.error("無法取得裝備資料", error);
-  }
-};
+    url: "/api/dollitem/equipped",
+  })
+    .then((response) => {
+      const items = response.data;
+      if (items && items.length > 0) {
+        // 把從後端抓到的陣列資料，轉換為字典格式 (key: category.id) 塞進 equippedItems
+        const newEquipped = {};
+        items.forEach((item) => {
+          if (item && item.category) {
+            newEquipped[item.category.id] = item;
+          }
+        });
+        equippedItems.value = newEquipped;
+      } else {
+        console.log("目前無穿著紀錄，顯示後端提供的預設裝備");
+      }
+    })
+    .catch((error) => {
+      console.error("無法取得裝備資料", error);
+    });
+}
 
 const equipItem = (item) => {
   if (item?.category?.id) {
@@ -114,26 +117,28 @@ const equipItem = (item) => {
 
 const isSaving = ref(false);
 
-const saveEquippedItems = async () => {
-  try {
-    isSaving.value = true;
+function saveEquippedItems() {
+  isSaving.value = true;
+  const itemIds = Object.values(equippedItems.value).map((item) => item.id);
 
-    // 將 { 1: {id: 5, ...}, 2: {id: 8, ...} } 轉成只有 ID 的陣列 [5, 8]
-    const itemIds = Object.values(equippedItems.value).map((item) => item.id);
-
-    // 發送 PUT 請求給後端
-    const response = await httpClient.put("/api/dollitem/newequip", itemIds);
-
-    if (response.status === 200) {
-      alert("套裝儲存成功！");
-    }
-  } catch (error) {
-    console.error("儲存套裝失敗", error);
-    alert("儲存失敗，請確認連線或登入狀態");
-  } finally {
-    isSaving.value = false;
-  }
-};
+  httpClient({
+    method: "put",
+    url: "/api/dollitem/newequip",
+    data: itemIds, // 👈 PUT 請求的 Body 要放在 data 屬性裡
+  })
+    .then((response) => {
+      if (response.status === 200) {
+        alert("套裝儲存成功！");
+      }
+    })
+    .catch((error) => {
+      console.error("儲存套裝失敗", error);
+      alert("儲存失敗，請確認連線或登入狀態");
+    })
+    .finally(() => {
+      isSaving.value = false;
+    });
+}
 
 onMounted(() => {
   loadEquippedItems();

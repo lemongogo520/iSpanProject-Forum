@@ -58,6 +58,7 @@ public class UsersService {
 		user.setCreator(newId);
 		
 		UserDetail userDetail = new UserDetail();
+		//加入預設使用者圖片
 		userDetail.setUserId(newId);
 		userDetail.setCreateIp(registerIp);
 		userDetail.setCreator(newId);

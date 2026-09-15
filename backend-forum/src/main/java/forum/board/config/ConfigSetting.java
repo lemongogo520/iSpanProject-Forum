@@ -26,5 +26,7 @@ public class ConfigSetting {
 
     @Column(name = "value", nullable = true, columnDefinition = "nvarchar(max)") 
     private String value; 
-    
+
+    @Column(name = "comment", nullable = true, columnDefinition = "nvarchar(max)") 
+    private String comment; 
 }

@@ -2,10 +2,12 @@ package forum.board.category;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import forum.board.userpermission.UserPermissionService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +25,21 @@ public class CategoryController {
 
 	private final CategoryService categoryService;
 
+	private final UserPermissionService userPermissionService;
+
 	// 新增
 	@PostMapping("/api/categories")
-	public ResponseEntity<?> save(@RequestBody Category category) {
+	public ResponseEntity<?> save(@RequestBody Category category, HttpSession hs) {
+
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
+		}
+
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有論壇管理員可以管理分類");
+		}
 		categoryService.insertCategory(category);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
@@ -37,20 +51,28 @@ public class CategoryController {
 		return categoryService.findAll();
 	}
 
-	//查詢單一分類
+	// 查詢單一分類
 	@GetMapping("/api/categories/{id}")
 	public ResponseEntity<Category> findById(@PathVariable Integer id) {
 		Category category = categoryService.findById(id);
-		
+
 		if (category == null) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 		return ResponseEntity.ok(category);
 	}
-	
+
 	// 更新分類
 	@PutMapping("/api/categories/{id}")
-	public ResponseEntity<?> updateCategory(@PathVariable Integer id, @RequestBody Category category) {
+	public ResponseEntity<?> updateCategory(@PathVariable Integer id, @RequestBody Category category, HttpSession hs) {
+
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
+		}
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只論壇管理員可以管理分類");
+		}
 
 		category.setId(id);
 
@@ -62,19 +84,19 @@ public class CategoryController {
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
-	
+
 	// 刪除分類
 	@DeleteMapping("/api/categories/delete/{id}")
 	public ResponseEntity<?> deleteCategory(@PathVariable Integer id, HttpSession hs) {
 
-		// 權限判斷(管理員)先隨便設待之後實作後補上
-	    boolean isAdmin = true; // 現在先寫死為 true，讓自己測試「刪除分類」功能時可以順利通行
-	    
-	    if (!isAdmin) {
-	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有管理員可以刪除分類");
-	    }
-		
-		
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
+		}
+		if (!userPermissionService.canManageForum(userId)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有論壇管理員可以管理分類");
+		}
+
 		categoryService.delete(id);
 
 		return ResponseEntity.status(HttpStatus.OK).build();

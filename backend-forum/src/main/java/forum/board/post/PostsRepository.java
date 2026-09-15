@@ -34,10 +34,49 @@ public interface PostsRepository extends JpaRepository<Posts, Integer> {
 	int increaseViews(@Param("id") Integer id);
 
 	// 全站標題搜尋，排除已刪除文章
-	Page<Posts>findByTitleContainingAndIsDeletedFalse(String title,Pageable pageable);
-	
+	Page<Posts> findByTitleContainingAndIsDeletedFalse(String title, Pageable pageable);
 
-// 指定看板的標題搜尋，排除已刪除文章
-	Page<Posts> findByBoardIdAndTitleContainingAndIsDeletedFalse(Integer boardId,String title,Pageable pageable);
+	// 指定看板的標題搜尋，排除已刪除文章
+	Page<Posts> findByBoardIdAndTitleContainingAndIsDeletedFalse(Integer boardId, String title, Pageable pageable);
+
+	// 按讚數排序查詢
+	@Query(value = """
+			SELECT p
+			FROM Posts p
+			LEFT JOIN PostLike pl ON pl.post = p
+			WHERE p.board.id = :boardId
+			  AND p.isDeleted = false
+			GROUP BY p
+			ORDER BY COUNT(pl.id) DESC,
+			         p.createTime DESC,
+			         p.id DESC
+			""", countQuery = """
+			SELECT COUNT(p)
+			FROM Posts p
+			WHERE p.board.id = :boardId
+			  AND p.isDeleted = false
+			""")
+	Page<Posts> findByBoardIdOrderByLikeCount(@Param("boardId") Integer boardId, Pageable pageable);
+
+	// 搜尋文章最多點讚
+	@Query(value = """
+			SELECT p
+			FROM Posts p
+			LEFT JOIN PostLike pl ON pl.post = p
+			WHERE p.board.id = :boardId
+			  AND p.isDeleted = false
+			  AND p.title LIKE CONCAT('%', :title, '%')
+			GROUP BY p
+			ORDER BY COUNT(pl.id) DESC,
+			         p.createTime DESC,
+			         p.id DESC
+			""", countQuery = """
+			SELECT COUNT(p)
+			FROM Posts p
+			WHERE p.board.id = :boardId
+			  AND p.isDeleted = false
+			  AND p.title LIKE CONCAT('%', :title, '%')
+			""")
+	Page<Posts> findByBoardIdAndTitleOrderByLikeCount(@Param("boardId") Integer boardId,@Param("title") String title,Pageable pageable);
 
 }

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import forum.board.common.util.IpUtil;
 import forum.board.exception.AccountExistsException;
+import forum.board.response.ErrorResponse;
+import forum.board.response.SuccessResponse;
 import forum.board.users.UsersService;
 
 @RestController
@@ -35,33 +37,18 @@ public class RegisterController {
         }
 
         try {
-
             // 建立會員
-            usersService.register(
-                    dto,
-                    IpUtil.getClientIp(request)
-            );
-
+            usersService.register(dto, IpUtil.getClientIp(request));
+            
         } catch (AccountExistsException e) {
-
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponse(e.getMessage()));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(e.getMessage()));
         }
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(new SuccessResponse("註冊成功"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResponse("註冊成功"));
     }
 
 
     // =========================
     // API 回傳格式
     // =========================
-
-    public record ErrorResponse(String message) {
-    }
-
-    public record SuccessResponse(String message) {
-    }
 }

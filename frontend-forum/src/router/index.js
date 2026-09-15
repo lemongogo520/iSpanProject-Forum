@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   {
@@ -12,44 +13,77 @@ const routes = [
       import('@/views/HomeView.vue')
   },
   {
-    path: "/login",
-    name: "Login",
-    component: () => import("../views/login/LoginView.vue"),
+      path: "/login",
+      name: "Login",
+      component: () => import("@/views/login/LoginView.vue"),
   },
   {
-    path: "/register",
-    name: "Register",
-    component: () => import("../views/login/RegisterView.vue"),
+      path: "/register",
+      name: "Register",
+      component: () => import("@/views/login/RegisterView.vue"),
   },
   {
-    path: "/api/admin/categories",
-    name: "categories",
-    component: () => import("../view/AdminCategoryView.vue"),
+      path: "/home",
+      name: "Homepage",
+      component: () => import("@/views/HomeView.vue"),
   },
   {
-    path: "/api/categories",
+    path: "/admin/categories",
+    name: "ForumAdminView",
+    component: () => import("@/views/admin/ForumAdminView.vue"),
+  },
+  {
+    path: "/categories",
     name: "userCategories",
-    component: () => import("../view/CategoryListView.vue"),
+    component: () => import("@/views/forum/CategoryListView.vue"),
   },
   {
     path: "/boards/:boardId",
     name: "board",
-    component: () => import("../view/BoardView.vue"),
+    component: () => import("@/views/forum/BoardView.vue"),
   },
   {
     path: "/post/create",
     name: "PostCreate",
-    component: () => import("../view/PostCreateView.vue"),
+    component: () => import("@/views/post/PostCreateView.vue"),
   },
   {
     path: "/posts/:postId/edit",
     name: "post-edit",
-    component: () => import("@/view/PostCreateView.vue"),
+    component: () => import("@/views/post/PostCreateView.vue"),
   },
   {
     path: "/post/:postId",
     name: "PostDetail",
-    component: () => import("../view/PostDetailView.vue"),
+    component: () => import("@/views/post/PostDetailView.vue"),
+  },
+  {
+    path: "/doll/categories",
+    name: "dollCategories",
+    component: () => import("@/views/doll/DollCategoriesView.vue"),
+  },
+  {
+    path: "/doll/newitem",
+    name: "dollnewitem",
+    component: () => import("@/views/doll/DollNewItemsView.vue"),
+  },
+  {
+    path: "/doll/cart",
+    name: "dollcart",
+    component: () => import("@/views/doll/DollCartItemsView.vue"),
+  },
+  {
+    path: "/friend",
+    name: "Friend",
+    component: () => import("@/views/friend/FriendView.vue"),
+  },
+
+
+  //管理者設定
+  {
+    path: '/config/setting',
+    name: 'Config',
+    component: () => import('@/views/config/ConfigView.vue')
   },
   {
     path: '/shop',
@@ -72,6 +106,30 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+})
+
+router.beforeEach(async (to) => {
+
+  const authStore = useAuthStore()
+
+  // 登入、註冊頁不用檢查
+  if (
+    to.path === '/login' ||
+    to.path === '/register'
+  ) {
+    return true
+  }
+
+  // 其他頁面只檢查一次
+  const isLogin = await authStore.checkLogin()
+
+  // 沒登入 → 登入頁
+  if (!isLogin) {
+    return '/login'
+  }
+
+  // 有登入 → 正常進入
+  return true
 })
 
 export default router;

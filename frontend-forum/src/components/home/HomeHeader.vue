@@ -1,179 +1,236 @@
-<script setup>
-import { ref } from "vue";
-import { useDisplay } from "vuetify";
-
-const drawer = ref(false);
-const { mdAndUp } = useDisplay();
-
-const navItems = [
-  { title: "首頁", icon: "mdi-home-outline", to: "/" },
-  { title: "討論區", icon: "mdi-forum-outline", to: "/forum" },
-  { title: "點數", icon: "mdi-star-circle-outline", to: "/coin" },
-  { title: "我的角色", icon: "mdi-account-circle-outline", to: "/avatar" },
-  { title: "商城", icon: "mdi-storefront-outline", to: "/shop" },
-  { title: "任務活動", icon: "mdi-clipboard-check-outline", to: "/tasks" },
-];
-</script>
-
 <template>
-  <v-app-bar class="top-header" color="#0f1f35" height="72" elevation="2">
-    <v-container class="header-container d-flex align-center" max-width="1200">
-      <v-app-bar-nav-icon v-if="!mdAndUp" color="white" aria-label="開啟導覽選單" @click="drawer = !drawer" />
+  <v-app-bar elevation="2" color="white" height="64">
+    <v-container fluid class="navbar-container">
+      <div class="navbar-left">
+        <div class="logo" @click="goTo('/')">
+          XX論壇
+        </div>
 
-      <RouterLink to="/" class="brand">iSpanProject</RouterLink>
-
-      <nav v-if="mdAndUp" class="main-nav">
-        <v-btn
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          :class="{ 'nav-button--active': $route.path === item.to }"
-          class="nav-button"
-          color="#c8d1de"
-          variant="text"
-          rounded="0"
-        >
-          {{ item.title }}
+        <v-btn variant="text" @click="goTo('/categories')">
+          <v-icon start>mdi-forum</v-icon>
+          討論版
         </v-btn>
-      </nav>
+
+        <v-btn variant="text" @click="goTo('/paper-doll')">
+          <v-icon start>mdi-account-star</v-icon>
+          紙娃娃系統
+        </v-btn>
+
+        <v-btn variant="text" @click="goTo('/daily-task')">
+          <v-icon start>mdi-calendar-check</v-icon>
+          每日任務
+        </v-btn>
+
+        <v-btn
+          v-if="isAdmin"
+          variant="text"
+          @click="goTo('/admin')"
+        >
+          <v-icon start>mdi-shield-crown</v-icon>
+          後台管理
+        </v-btn>
+      </div>
 
       <v-spacer />
 
-      <div class="user-area">
-        <v-avatar color="primary" size="34">
-          <span class="avatar-text">A</span>
-        </v-avatar>
+      <v-menu>
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="text"
+            class="user-menu-btn"
+          >
+            <v-avatar size="38" class="mr-2">
+              <v-img
+                v-if="user.avatar"
+                :src="user.avatar"
+                alt="使用者頭像"
+              />
+              <v-icon v-else size="26">
+                mdi-account
+              </v-icon>
+            </v-avatar>
 
-        <span v-if="mdAndUp">哈囉，Admin</span>
-      </div>
+            <span class="username">
+             {{ user.name || user.account }}
+            </span>
+
+            <v-icon class="ml-1">
+              mdi-chevron-down
+            </v-icon>
+          </v-btn>
+        </template>
+
+        <v-list min-width="180">
+          <v-list-item @click="openUserDetail">
+            <template #prepend>
+              <v-icon>mdi-account-circle</v-icon>
+            </template>
+
+            <v-list-item-title>使用者資訊</v-list-item-title>
+          </v-list-item>
+
+          <v-list-item @click="goTo('/friends')">
+            <template #prepend>
+              <v-icon>mdi-account-multiple</v-icon>
+            </template>
+            <v-list-item-title>好友</v-list-item-title>
+          </v-list-item>
+
+          <v-divider />
+
+          <v-list-item @click="logout">
+            <template #prepend>
+              <v-icon>mdi-logout</v-icon>
+            </template>
+            <v-list-item-title>登出</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
+      <UserDetailView v-model="userDetailDialog" :account="userStore.account" @saved="reloadPage"/>
     </v-container>
   </v-app-bar>
-
-  <v-navigation-drawer v-model="drawer" color="#0f1f35" location="left" temporary width="280">
-    <div class="drawer-user">
-      <v-avatar color="primary" size="42">
-        <span class="avatar-text">A</span>
-      </v-avatar>
-
-      <div>
-        <div class="drawer-user-name">Admin</div>
-        <div class="drawer-user-caption">歡迎回來</div>
-      </div>
-    </div>
-
-    <v-divider color="#56677c" />
-
-    <v-list nav density="comfortable">
-      <v-list-item
-        v-for="item in navItems"
-        :key="item.to"
-        :title="item.title"
-        :prepend-icon="item.icon"
-        :to="item.to"
-        color="primary"
-        rounded="lg"
-        @click="drawer = false"
-      />
-    </v-list>
-  </v-navigation-drawer>
 </template>
 
-<style scoped>
-.top-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import httpClient from '@/services/httpClient'
+import UserDetailView from '@/views/user/UserDetailView.vue'
+import { useUserStore } from '@/stores/user'
+import { userService } from '@/services/userService'
+
+const router = useRouter()
+const userDetailDialog = ref(false)
+const userStore = useUserStore()
+
+//初始化確認使用者是否有填寫第一次資料
+onMounted(async () => {
+  await checkUserDetail()
+})
+
+async function checkUserDetail() {
+
+  try {
+    const user = await userService.getUserDetail(userStore.account)
+
+    console.log('目前使用者資料：', user)
+
+    // 沒有名稱
+    if (!user.name || user.name.trim() === '') {
+      userDetailDialog.value = true
+    }
+
+  } catch (error) {
+    console.error('取得使用者資料失敗：', error)
+  }
 }
 
-.header-container {
-  width: 100%;
+//塞畫面資料
+const user = computed(() => ({
+  name: userStore.name,
+  account: userStore.account,
+  role: userStore.permission
+}))
+
+//登出
+const logout = () => {
+  httpClient({
+    method: 'post',
+    url: '/api/logout'
+  })
+    .then(response => {
+      console.log('登出成功:', response.data)
+      userStore.clearUser();
+      router.push('/login')
+    })
+    .catch(error => {
+      console.error('登出失敗:', error)
+    })
+}
+
+//開啟明細設定
+function openUserDetail() {
+  userDetailDialog.value = true
+}
+
+//設定管理者才有的顯示
+const isAdmin = computed(() => {
+  return userStore.permission === 1
+})
+
+//前往路由
+function goTo(path) {
+  router.push(path)
+}
+
+//重新整理介面
+function reloadPage() {
+  window.location.reload()
+}
+
+</script>
+
+<style scoped>
+.navbar-container {
+  display: flex;
+  align-items: center;
   height: 100%;
   padding: 0 24px;
 }
 
-.brand {
-  flex-shrink: 0;
-  margin-right: 30px;
-  color: white;
-  font-size: 22px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.main-nav {
-  display: flex;
-  align-items: stretch;
-  height: 100%;
-}
-
-.nav-button {
-  position: relative;
-  height: 72px !important;
-  padding: 0 14px !important;
-  font-size: 15px;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.nav-button:hover {
-  color: white !important;
-}
-
-.nav-button--active {
-  color: white !important;
-}
-
-.nav-button--active::after {
-  position: absolute;
-  right: 14px;
-  bottom: 0;
-  left: 14px;
-  height: 3px;
-  background: #3b82f6;
-  content: "";
-}
-
-.user-area {
+.navbar-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #e5ebf3;
-  font-size: 14px;
+  gap: 4px;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  margin-right: 20px;
+  cursor: pointer;
+  color: #1976d2;
   white-space: nowrap;
 }
 
-.avatar-text {
-  color: white;
-  font-weight: 700;
+.user-menu-btn {
+  text-transform: none;
+  min-width: auto;
+  padding: 4px 8px;
 }
 
-.drawer-user {
+.username {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.dialog-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.user-info {
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 24px 20px;
+  gap: 20px;
+  padding: 10px 0;
 }
 
-.drawer-user-name {
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-.drawer-user-caption {
-  margin-top: 2px;
-  color: #9eacbd;
-  font-size: 13px;
+.user-name {
+  font-size: 20px;
+  font-weight: 600;
 }
 
-@media (max-width: 959px) {
-  .header-container {
-    padding: 0 12px;
-  }
-
-  .brand {
-    margin-right: 0;
-    font-size: 20px;
-  }
+.user-account {
+  font-size: 14px;
+  color: #777;
 }
 </style>

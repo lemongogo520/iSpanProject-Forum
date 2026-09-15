@@ -16,7 +16,7 @@ public class CategoryService {
     // 找所有看板分類
     public List<Category> findAll() {
 
-        return categoryRepo.findAll();
+        return categoryRepo.findAllByOrderByRankAscIdAsc();
     }
 
     // 根據id找類別

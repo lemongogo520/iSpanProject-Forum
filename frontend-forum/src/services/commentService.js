@@ -49,8 +49,15 @@ export const updateComment = (commentId, content) => {
 };
 
 // 刪除留言
-export const deleteComment = (commentId) => {
-  return httpClient.delete(`/api/comments/${commentId}`);
+export const deleteComment = (commentId,reason = null,) => {
+  return httpClient.delete(
+    `/api/comments/${commentId}`,
+    {
+      data: {
+        reason,
+      },
+    },
+  );
 };
 
 // 取得留言編輯紀錄

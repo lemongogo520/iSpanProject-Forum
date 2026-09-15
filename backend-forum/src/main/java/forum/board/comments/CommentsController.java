@@ -105,7 +105,8 @@ public class CommentsController {
 
 	// 刪除留言
 	@DeleteMapping("/api/comments/{commentId}")
-	public ResponseEntity<?> delete(@PathVariable Integer commentId, HttpSession session) {
+	public ResponseEntity<?> delete(@PathVariable Integer commentId,@RequestBody(required = false)
+        DeleteRequestDTO request, HttpSession session) {
 
 		UUID userId = (UUID) session.getAttribute("loginUserId");
 		if (userId == null) {
@@ -118,8 +119,9 @@ public class CommentsController {
 		}
 
 		Users user = opUser.get();
+		String reason = request == null ? null : request.getReason();
 		try {
-			commentsService.delete(commentId, user);
+			commentsService.delete(commentId, user, reason);
 
 			return ResponseEntity.ok("留言刪除成功！");
 

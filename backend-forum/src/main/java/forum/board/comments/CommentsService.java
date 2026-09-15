@@ -121,7 +121,7 @@ public class CommentsService {
 
     // 刪除留言
     @Transactional
-    public void delete(Integer commentId, Users user) {
+    public void delete(Integer commentId, Users user, String reason) {
 
         // 檢查有沒有登入
         if (user == null) {
@@ -155,14 +155,19 @@ public class CommentsService {
 
         boolean isModeratorDelete = !isOwner && (isBoardModerator || isForumManager);
 
+        if (isModeratorDelete) {
+            if (reason == null || reason.trim().isEmpty()) {
+                throw new RuntimeException("管理員刪除留言時必須選擇原因");
+            }
+            reason = reason.trim();
+        }
         // 寫入歷史紀錄
         commentsHistoryService.recordDeleteHistory(comment, user);
-
         // 軟刪除狀態
         comment.setDeletedByModerator(isModeratorDelete);
+        comment.setDeleteReason(isModeratorDelete ? reason : null);
         comment.setIsDeleted(true);
         comment.setDeletedTime(Instant.now());
-
         // 刪除留言
         commentsRepo.save(comment);
     }

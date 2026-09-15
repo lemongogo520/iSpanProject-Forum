@@ -102,7 +102,8 @@ public class BoardModeratorController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
         }
 
-        boolean canModerate = boardModeratorService.isBoardModerator(boardId, loginUserId);
+        boolean canModerate = boardModeratorService.isBoardModerator(boardId, loginUserId)
+                || userPermissionService.canManageForum(loginUserId);
 
         return ResponseEntity.ok(Map.of("canModerate", canModerate));
     }

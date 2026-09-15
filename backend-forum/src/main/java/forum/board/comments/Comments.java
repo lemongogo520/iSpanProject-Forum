@@ -59,6 +59,10 @@ public class Comments {
 	@Column(name = "deleted_by_moderator")
 	private Boolean deletedByModerator = false;
 
+	// 管理員刪除留言的原因
+	@Column(name = "delete_reason", length = 200)
+	private String deleteReason;
+
 	// 軟刪除時間
 	@Column(name = "deleted_time")
 	private Instant deletedTime;
@@ -80,11 +84,15 @@ public class Comments {
 	public String getContent() {
 		if (Boolean.TRUE.equals(this.isDeleted)) {
 			if (Boolean.TRUE.equals(this.deletedByModerator)) {
+				if (deleteReason != null &&
+						!deleteReason.isBlank()) {
+					return "此留言因「"+ deleteReason+ "」已被管理員刪除";
+				}
 				return "此留言因違反規章已被管理員刪除";
 			}
 			return "此留言已被使用者刪除";
 		}
-		return this.content;
+		return content;
 	}
 
 }

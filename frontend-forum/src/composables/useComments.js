@@ -233,11 +233,11 @@ export function useComments(postId) {
   // ======================
   // 刪除留言
   // ======================
-  const deleteComment = async (commentId, parentCommentId = null) => {
+  const deleteComment = async (commentId, parentCommentId = null,reason = null,) => {
     deletingCommentId.value = commentId;
 
     try {
-      await deleteCommentApi(commentId);
+      await deleteCommentApi(commentId,reason);
 
       showMessage("留言刪除成功");
 

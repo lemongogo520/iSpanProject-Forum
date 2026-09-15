@@ -69,7 +69,7 @@
               variant="text"
               :disabled="deletingCommentId === comment.id"
               :loading="deletingCommentId === comment.id"
-              @click.stop="emit('delete-comment', comment.id, null)"
+              @click.stop="emit('delete-comment', comment.id, null,comment.users?.id)"
             >
               刪除
             </v-btn>
@@ -219,7 +219,7 @@
                       variant="text"
                       :disabled="deletingCommentId === child.id"
                       :loading="deletingCommentId === child.id"
-                      @click.stop="emit('delete-comment', child.id, comment.id)"
+                      @click.stop="emit('delete-comment', child.id, comment.id,child.users?.id)"
                     >
                       刪除
                     </v-btn>

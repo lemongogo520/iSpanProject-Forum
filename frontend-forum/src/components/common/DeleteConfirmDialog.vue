@@ -1,16 +1,25 @@
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    max-width="420"
-    persistent
-  >
+  <v-dialog :model-value="modelValue" max-width="420" persistent>
     <v-card>
       <v-card-title class="text-h6">
         {{ title }}
       </v-card-title>
 
       <v-card-text>
-        {{ message }}
+        <div class="mb-4">
+          {{ message }}
+        </div>
+
+        <v-select
+          v-if="reasonRequired"
+          :model-value="reason"
+          :items="deleteReasons"
+          label="請選擇刪除原因"
+          variant="outlined"
+          density="comfortable"
+          hide-details="auto"
+          @update:model-value="emit('update:reason', $event)"
+        />
       </v-card-text>
 
       <v-card-actions>
@@ -18,7 +27,7 @@
 
         <v-btn
           variant="text"
-          :disabled="loading"
+          :disabled="loading || (reasonRequired && !reason?.trim())"
           @click="emit('cancel')"
         >
           取消
@@ -59,10 +68,23 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  reasonRequired: {
+    type: Boolean,
+    default: false,
+  },
+  reason: {
+    type: String,
+    default: "",
+  },
 });
+const deleteReasons = [
+  "廣告或垃圾內容",
+  "人身攻擊或不當言論",
+  "色情或暴力內容",
+  "洩漏個人資料",
+  "與討論版主題無關",
+  "其他違反規章的內容",
+];
 
-const emit = defineEmits([
-  "cancel",
-  "confirm",
-]);
+const emit = defineEmits(["cancel", "confirm", "update:reason"]);
 </script>

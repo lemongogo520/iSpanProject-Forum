@@ -30,16 +30,16 @@ public class Comments {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	
+
 	@JsonIgnore
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="post_id",nullable=false)
+	@JoinColumn(name = "post_id", nullable = false)
 	private Posts post;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="user_id",nullable=false)
+	@JoinColumn(name = "user_id", nullable = false)
 	private Users users;
-	
+
 	@Column(columnDefinition = "nvarchar(max)")
 	private String content;
 
@@ -47,39 +47,44 @@ public class Comments {
 	// 如果這是一樓的留言，parentComment 就 null
 	// 如果這是子樓留言，parentComment 就會指向被回覆的那條 Comments
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
+	@JoinColumn(name = "parent_id")
 	@JsonIgnore
-    private Comments parentComment;
-
+	private Comments parentComment;
 
 	// 軟刪除狀態 (預設 false)
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
+	@Column(name = "is_deleted", nullable = false)
+	private Boolean isDeleted = false;
 
-    // 軟刪除時間
-    @Column(name = "deleted_time")
-    private Instant deletedTime;
-	
-	@Column(name="create_time")
+	// 是否由版主或管理員刪除
+	@Column(name = "deleted_by_moderator")
+	private Boolean deletedByModerator = false;
+
+	// 軟刪除時間
+	@Column(name = "deleted_time")
+	private Instant deletedTime;
+
+	@Column(name = "create_time")
 	private Instant createTime;
-	
-	@Column(name="modify_time")
+
+	@Column(name = "modify_time")
 	private Instant modifyTime;
-	
+
 	@PrePersist
 	public void createAt() {
-		
-		if(createTime==null) {
-			createTime=Instant.now();
+
+		if (createTime == null) {
+			createTime = Instant.now();
 		}
 	}
 
 	public String getContent() {
-    if (Boolean.TRUE.equals(this.isDeleted)) {
-
-        return "此留言已被使用者刪除";
-    }
-    return this.content;
-}
+		if (Boolean.TRUE.equals(this.isDeleted)) {
+			if (Boolean.TRUE.equals(this.deletedByModerator)) {
+				return "此留言因違反規章已被管理員刪除";
+			}
+			return "此留言已被使用者刪除";
+		}
+		return this.content;
+	}
 
 }

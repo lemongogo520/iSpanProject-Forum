@@ -123,8 +123,9 @@ public class CommentsController {
 
 			return ResponseEntity.ok("留言刪除成功！");
 
+		} catch (SecurityException e) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
 		} catch (RuntimeException e) {
-
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 	}

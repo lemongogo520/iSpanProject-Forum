@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -71,7 +72,7 @@ public class BoardModeratorController {
 
     // 刪除某討論版版主身分
     @DeleteMapping("/api/boards/{boardId}/moderators/{userId}")
-    public ResponseEntity<?> removeModerator( @PathVariable Integer boardId,@PathVariable UUID userId,HttpSession hs) {
+    public ResponseEntity<?> removeModerator(@PathVariable Integer boardId, @PathVariable UUID userId, HttpSession hs) {
 
         UUID loginUserId = (UUID) hs.getAttribute("loginUserId");
 
@@ -82,13 +83,28 @@ public class BoardModeratorController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("權限不足：只有論壇管理員可以移除版主");
         }
         try {
-            boardModeratorService.removeModerator( boardId,userId);
+            boardModeratorService.removeModerator(boardId, userId);
             return ResponseEntity.ok("版主移除成功");
 
         } catch (IllegalArgumentException error) {
             return ResponseEntity.badRequest().body(error.getMessage());
         }
-        
+
+    }
+
+    // 目前登入者是否能管理這個看板
+    @GetMapping("/api/boards/{boardId}/moderators/me")
+    public ResponseEntity<?> canModerate(@PathVariable Integer boardId, HttpSession hs) {
+
+        UUID loginUserId = (UUID) hs.getAttribute("loginUserId");
+
+        if (loginUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入");
+        }
+
+        boolean canModerate = boardModeratorService.isBoardModerator(boardId, loginUserId);
+
+        return ResponseEntity.ok(Map.of("canModerate", canModerate));
     }
 
 }

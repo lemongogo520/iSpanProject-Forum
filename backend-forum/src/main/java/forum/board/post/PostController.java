@@ -109,6 +109,8 @@ public class PostController {
 			postService.delete(id, userId);
 
 			return ResponseEntity.ok("文章刪除成功！");
+		} catch (SecurityException e) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
 		} catch (RuntimeException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
@@ -150,10 +152,10 @@ public class PostController {
 	public ResponseEntity<?> uploadPostImage(
 			@RequestParam("file") MultipartFile file,
 			HttpSession hs) {
-				UUID userId =(UUID) hs.getAttribute("loginUserId");
+		UUID userId = (UUID) hs.getAttribute("loginUserId");
 
-    if (userId == null) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入才能上傳文章圖片");
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("請先登入才能上傳文章圖片");
 		}
 
 		try {

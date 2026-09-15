@@ -8,8 +8,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import forum.board.boardModerator.BoardModeratorService;
 import forum.board.post.Posts;
 import forum.board.post.PostsRepository;
+import forum.board.userpermission.UserPermissionService;
 import forum.board.users.Users;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,10 @@ public class CommentsService {
     private final PostsRepository postsRepo;
 
     private final CommentsHistoryService commentsHistoryService;
+
+    private final BoardModeratorService boardModeratorService;
+
+    private final UserPermissionService userPermissionService;
 
     // 新增留言
     public Comments createComments(Integer postId, Integer parentCommentId, Comments newComments, Users user) {
@@ -90,7 +96,7 @@ public class CommentsService {
 
             throw new RuntimeException("修改失敗！找不到指定的留言 ID: " + commentId);
         }
-        
+
         Comments comment = opComment.get();
 
         // 如果已經刪除，不允許修改
@@ -102,7 +108,7 @@ public class CommentsService {
             throw new RuntimeException("權限不足：不能修改別人的留言！");
         }
 
-        String validatedContent =validateContent(newContent);
+        String validatedContent = validateContent(newContent);
         // 做新增修改紀錄動作
         commentsHistoryService.updateHistory(comment, validatedContent, user);
 
@@ -134,17 +140,26 @@ public class CommentsService {
         if (Boolean.TRUE.equals(comment.getIsDeleted())) {
             throw new RuntimeException("留言已經刪除！");
         }
-
-        // 權限檢查：只能刪除自己的留言
-        if (!comment.getUsers().getId().equals(user.getId())) {
-            throw new RuntimeException("權限不足：不能刪除別人的留言！");
+        // 是否為留言作者
+        boolean isOwner = comment.getUsers().getId().equals(user.getId());
+        // 留言所屬文章的討論版
+        Integer boardId = comment.getPost().getBoard().getId();
+        // 是否為該版版主
+        boolean isBoardModerator = boardModeratorService.isBoardModerator(boardId, user.getId());
+        // 是否為論壇管理員或系統管理員
+        boolean isForumManager = userPermissionService.canManageForum(user.getId());
+        // 三種身分都不符合才禁止刪除
+        if (!isOwner && !isBoardModerator && !isForumManager) {
+            throw new SecurityException("權限不足：無法刪除這則留言");
         }
-        // 管理員權限尚未實作待補能夠刪除使用者的留言
+
+        boolean isModeratorDelete = !isOwner && (isBoardModerator || isForumManager);
 
         // 寫入歷史紀錄
         commentsHistoryService.recordDeleteHistory(comment, user);
 
         // 軟刪除狀態
+        comment.setDeletedByModerator(isModeratorDelete);
         comment.setIsDeleted(true);
         comment.setDeletedTime(Instant.now());
 

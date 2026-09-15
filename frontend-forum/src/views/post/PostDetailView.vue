@@ -25,6 +25,7 @@
         :liked-by-current-user="likedByCurrentUser"
         :like-updating="likeUpdating"
         :is-post-owner="isPostOwner"
+        :can-moderate="canModerate"
         :post-deleting="postDeleting"
         @toggle-like="handleToggleLike"
         @edit-post="editPost"
@@ -74,6 +75,7 @@
         :replying-comment-id="replyingCommentId"
         :reply-content="replyContent"
         :current-user-id="currentUserId"
+        :can-moderate="canModerate"
         :comment-updating="commentUpdating"
         :reply-submitting="replySubmitting"
         :deleting-comment-id="deletingCommentId"
@@ -134,6 +136,8 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
+import httpClient from "@/services/httpClient";
 
 // API匯入
 import {
@@ -256,6 +260,11 @@ const {
 // ======================
   openCommentHistory,
 } = useComments(postId);
+
+// ======================
+// 刪除按鈕顯示
+// ======================
+const canModerate = ref(false);
 const {
   likeCount,
   likedByCurrentUser,
@@ -331,7 +340,7 @@ const currentUserId = computed(() => userStore.uid ?? "");
 const fetchPost = () => {
   loading.value = true;
   errorMessage.value = "";
-  getPostApi(postId)
+  return getPostApi(postId)
     .then((response) => {
       post.value = response.data;
     })
@@ -411,7 +420,30 @@ const deletePost = () => {
       postDeleting.value = false;
     });
 };
+// ======================
+// 管理員刪除留言功能
+// ======================
+const fetchModerationPermission = () => {
+  const boardId = post.value?.boardId;
 
+  if (!boardId) {
+    canModerate.value = false;
+    return Promise.resolve();
+  }
+
+  return httpClient({
+    method: "get",
+    url: `/api/boards/${boardId}/moderators/me`,
+  })
+    .then((response) => {
+      canModerate.value =
+          response.data?.canModerate === true;
+    })
+    .catch((error) => {
+      console.error("取得版主權限失敗：", error);
+      canModerate.value = false;
+    });
+};
 // ======================
 // 返回
 // ======================
@@ -452,7 +484,8 @@ onMounted(async () => {
     }
   }
   // 不論是否計次，都正常取得文章
-  fetchPost();
+  await fetchPost();
+  await fetchModerationPermission();
   fetchPostHistory();
   fetchLikeStatus();
 });

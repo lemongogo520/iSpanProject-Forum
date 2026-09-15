@@ -578,28 +578,37 @@ async function validateForm() {
 |--------------------------------------------------------------------------
 */
 async function save() {
-  /*
-   * 先驗證
-   */
   const valid = await validateForm();
 
   if (!valid) {
     return;
   }
 
-  await userService.saveUserDetail(form);
+  try {
+    await userService.saveUserDetail(form);
 
-  /*
-   * 更新原始資料
-   */
-  originalForm.value = JSON.parse(JSON.stringify(form));
+    // 重新查詢，確認後端確實已儲存名稱。
+    const user = await userService.getUserDetail(userStore.account);
 
-  /*
-   * 已經沒有未儲存修改
-   */
-  isDirty.value = false;
+    nameExistsInDatabase.value = !!user.name?.trim();
+
+    if (!nameExistsInDatabase.value) {
+      pointsNavigationError.value =
+        "儲存後仍未取得名稱，請確認會員資料 API。";
+      return;
+    }
+
+    originalForm.value = JSON.parse(JSON.stringify(form));
+    isDirty.value = false;
+    pointsNavigationError.value = "";
+
+    emit("saved");
+  } catch (error) {
+    console.error("儲存或確認會員資料失敗：", error);
+    pointsNavigationError.value =
+      "無法確認會員資料是否儲存成功，請稍後再試。";
+  }
 }
-
 /*
 |--------------------------------------------------------------------------
 | 儲存並關閉

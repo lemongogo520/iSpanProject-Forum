@@ -23,4 +23,6 @@ public interface ConversationRepository extends JpaRepository<ConversationEntity
     Optional<ConversationEntity> findDirectConversation(UUID user1Id, UUID user2Id);
 
 
+
+
 }

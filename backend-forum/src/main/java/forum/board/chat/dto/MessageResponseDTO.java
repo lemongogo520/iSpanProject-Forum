@@ -5,11 +5,12 @@ import java.time.Instant;
 import forum.board.chat.message.MessagesEntity.ChatType;
 import forum.board.friends.dto.FriendResponseDTO;
 
-public record MessageDTO(
+public record MessageResponseDTO(
     long id,
     long conversationId,
     ChatType type,
     FriendResponseDTO sender,
     String content,
-    Instant createTime
+    Instant createTime,
+    boolean mine
 ) {}

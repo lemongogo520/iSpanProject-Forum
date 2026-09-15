@@ -1,75 +1,66 @@
 import httpClient from "@/services/httpClient";
+import axios from "axios";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 export const useChatStore = defineStore('chat',()=>{
     const conversations = ref([]);
-    const getConversation = (targetUserId) => {
-        return httpClient({
+    const currentConversation = ref(null);
+    // 目前 Conversation 的訊息
+    const messages = ref([]);
+    const getConversation = async (targetUserId) => {
+        const response = await httpClient({
             method: 'post',
             url: '/api/chat/direct',
             data: {
                 targetUserId
             }
-        })
-            .then(response => {
-                conversations.value = response.data;
-            })
-
+        });
+        currentConversation.value = response.data;
+        clearMessages();
     }
-    const messages = ref([
-        {
-            1: [
-                {
-                    id: 1,
-                    type: 'TEXT',
-                    senderId: '00000000-0000-4000-8000-000000000001',
-                    content: ' 哈囉',
-                    createTime: '2026-09-13 18:00'
-                },
-                {
-                    id: 2,
-                    conversationId: '1',
-                    type: 'TEXT',
-                    senderId: '00000000-0000-4000-8000-000000000002',
-                    content: '你好',
-                    createTime: '2026-09-13 18:50'
-                }
-            ]
-        }
-  
-
-    ]);
-    const activeConversationId = ref(null);
-
-    const getActiveConversation = computed(()=>{
+    
+    const getcurrentConversation = (()=>{
         return conversations.value.find(
-            conversation => conversation.id === activeConversationId .value
+            conversation => conversation.id === currentConversation .value
         )
     })
 
-    const getActiveMessages = computed(()=>{
-        return messages.value.find(
-            message => message.value[activeConversationId.value]||[]
-        )
+
+    const getMessages = (async (conversationId)=>{
+        const response = await httpClient.get(`/api/chat/message/${conversationId}`);
+        return messages.value = response.data;
     })
 
-    // const sendMessage = (content) => {
-    //     messages.value.push({
-    //         id: Date.now(),
-    //         type: 'TEXT',
-    //         senderId: '00000000-0000-4000-8000-000000000001',
-    //         content: content,
-    //         createTime: new Date().toLocaleString()
-    //     })
-    // }
+    const sendMessage = async (conversationId,content) => {
+        try {
+            const response = await httpClient({
+                method: 'post',
+                url: '/api/chat/message',
+                data: {
+                    conversationId: conversationId,
+                    content: content
+                }
+            });
+            messages.value.push(response.data);
+        } catch (error) {
+            return console.log(error);
+        }
+    }
+
+    const clearMessages = () =>{
+        messages.value = [];
+    }
+
+        
 
     return {
         conversations,
         getConversation,
+        currentConversation,
+        getcurrentConversation,
         messages,
-        activeConversationId,
-        getActiveConversation,
-        getActiveMessages,
-        sendMessage
+        getMessages,
+        sendMessage,
+        clearMessages
     }
 })

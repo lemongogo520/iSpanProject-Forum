@@ -1,29 +1,37 @@
 <template>
     <div class="chat-room">
         <ChatHeader :friend="friend"></ChatHeader>
-        <MessageList :friend="friend" :conversation="conversations"></MessageList>
-        <MessageInput @send="sendMessage"/>
+        <MessageList></MessageList>
+        <MessageInput/>
     </div>
 </template>
 <script setup>
-import { useChatStore } from '@/stores/chat.js';
+import { onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+
 import ChatHeader from './ChatHeader.vue';
 import MessageInput from './MessageInput.vue';
 import MessageList from './MessageList.vue';
-import { storeToRefs } from 'pinia';
+
+import { useChatStore } from '@/stores/chat.js';
+
 defineProps({
     friend:{
         type: Object,
         required:true
-    }
+    },
 })
 
 const chatStore = useChatStore();  
-const {conversations} = storeToRefs(chatStore);
-const sendMessage = (content)=>{
-    console.log('Chatroom收到:',content);
-    chatStore.sendMessage(content);
-}
+const {currentConversation} = storeToRefs(chatStore);
+const {getMessages} = chatStore;
+
+onMounted(()=>{
+    // console.log(currentConversation.value)
+    getMessages(currentConversation.value.id);
+})
+
+
 </script>
 <style>
 .chat-room{

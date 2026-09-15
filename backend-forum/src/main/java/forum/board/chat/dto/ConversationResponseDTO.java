@@ -10,6 +10,6 @@ public record ConversationResponseDTO(
     ConversationType type,
     String lastMessage,
     Instant createTime,
-    Instant updateTime,
-    List<ConversationMemberResponseDTO> members
+    Instant updateTime
+    // List<ConversationMemberResponseDTO> members
 ) {}

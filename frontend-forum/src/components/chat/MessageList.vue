@@ -1,20 +1,39 @@
 <template>
-    <div class="message-list">
-        <MessageItem v-for="message in messages[1]" :key="message.id" :message="message"></MessageItem>
+    <div ref="messageList" class="message-list" v-if="messages!=[]">
+        <MessageItem 
+            v-for="message in messages" 
+            :key="message.id" 
+            :message="message"/>
     </div>
+    <div v-else class="empty-text">打聲招呼吧!</div>
 </template>
 <script setup>
+import { ref, watch, nextTick } from 'vue';
 import { useChatStore } from '@/stores/chat.js';
 import MessageItem from './MessageItem.vue';
 import { storeToRefs } from 'pinia';
 const chatStore = useChatStore();
 const {messages} = storeToRefs(chatStore);
-defineProps({
-    friend:{
-        type: Object,
-        required:true
+const messageList = ref(null);
+
+const scrollToBottom = async () => {
+    await nextTick()
+
+    if (messageList.value) {
+        messageList.value.scrollTop =
+            messageList.value.scrollHeight
     }
-})
+}
+
+// messages 改變時捲到底
+watch(
+    () => messages,
+    () => {
+        scrollToBottom()
+    },
+    { deep: true }
+)
+
     
 </script>
 <style>

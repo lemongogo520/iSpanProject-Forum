@@ -29,23 +29,7 @@ public class ConversationService {
         // 先找兩人有沒有聊過天 沒有就建立 conversation+conversation member
         ConversationEntity c = cRepo.findDirectConversation(user1Id, user2Id)
             .orElseGet(() -> createDirectConversation(user1Id, user2Id));
-
-        List<ConversationMemberResponseDTO> members = c.getMembers().stream().map(member -> {
-            Users user = member.getUser();
-            return new ConversationMemberResponseDTO(
-                member.getId(),
-                new FriendResponseDTO(
-                    user.getId(),
-                    user.getAccount(),
-                    user.getUsersDetail().getName(),
-                    user.getUsersDetail().getPhoto()
-                ),
-                member.getJoinTime(),
-                member.getLastReadTime()
-            );
-        }).toList();
-
-        return new ConversationResponseDTO(c.getId(), c.getType(), c.getLastMessage(), c.getCreateTime(), c.getUpdateTime(),members);
+        return new ConversationResponseDTO(c.getId(), c.getType(), c.getLastMessage(), c.getCreateTime(), c.getUpdateTime());
     }
 
     private ConversationEntity createDirectConversation(UUID user1Id, UUID user2Id){

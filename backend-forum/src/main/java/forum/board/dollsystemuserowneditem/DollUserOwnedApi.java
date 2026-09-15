@@ -20,8 +20,8 @@ public class DollUserOwnedApi {
 
     private final DollUserOwnedService ownedService;
 
-    // 取得該部位所有裝備，並標示玩家是否已經擁有 (取代原本的 /api/dollitems/usercheck/{categoryId})
-    @GetMapping("/api/dollitem/shop/{categoryId}")
+    // 取得該部位所有裝備，並標示玩家是否已經擁有
+    @GetMapping("/api/dollitem/userowned/{categoryId}")
     public ResponseEntity<?> getShopItemsWithOwnership(
             @PathVariable Integer categoryId,
             HttpSession session) {
@@ -39,7 +39,7 @@ public class DollUserOwnedApi {
     }
 
     // 玩家獲得裝備 (點擊購買時呼叫)
-    @PostMapping("/api/dollitem/acquire/{itemId}")
+    @PostMapping("/api/dollitem/userbuy/{itemId}")
     public ResponseEntity<?> acquireItem(
             @PathVariable Integer itemId,
             HttpSession session) {

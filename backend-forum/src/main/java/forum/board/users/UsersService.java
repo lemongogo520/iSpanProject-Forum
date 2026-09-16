@@ -100,10 +100,7 @@ public class UsersService {
 	 * @return
 	 */
 	public Users getUsersById(UUID userId) {
-		if (usersRepository.findById(userId) != null)
-			return usersRepository.findById(userId).get();
-		else
-			return null;
+		return usersRepository.findById(userId).orElse(null);
 	}
 
 	/**
@@ -113,10 +110,7 @@ public class UsersService {
 	 * @return
 	 */
 	public Users getUsersByAccount(String account) {
-		if (usersRepository.findByAccount(account) != null)
-			return usersRepository.findByAccount(account).get();
-		else
-			return null;
+		return usersRepository.findByAccount(account).orElse(null);
 	}
 
 	/**

@@ -4,10 +4,6 @@ import { useUserStore } from "@/stores/user";
 
 const routes = [
   {
-    path: '/',
-    redirect: '/login'
-  },
-  {
     path: "/",
     name: "home",
     component: () => import("@/views/HomeView.vue"),
@@ -79,11 +75,6 @@ const routes = [
     path: "/friends",
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
-  },
-  {
-    path: "/ava",
-    name: "ava",
-    component: () => import("@/views/doll/DollAvatarTestView.vue"),
   },
 
   //管理者設定

@@ -12,18 +12,18 @@
         label="選擇討論版"
         variant="outlined"
         density="comfortable"
-        @update:model-value="fetchModerators"
+        @update:model-value="handleBoardChange"
       />
 
-      <!-- 等 User 組員完成後，改成帳號搜尋元件 -->
-      <v-text-field
-        v-model="moderatorUserId"
-        label="使用者 UUID（暫時）"
-        variant="outlined"
-        density="comfortable"
-        clearable
-      />
-
+      <!-- 選擇要指派為版主的使用者 -->
+      <div class="moderator-user-selector">
+        <GetAllUsers
+          :key="userSelectorKey"
+          :types="[3]"
+          immediate-select
+          @select="handleUserSelect"
+        />
+      </div>
       <v-btn
         color="success"
         prepend-icon="mdi-account-plus"
@@ -112,6 +112,7 @@
 import { ref } from "vue";
 import httpClient from "@/services/httpClient";
 import { useNotification } from "@/composables/useNotification";
+import GetAllUsers from "@/components/user/GetAllUsers.vue";
 
 // ======================
 // Props
@@ -139,7 +140,9 @@ const { showMessage } = useNotification();
 const moderatorBoardId = ref(null);
 
 // 準備設為版主的使用者 UUID
-const moderatorUserId = ref("");
+const moderatorUserId = ref(null);
+const selectedUser = ref(null);
+const userSelectorKey = ref(0);
 
 // ======================
 // 版主清單
@@ -210,13 +213,18 @@ const fetchModerators = () => {
 // 新增版主
 // ======================
 
+const handleUserSelect = (user) => {
+  selectedUser.value = user;
+  moderatorUserId.value = user?.uid ?? null;
+};
+
 const addModerator = () => {
   // 移除 UUID 前後的空白
-  const userId = moderatorUserId.value.trim();
+  const userId = moderatorUserId.value;
 
   // 驗證討論版與使用者 UUID
   if (!moderatorBoardId.value || !userId) {
-    showMessage("請選擇討論版並輸入使用者 UUID", "warning");
+    showMessage("請選擇討論版與使用者", "warning");
     return;
   }
 
@@ -231,7 +239,11 @@ const addModerator = () => {
   })
     .then(() => {
       showMessage("版主新增成功", "success");
-      moderatorUserId.value = "";
+      moderatorUserId.value = null;
+      selectedUser.value = null;
+
+      // 重新建立 GetAllUsers，清除元件內原本的選擇
+      userSelectorKey.value += 1;
 
       // 重新取得最新的版主清單
       return fetchModerators();
@@ -269,11 +281,22 @@ const removeModerator = (moderator) => {
       removingModeratorId.value = null;
     });
 };
+
+const handleBoardChange = () => {
+  moderatorUserId.value = null;
+  selectedUser.value = null;
+  userSelectorKey.value += 1;
+  fetchModerators();
+};
 </script>
 
 <style scoped>
 .admin-card {
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
+}
+.moderator-user-selector
+  :deep(.user-selector-actions .v-btn:first-child) {
+  display: none;
 }
 </style>

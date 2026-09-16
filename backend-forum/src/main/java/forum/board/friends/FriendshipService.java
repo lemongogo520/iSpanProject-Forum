@@ -6,9 +6,10 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import forum.board.conversation.ConversationUserRepository;
+import forum.board.chat.conversation.FriendshipUserRepository;
 import forum.board.friends.FriendshipEntity.FriendshipStatus;
 import forum.board.friends.dto.FriendResponseDTO;
+import forum.board.friends.dto.FriendshipResponseDTO;
 import forum.board.friends.exception.BusinessException;
 import forum.board.friends.exception.ResourceNotFoundException;
 import forum.board.users.Users;
@@ -20,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FriendshipService {
 	private final FriendshipRepository fRepo;
-	private final ConversationUserRepository uRepo;
+	private final FriendshipUserRepository uRepo;
 	
 	private UUID[] normalize(UUID a, UUID b) {
 		//-1:目前 UUID 值小於目標值
@@ -142,7 +143,7 @@ public class FriendshipService {
 	}
 	
 	/* 送出的好友邀請 */
-    public List<FriendResponseDTO> getRequestList(UUID currentUserId) {
+    public List<FriendshipResponseDTO> getRequestList(UUID currentUserId) {
 		findUser(currentUserId);
 		List<FriendshipEntity> friendshipList = fRepo.findByRequesterIdAndStatus(currentUserId, FriendshipStatus.PENDING);
 		return friendshipList.stream().map(friendship ->{
@@ -152,19 +153,28 @@ public class FriendshipService {
 			}else{
 				friend = friendship.getUser1();
 			}
-
-			return new FriendResponseDTO(friend.getId(), friend.getAccount(), null, null);
+			FriendResponseDTO friendDTO = new FriendResponseDTO(
+				friend.getId(),
+				friend.getAccount(), 
+				friend.getUsersDetail().getName(),
+				friend.getUsersDetail().getPhoto());
+			return new FriendshipResponseDTO(friendship.getId(),friendship.getStatus(),friendDTO);
 		}).toList();
  
     }
 
 	/* 收到的好友邀請 */
-	public List<FriendResponseDTO> getReceivedList(UUID currentUserId){
+	public List<FriendshipResponseDTO> getReceivedList(UUID currentUserId){
 		findUser(currentUserId);
 		List<FriendshipEntity> friendshipList = fRepo.findPendingRequests(currentUserId);
 		return friendshipList.stream().map(friendship ->{
 			Users friend = friendship.getRequester();
-			return new FriendResponseDTO(friend.getId(), friend.getAccount(), friend.getUsersDetail().getName(), friend.getUsersDetail().getPhoto());
+			FriendResponseDTO friendDTO = new FriendResponseDTO(
+				friend.getId(),
+				friend.getAccount(), 
+				friend.getUsersDetail().getName(),
+				friend.getUsersDetail().getPhoto());
+			return new FriendshipResponseDTO(friendship.getId(),friendship.getStatus(),friendDTO);
 		}).toList();
 	}
 

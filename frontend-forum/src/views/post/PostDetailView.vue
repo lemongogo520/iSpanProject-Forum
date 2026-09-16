@@ -25,6 +25,7 @@
         :liked-by-current-user="likedByCurrentUser"
         :like-updating="likeUpdating"
         :is-post-owner="isPostOwner"
+        :can-moderate="canModerate"
         :post-deleting="postDeleting"
         @toggle-like="handleToggleLike"
         @edit-post="editPost"
@@ -74,6 +75,7 @@
         :replying-comment-id="replyingCommentId"
         :reply-content="replyContent"
         :current-user-id="currentUserId"
+        :can-moderate="canModerate"
         :comment-updating="commentUpdating"
         :reply-submitting="replySubmitting"
         :deleting-comment-id="deletingCommentId"
@@ -123,8 +125,10 @@
     <!-- 共用刪除確認視窗 -->
     <DeleteConfirmDialog
       :model-value="deleteDialog"
+      v-model:reason="deleteReason"
       :message="deleteDialogMessage"
       :loading="isDeleting"
+      :reason-required="deleteReasonRequired"
       @cancel="closeDeleteDialog"
       @confirm="confirmDelete"
     />
@@ -135,6 +139,8 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
+import httpClient from "@/services/httpClient";
+
 // API匯入
 import {
   getPost as getPostApi,
@@ -142,7 +148,6 @@ import {
   deletePost as deletePostApi,
   increasePostViews as increasePostViewsApi,
 } from "@/services/postService";
-
 
 // components 元件匯入
 import CommentItem from "@/components/post/CommentItem.vue";
@@ -157,7 +162,10 @@ import { useNotification } from "@/composables/useNotification";
 import { useComments } from "@/composables/useComments";
 import { usePostLike } from "@/composables/usePostLike";
 
+import { useUserStore } from "@/stores/user";
 const { showMessage } = useNotification();
+
+const userStore = useUserStore();
 // ======================
 // Router
 // ======================
@@ -172,87 +180,91 @@ const postId = route.params.postId;
 // ======================
 const post = ref(null);
 const {
-// ======================
-// 主留言Comments
-// ======================
+  // ======================
+  // 主留言Comments
+  // ======================
   comments,
   totalCommentElements,
   commentPage,
-  commentPageSize,
   totalCommentPages,
-// ======================
-// 子留言childComment
-// ======================
+  // ======================
+  // 子留言childComment
+  // ======================
   childComments,
   expandedComments,
-// ======================
-// 新增留言
-// ======================
+  // ======================
+  // 新增留言
+  // ======================
   newComment,
   commentSubmitting,
-// ======================
-// 新增子留言
-// ======================
+  // ======================
+  // 新增子留言
+  // ======================
   replyingCommentId,
   replyContent,
   replySubmitting,
-// ======================
-// 更新留言
-// ======================
+  // ======================
+  // 更新留言
+  // ======================
   editingCommentId,
   editingContent,
   commentUpdating,
   deletingCommentId,
-// ======================
-// 留言編輯紀錄
-// ======================
+  // ======================
+  // 留言編輯紀錄
+  // ======================
   commentHistoryDialog,
   commentHistory,
   commentHistoryLoading,
   commentHistoryError,
-// ======================
-// 取得主留言Comments
-// ======================
+  // ======================
+  // 取得主留言Comments
+  // ======================
   fetchComments,
-// ======================
-// 取得子留言ChildComments
-// ======================
+  // ======================
+  // 取得子留言ChildComments
+  // ======================
   fetchChildComments,
-// ======================
-// 展開與收合回覆
-// ======================
+  // ======================
+  // 展開與收合回覆
+  // ======================
   toggleReplies,
-// ======================
-// 開始與取消回覆
-// ======================
+  // ======================
+  // 開始與取消回覆
+  // ======================
   startReply,
   cancelReply,
-// ======================
-// 新增子留言
-// ======================
+  // ======================
+  // 新增子留言
+  // ======================
   submitReply,
-// ======================
-// 發表留言
-// ======================
+  // ======================
+  // 發表留言
+  // ======================
   submitComment,
-// ======================
-// 開始編輯留言與取消編輯
-// ======================
+  // ======================
+  // 開始編輯留言與取消編輯
+  // ======================
   startEditComment,
   cancelEditComment,
-// ======================
-// 更新留言
-// ======================
+  // ======================
+  // 更新留言
+  // ======================
   updateComment,
-// ======================
-// 刪除留言
-// ======================
+  // ======================
+  // 刪除留言
+  // ======================
   deleteComment,
-// ======================
-// 取得留言編輯紀錄
-// ======================
+  // ======================
+  // 取得留言編輯紀錄
+  // ======================
   openCommentHistory,
 } = useComments(postId);
+
+// ======================
+// 刪除按鈕顯示
+// ======================
+const canModerate = ref(false);
 const {
   likeCount,
   likedByCurrentUser,
@@ -272,6 +284,7 @@ const historyError = ref("");
 const postHistory = ref([]);
 const deleteTarget = ref(null);
 const postDeleting = ref(false);
+const deleteReason = ref("");
 
 const deleteDialogMessage = computed(() =>
   deleteTarget.value?.type === "post"
@@ -283,8 +296,9 @@ const isDeleting = computed(
   () => postDeleting.value || deletingCommentId.value !== null,
 );
 // 建立刪除目標
-const requestDelete = (type, commentId = null, parentCommentId = null) => {
-  deleteTarget.value = { type, commentId, parentCommentId };
+const requestDelete = (type, commentId = null, parentCommentId = null,ownerId = null,) => {
+  deleteReason.value = "";
+  deleteTarget.value = { type, commentId, parentCommentId, ownerId, };
   deleteDialog.value = true;
 };
 // 關閉與確認刪除
@@ -292,6 +306,7 @@ const closeDeleteDialog = () => {
   if (isDeleting.value) return;
   deleteDialog.value = false;
   deleteTarget.value = null;
+  deleteReason.value = "";
 };
 // 確認刪除
 const confirmDelete = async () => {
@@ -304,31 +319,44 @@ const confirmDelete = async () => {
     return;
   }
 
-  const success = await deleteComment(
-    target.commentId,
-    target.parentCommentId,
-  );
-
+  const success = await deleteComment(target.commentId, target.parentCommentId,deleteReasonRequired.value? deleteReason.value: null,);
   if (success) {
     deleteDialog.value = false;
     deleteTarget.value = null;
+    deleteReason.value = "";
   }
 };
 // 轉接 CommentItem 的刪除事件
-const handleCommentDeleteRequest = (commentId, parentCommentId) => {
-  requestDelete("comment", commentId, parentCommentId);
+const handleCommentDeleteRequest = (commentId, parentCommentId,ownerId,) => {
+  requestDelete("comment", commentId, parentCommentId,ownerId,);
 };
 // ======================
-// 使用者判斷 暫時寫死
+// 使用者判斷
 // ======================
-const currentUserId = ref("");
+const currentUserId = computed(() => userStore.uid ?? "");
+// ======================
+// 管理員刪除
+// ======================
+const deleteReasonRequired = computed(() => {
+  const target = deleteTarget.value;
+
+  if (!target || target.type !== "comment") {
+    return false;
+  }
+  const ownerId = target.ownerId;
+  if (!ownerId || !currentUserId.value) {
+    return false;
+  }
+  const isOwner =String(ownerId).toLowerCase() === String(currentUserId.value).toLowerCase();
+  return canModerate.value && !isOwner;
+});
 // ======================
 // 取得 Post
 // ======================
 const fetchPost = () => {
   loading.value = true;
   errorMessage.value = "";
-  getPostApi(postId)
+  return getPostApi(postId)
     .then((response) => {
       post.value = response.data;
     })
@@ -408,7 +436,29 @@ const deletePost = () => {
       postDeleting.value = false;
     });
 };
+// ======================
+// 管理員刪除留言功能
+// ======================
+const fetchModerationPermission = () => {
+  const boardId = post.value?.boardId;
 
+  if (!boardId) {
+    canModerate.value = false;
+    return Promise.resolve();
+  }
+
+  return httpClient({
+    method: "get",
+    url: `/api/boards/${boardId}/moderators/me`,
+  })
+    .then((response) => {
+      canModerate.value = response.data?.canModerate === true;
+    })
+    .catch((error) => {
+      console.error("取得版主權限失敗：", error);
+      canModerate.value = false;
+    });
+};
 // ======================
 // 返回
 // ======================
@@ -449,7 +499,8 @@ onMounted(async () => {
     }
   }
   // 不論是否計次，都正常取得文章
-  fetchPost();
+  await fetchPost();
+  await fetchModerationPermission();
   fetchPostHistory();
   fetchLikeStatus();
 });

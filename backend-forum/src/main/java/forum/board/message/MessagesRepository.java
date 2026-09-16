@@ -1,7 +1,0 @@
-package forum.board.message;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface MessagesRepository extends JpaRepository<MessagesEntity, Long> {
-    
-}

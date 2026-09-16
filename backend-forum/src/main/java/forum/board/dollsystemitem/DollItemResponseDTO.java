@@ -3,17 +3,18 @@ package forum.board.dollsystemitem;
 import forum.board.dollsystemcategories.DollCategoryDTO;
 import lombok.Data;
 
-@Data 
+@Data
 public class DollItemResponseDTO {
 
     private Integer id;
     private String name;
     private String filePath;
     private Boolean isActive;
+    private Boolean isOwned;
     private DollCategoryDTO category;
 
-    public static DollItemResponseDTO fromEntity(DollItem item){
-        if(item==null){
+    public static DollItemResponseDTO fromEntity(DollItem item) {
+        if (item == null) {
             return null;
         }
 
@@ -23,7 +24,7 @@ public class DollItemResponseDTO {
         dto.setFilePath(item.getFilePath());
         dto.setIsActive(item.getIsActive());
 
-        if(item.getCategory() != null){
+        if (item.getCategory() != null) {
             DollCategoryDTO categoryDTO = new DollCategoryDTO();
             categoryDTO.setId(item.getCategory().getId());
             categoryDTO.setCode(item.getCategory().getCode());
@@ -34,6 +35,16 @@ public class DollItemResponseDTO {
             dto.setCategory(categoryDTO);
         }
 
+        return dto;
+    }
+
+    public static DollItemResponseDTO fromEntity(DollItem item, Boolean isOwned) {
+
+        DollItemResponseDTO dto = fromEntity(item);
+
+        if (dto != null) {
+            dto.setIsOwned(isOwned);
+        }
         return dto;
     }
 }

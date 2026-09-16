@@ -1,38 +1,41 @@
 <template>
-    <p>你的朋友</p>
+    <p class="title">你的朋友</p>
     <div class="friends-list">
-        <FriendItem 
-            v-for="friend in friends" 
-            :key="friend.id" :friend="friend">
+
+        <div v-if="friendList.length === 0" class="empty-text">
+            目前沒有好友
+        </div>
+        <template v-else>
+            <FriendItem 
+            v-for="friend in friendList" 
+            :key="friend.userId" :friend="friend"
+            @click="emit('select-friend',friend)">
         </FriendItem>
+    </template>
     </div>
 </template>
 <script setup>
-import httpClient from '@/services/httpClient';
-import { onMounted, ref } from 'vue';
+import { onMounted} from 'vue';
 import FriendItem from '@/components/friend/FriendItem.vue';
+import { storeToRefs } from 'pinia';
+import { useFriendStore } from '@/stores/friend';
 
-const friends = ref([])
+
+const friendstore = useFriendStore();
+const {friendList} = storeToRefs(friendstore);
+const {getFriendList} = friendstore;
+
+const emit = defineEmits(['select-friend'])
 
 onMounted(()=>{
-    getFriendList()
+    getFriendList();
 })
-function getFriendList(){
-    httpClient({
-        method: 'get',
-    
-        url: '/api/friendship/list'
-    })    
-        .then(response => {
-            // console.log(response)
-            friends.value = response.data
-        })
-    
-        .catch(error => console.log(error));
 
-
-    
-}
 </script>
 <style>
+
+.friends-list{
+    padding-left: 24px;
+    gap: 10px;
+}
 </style>

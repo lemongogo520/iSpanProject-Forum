@@ -17,6 +17,7 @@
       clearable
       no-data-text="找不到使用者"
       :custom-filter="filterUsers"
+      @update:model-value="handleUserChange"
     >
       <template #item="{ props, item }">
         <v-list-item
@@ -62,7 +63,7 @@
       </template>
     </v-autocomplete>
 
-    <div class="user-selector-actions">
+    <div v-if="!immediateSelect" class="user-selector-actions">
       <v-btn
         variant="text"
         @click="clearUser"
@@ -95,7 +96,11 @@ const props = defineProps({
     default: () => [0],
     validator: values =>
       values.every(value => [0, 1, 2, 3].includes(value))
-  }
+  },
+  immediateSelect: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits([
@@ -168,6 +173,12 @@ function confirmUser() {
   }
 
   emit('select', selectedUser.value)
+}
+
+function handleUserChange(user) {
+  if (props.immediateSelect) {
+    emit("select", user);
+  }
 }
 
 onMounted(() => {

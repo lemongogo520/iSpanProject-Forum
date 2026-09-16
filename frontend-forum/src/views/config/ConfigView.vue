@@ -440,7 +440,7 @@ const saveSettings = async () => {
     bindSettings(settings)
 
     // 更新「最後一次儲存」的資料
-    originalSettings.value = structuredClone(settings)
+    originalSettings.value = structuredClone(getCurrentSettings())
   } catch (error) {
     console.error('儲存設定失敗：', error)
   } finally {

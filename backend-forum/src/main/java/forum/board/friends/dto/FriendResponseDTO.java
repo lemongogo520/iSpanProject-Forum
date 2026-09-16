@@ -6,11 +6,11 @@ public record FriendResponseDTO(
 
         UUID userId
         
-        ,String username
+        ,String account
         
         ,String displayName
 
-        ,String showPhoto
+        ,String Photo
 
 ) {
 }

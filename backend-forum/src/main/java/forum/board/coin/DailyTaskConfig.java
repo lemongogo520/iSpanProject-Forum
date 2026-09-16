@@ -7,35 +7,42 @@ import org.springframework.stereotype.Component;
 @Component
 public class DailyTaskConfig {
 
-    /**
-     * 目前啟用的每日任務。
-     */
     public List<DailyTaskType> getEnabledTaskTypes() {
 
         return List.of(
+                DailyTaskType.LOGIN,
+                DailyTaskType.CHECK_IN,
+                DailyTaskType.POST,
+                DailyTaskType.COMMENT,
                 DailyTaskType.GIVE_LIKE,
                 DailyTaskType.RECEIVE_LIKE
         );
     }
 
-    /**
-     * 任務達標次數。
-     */
     public int getTargetCount(DailyTaskType taskType) {
 
         validateEnabled(taskType);
 
-        return 3;
+        return switch (taskType) {
+
+            case GIVE_LIKE, RECEIVE_LIKE -> 3;
+
+            case LOGIN, CHECK_IN, POST, COMMENT -> 1;
+        };
     }
 
-    /**
-     * 任務獎勵點數。
-     */
     public long getRewardAmount(DailyTaskType taskType) {
 
         validateEnabled(taskType);
 
-        return 10L;
+        return switch (taskType) {
+
+            // 已確認的規則。
+            case GIVE_LIKE, RECEIVE_LIKE -> 10L;
+
+            // 開發暫定值，待小組確認。
+            case LOGIN, CHECK_IN, POST, COMMENT -> 10L;
+        };
     }
 
     private void validateEnabled(DailyTaskType taskType) {

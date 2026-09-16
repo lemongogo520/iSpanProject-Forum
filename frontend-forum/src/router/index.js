@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from "@/stores/auth";
 
 const routes = [
   // {
@@ -7,25 +7,24 @@ const routes = [
   //   redirect: '/login'
   // },
   {
-    path: '/',
-    name: 'home',
-    component: () =>
-      import('@/views/HomeView.vue')
+    path: "/",
+    name: "home",
+    component: () => import("@/views/HomeView.vue"),
   },
   {
-      path: "/login",
-      name: "Login",
-      component: () => import("@/views/login/LoginView.vue"),
+    path: "/login",
+    name: "Login",
+    component: () => import("@/views/login/LoginView.vue"),
   },
   {
-      path: "/register",
-      name: "Register",
-      component: () => import("@/views/login/RegisterView.vue"),
+    path: "/register",
+    name: "Register",
+    component: () => import("@/views/login/RegisterView.vue"),
   },
   {
-      path: "/home",
-      name: "Homepage",
-      component: () => import("@/views/HomeView.vue"),
+    path: "/home",
+    name: "Homepage",
+    component: () => import("@/views/HomeView.vue"),
   },
   {
     path: "/admin/categories",
@@ -77,54 +76,42 @@ const routes = [
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
   },
-  {
-    path: "/ava",
-    name: "ava",
-    component: () => import("@/views/doll/DollAvatarTestView.vue"),
-  },
-
 
   //管理者設定
   {
-    path: '/config/setting',
-    name: 'Config',
-    component: () => import('@/views/config/ConfigView.vue')
+    path: "/config/setting",
+    name: "Config",
+    component: () => import("@/views/config/ConfigView.vue"),
   },
   {
-    path: '/shop',
-    name: 'shop',
-    component: () =>
-      import('@/views/ShopView.vue')
-  }
-
-]
+    path: "/shop",
+    name: "shop",
+    component: () => import("@/views/ShopView.vue"),
+  },
+];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-})
+});
 
 router.beforeEach(async (to) => {
-
-  const authStore = useAuthStore()
+  const authStore = useAuthStore();
 
   // 登入、註冊頁不用檢查
-  if (
-    to.path === '/login' ||
-    to.path === '/register'
-  ) {
-    return true
+  if (to.path === "/login" || to.path === "/register") {
+    return true;
   }
 
   // 其他頁面只檢查一次
-  const isLogin = await authStore.checkLogin()
+  const isLogin = await authStore.checkLogin();
 
   // 沒登入 → 登入頁
   if (!isLogin) {
-    return '/login'
+    return "/login";
   }
 
   // 有登入 → 正常進入
-  return true
-})
+  return true;
+});
 
 export default router;

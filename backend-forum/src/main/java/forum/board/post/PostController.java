@@ -70,7 +70,7 @@ public class PostController {
 	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId,
 			@RequestParam(defaultValue = "latest") String sortBy, Pageable pageable) {
 
-		Pageable configuredPageable = PageRequest.of(pageable.getPageNumber(),getPostPageSize(),pageable.getSort());
+		Pageable configuredPageable = PageRequest.of(pageable.getPageNumber(), getPostPageSize(), pageable.getSort());
 
 		return postService.findByBoardId(boardId, sortBy, configuredPageable);
 	}
@@ -83,7 +83,9 @@ public class PostController {
 			@RequestParam(defaultValue = "latest") String sortBy,
 			Pageable pageable) {
 
-		return postService.searchPosts(title, boardId, sortBy, pageable);
+		Pageable configuredPageable = PageRequest.of(pageable.getPageNumber(),getPostPageSize(),pageable.getSort());
+		
+		return postService.searchPosts(title, boardId, sortBy, configuredPageable);
 	}
 
 	// 新增文章

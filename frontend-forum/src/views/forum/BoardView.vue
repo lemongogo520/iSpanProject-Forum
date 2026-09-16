@@ -235,7 +235,6 @@ const sortOptions = [
 // 分頁
 const page = ref(1);
 
-const pageSize = ref(10);
 
 const totalPages = ref(0);
 
@@ -274,7 +273,6 @@ const fetchPosts = () => {
     request = searchPostsApi(
       activeKeyword.value,
       page.value - 1,
-      pageSize.value,
       boardId,
       sortBy.value,
     );
@@ -283,7 +281,6 @@ const fetchPosts = () => {
     request = getPostsByBoard(
       boardId,
       page.value - 1,
-      pageSize.value,
       sortBy.value,
     );
   }

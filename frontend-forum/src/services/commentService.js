@@ -1,11 +1,10 @@
 import httpClient from "@/services/httpClient";
 
 // 取得主留言
-export const getComments = (postId, page, size) => {
+export const getComments = (postId, page) => {
   return httpClient.get(`/api/comments/posts/${postId}`, {
     params: {
       page,
-      size,
     },
   });
 };

@@ -21,7 +21,6 @@ export function useComments(postId) {
   const comments = ref([]);
   const totalCommentElements = ref(0);
   const commentPage = ref(1);
-  const commentPageSize = ref(5);
   const totalCommentPages = ref(0);
   // ======================
   // 子留言
@@ -64,7 +63,6 @@ export function useComments(postId) {
       const response = await getCommentsApi(
         postId,
         commentPage.value - 1,
-        commentPageSize.value,
       );
 
       comments.value = response.data.content;
@@ -286,7 +284,6 @@ export function useComments(postId) {
     comments,
     totalCommentElements,
     commentPage,
-    commentPageSize,
     totalCommentPages,
 
     // 子留言

@@ -186,7 +186,6 @@ const {
   comments,
   totalCommentElements,
   commentPage,
-  commentPageSize,
   totalCommentPages,
   // ======================
   // 子留言childComment

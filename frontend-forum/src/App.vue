@@ -3,9 +3,11 @@ import { computed } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import HomeHeader from "@/components/home/HomeHeader.vue";
 import { useNotification } from "@/composables/useNotification";
+import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
 const { snackbar } = useNotification();
+const authStore = useAuthStore();
 
 const hideHeaderPaths = ["/login", "/register"];
 const showHeader = computed(() => { 
@@ -16,7 +18,7 @@ const showHeader = computed(() => {
 
 <template>
   <v-app>
-    <HomeHeader v-if="showHeader" />
+    <HomeHeader v-if="showHeader && authStore.checked && authStore.isLogin" />
 
     <v-main>
       <RouterView />

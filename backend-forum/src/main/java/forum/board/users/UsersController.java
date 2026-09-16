@@ -25,10 +25,14 @@ public class UsersController {
 
     @GetMapping("/detail")
     public ResponseEntity<?> getUserDetail(@RequestParam String account) {
-    	
-    	if(userService.getUsersByAccount(account) == null) { 
-    		return ResponseEntity.badRequest().body(null);
-    	}
+
+        if (account == null || account.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if (userService.getUsersByAccount(account) == null) {
+            return ResponseEntity.notFound().build();
+        }
     	
         UserDetailDTO dto = userService.getUserDetail(account);
         return ResponseEntity.ok(dto);

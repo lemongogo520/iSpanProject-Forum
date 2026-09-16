@@ -17,7 +17,8 @@
 </template>
 
 <script setup>
-import { QuillEditor, Quill } from "@vueup/vue-quill";
+import { QuillEditor } from "@vueup/vue-quill";
+import Quill from "quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
 
 import { uploadPostImage as uploadPostImageApi } from "@/services/postService";

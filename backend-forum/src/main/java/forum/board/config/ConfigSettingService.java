@@ -22,8 +22,11 @@ public class ConfigSettingService {
                 .toList();
     }
 
-	public List<SettingsDTO> setAllSettings() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<SettingsDTO> setAllSettings(List<SettingsDTO> settingsList) {
+	    settingsList.forEach(setting ->
+	        settings.set(setting.getItem(), setting.getValue())
+	    );
+	
+	    return getAllSettings();
 	}
 }

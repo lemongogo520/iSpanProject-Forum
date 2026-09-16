@@ -16,12 +16,14 @@ export const configService = {
   // 儲存全部設定
   async saveSettings(settings) {
 
-    console.log(settings);
     const response = await httpClient({
-      method: 'put',
-      url: '/api/config/settings',
-      data: settings
-    })
+    method: 'put',
+    url: '/api/config/settings',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    data: JSON.stringify(settings)
+  })
 
     return response.data
   }

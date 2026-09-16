@@ -4,9 +4,14 @@
 
     <main class="content">
         <h1>使用者管理</h1>
-        <GetAllUsers
-        :types="[1,2]"
-        @select="UserSelect"
+        <v-btn @click="openDialog">
+          選擇使用者
+        </v-btn>
+
+        <GetAllUsersDialog
+          v-model="showUserDialog"
+          :types="[1, 2]"
+          @select="UserSelect"
         />
     </main>
   </div>
@@ -15,7 +20,7 @@
 <script setup>
 import { ref } from 'vue'
 import Sidebar from '@/components/config/ConfigSidebar.vue'
-import GetAllUsers from '@/components/user/GetAllUsers.vue';
+import GetAllUsersDialog from '@/components/user/GetAllUsersDialog.vue';
 
 const showUserDialog = ref(false)
 const selectedUser = ref(null)
@@ -24,6 +29,10 @@ function UserSelect(user) {
   selectedUser.value = user
 
   console.log('選擇的使用者：', selectedUser.value)
+}
+
+const openDialog = () => {
+  showUserDialog.value = true
 }
 
 </script>

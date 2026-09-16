@@ -33,7 +33,7 @@ BEGIN
            ,[create_time]
            ,[creator]
            ,[create_ip])
-	VALUES('803BB44C-4F12-4056-8733-9D254162CCAE',NULL,NULL,0,NULL,0,NULL,0,NULL,0
+	VALUES('803BB44C-4F12-4056-8733-9D254162CCAE','系統管理員',NULL,0,NULL,0,NULL,0,NULL,0
 	,SYSDATETIMEOFFSET(),'803BB44C-4F12-4056-8733-9D254162CCAE'
 	,'127.0.0.1')
 END;
@@ -77,4 +77,29 @@ INSERT INTO [dbo].[user_permission]
            ,[create_ip])
 	VALUES('803BB44C-4F12-4056-8733-9D254162CCAE',(SELECT id FROM permissions WHERE [name] = 'systemadmin')
 	,SYSDATETIMEOFFSET(),'803BB44C-4F12-4056-8733-9D254162CCAE','127.0.0.1')
+END;
+
+IF NOT EXISTS (SELECT 1 FROM config_setting WHERE [item] = 'web_site_name')
+BEGIN
+INSERT INTO [dbo].[config_setting]
+           ([item]
+           ,[value]
+           ,[comment])
+ 	VALUES
+ 		('web_site_name', 'iSpan論壇', '網站名稱'),
+		('web_site_description', '這是一個iSpan論壇', '網站描述'),
+		('login_logo', '', '登入頁LOGO'),
+		('token_active', '30', 'token有效日期'),
+		
+		('allow_register','true','開放會員註冊'),
+		('account_min_length','6','帳號最小長度'),
+		('account_max_length','20','帳號最大長度'),
+		('password_min_length','6','密碼最小長度'),
+		('allow_change_password','true','是否允許修改密碼'),
+		
+		('post_paper_page','10','每頁文章數'),
+		('comment_paper_page','5','每頁留言數'),
+		('allow_edit_post','true','是否允許編輯文章'),
+		('edit_post_days','3','允許編輯文章日期限制'),
+		('allow_delete_post','false','是否允許刪除')
 END;

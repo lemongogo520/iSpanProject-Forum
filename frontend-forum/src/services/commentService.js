@@ -1,11 +1,10 @@
 import httpClient from "@/services/httpClient";
 
 // 取得主留言
-export const getComments = (postId, page, size) => {
+export const getComments = (postId, page) => {
   return httpClient.get(`/api/comments/posts/${postId}`, {
     params: {
       page,
-      size,
     },
   });
 };
@@ -49,8 +48,15 @@ export const updateComment = (commentId, content) => {
 };
 
 // 刪除留言
-export const deleteComment = (commentId) => {
-  return httpClient.delete(`/api/comments/${commentId}`);
+export const deleteComment = (commentId,reason = null,) => {
+  return httpClient.delete(
+    `/api/comments/${commentId}`,
+    {
+      data: {
+        reason,
+      },
+    },
+  );
 };
 
 // 取得留言編輯紀錄

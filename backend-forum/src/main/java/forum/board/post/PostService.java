@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import forum.board.board.Board;
 import forum.board.board.BoardRepository;
+import forum.board.boardModerator.BoardModeratorService;
+import forum.board.userpermission.UserPermissionService;
 import forum.board.users.Users;
 import forum.board.users.UsersRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,10 @@ public class PostService {
 	private final BoardRepository boardRepo;
 
 	private final PostsHistoryService historyService;
+
+	private final BoardModeratorService boardModeratorService;
+
+	private final UserPermissionService userPermissionService;
 
 	// 允許文字顏色、背景色，以及顏色函式
 	private static final CssSchema POST_CSS = CssSchema.withProperties(
@@ -239,16 +245,16 @@ public class PostService {
 
 		// 全站搜尋
 		if (boardId == null) {
-			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword,sortedPageable);
+			posts = postRepo.findByTitleContainingAndIsDeletedFalse(keyword, sortedPageable);
 
-		  // 指定看板，依按讚數排序
+			// 指定看板，依按讚數排序
 		} else if ("likes".equals(sortBy)) {
-			Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(),pageable.getPageSize());
-			posts = postRepo.findByBoardIdAndTitleOrderByLikeCount(boardId,keyword,unsortedPageable);
+			Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+			posts = postRepo.findByBoardIdAndTitleOrderByLikeCount(boardId, keyword, unsortedPageable);
 
 			// 指定看板，使用一般排序
 		} else {
-			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId,keyword,sortedPageable);
+			posts = postRepo.findByBoardIdAndTitleContainingAndIsDeletedFalse(boardId, keyword, sortedPageable);
 		}
 		return posts.map(this::toDTO);
 	}
@@ -341,11 +347,18 @@ public class PostService {
 		if (Boolean.TRUE.equals(post.getIsDeleted())) {
 			throw new RuntimeException("文章已經刪除！");
 		}
-
-		if (!post.getUsers().getId().equals(loginUser.getId())) {
-			throw new RuntimeException("不能刪除別人的文章");
+		// 文章作者
+		boolean isOwner = post.getUsers().getId().equals(loginUser.getId());
+		// 找文章討論版
+		Integer boardId = post.getBoard().getId();
+		// 各版管理員判斷
+		boolean isBoardModerator = boardModeratorService.isBoardModerator(boardId, loginUser.getId());
+		// 判斷是不是論壇管理員或是系統管理員
+		boolean isForumManager = userPermissionService.canManageForum(loginUser.getId());
+		// 只有三種權限都不符合才會執行
+		if (!isOwner && !isBoardModerator && !isForumManager) {
+			throw new SecurityException("權限不足：無法刪除這篇文章");
 		}
-		// 管理員權限檢查尚未實作待補!!!!!!!!!!!!!!!!
 
 		// 建立刪除紀錄物件
 		historyService.saveDeleteHistory(post, loginUser);

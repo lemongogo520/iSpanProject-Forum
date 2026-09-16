@@ -52,24 +52,27 @@
           <div v-if="!comment.isDeleted" class="comment-actions">
             <span>{{ formatCommentDate(comment.createTime) }}</span>
 
-            <template v-if="isCommentOwner(comment)">
-              <v-btn
-                size="small"
-                variant="text"
-                @click.stop="emit('start-edit', comment)"
-              >
-                編輯
-              </v-btn>
-              <v-btn
-                size="small"
-                variant="text"
-                :disabled="deletingCommentId === comment.id"
-                :loading="deletingCommentId === comment.id"
-                @click.stop="emit('delete-comment', comment.id, null)"
-              >
-                刪除
-              </v-btn>
-            </template>
+            <!-- 只有留言作者可以編輯 -->
+            <v-btn
+              v-if="isCommentOwner(comment)"
+              size="small"
+              variant="text"
+              @click.stop="emit('start-edit', comment)"
+            >
+              編輯
+            </v-btn>
+
+            <!-- 留言作者或該版版主可以刪除 -->
+            <v-btn
+              v-if="isCommentOwner(comment) || canModerate"
+              size="small"
+              variant="text"
+              :disabled="deletingCommentId === comment.id"
+              :loading="deletingCommentId === comment.id"
+              @click.stop="emit('delete-comment', comment.id, null,comment.users?.id)"
+            >
+              刪除
+            </v-btn>
 
             <v-btn
               v-if="comment.modifyTime"
@@ -196,26 +199,30 @@
                   </div>
                   <div class="comment-actions">
                     <span>{{ formatCommentDate(child.createTime) }}</span>
-                    <template v-if="!child.isDeleted && isCommentOwner(child)">
-                      <v-btn
-                        size="small"
-                        variant="text"
-                        @click.stop="emit('start-edit', child)"
-                      >
-                        編輯
-                      </v-btn>
-                      <v-btn
-                        size="small"
-                        variant="text"
-                        :disabled="deletingCommentId === child.id"
-                        :loading="deletingCommentId === child.id"
-                        @click.stop="
-                          emit('delete-comment', child.id, comment.id)
-                        "
-                      >
-                        刪除
-                      </v-btn>
-                    </template>
+                    <!-- 只有子留言作者可以編輯 -->
+                    <v-btn
+                      v-if="!child.isDeleted && isCommentOwner(child)"
+                      size="small"
+                      variant="text"
+                      @click.stop="emit('start-edit', child)"
+                    >
+                      編輯
+                    </v-btn>
+
+                    <!-- 子留言作者或該版版主可以刪除 -->
+                    <v-btn
+                      v-if="
+                        !child.isDeleted &&
+                        (isCommentOwner(child) || canModerate)
+                      "
+                      size="small"
+                      variant="text"
+                      :disabled="deletingCommentId === child.id"
+                      :loading="deletingCommentId === child.id"
+                      @click.stop="emit('delete-comment', child.id, comment.id,child.users?.id)"
+                    >
+                      刪除
+                    </v-btn>
                   </div>
                 </template>
                 <v-btn
@@ -249,6 +256,7 @@ const props = defineProps({
   commentUpdating: { type: Boolean, default: false },
   replySubmitting: { type: Boolean, default: false },
   deletingCommentId: { type: [Number, String], default: null },
+  canModerate: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([

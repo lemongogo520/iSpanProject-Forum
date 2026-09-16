@@ -3,6 +3,7 @@ package forum.board.board;
 import org.springframework.web.bind.annotation.RestController;
 
 import forum.board.category.CategoryService;
+import forum.board.config.Settings;
 import forum.board.userpermission.UserPermissionService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class BoardController {
 	private final BoardService boardService;
 
 	private final UserPermissionService userPermissionService;
+
 
 	// 新增
 	@PostMapping("/api/board")

@@ -71,8 +71,8 @@
             </v-btn>
             <v-spacer />
 
-            <!-- 只有文章作者顯示 -->
-            <v-menu v-if="isPostOwner">
+            <!-- 文章作者和各版管理員顯示 -->
+            <v-menu v-if="isPostOwner || canModerate">
               <template #activator="{ props: menuProps }">
                 <v-btn
                   v-bind="menuProps"
@@ -83,6 +83,7 @@
 
               <v-list>
                 <v-list-item
+                  v-if="isPostOwner"
                   title="編輯文章"
                   prepend-icon="mdi-pencil-outline"
                   @click="emit('edit-post')"
@@ -131,6 +132,10 @@ defineProps({
   },
 
   likeUpdating: {
+    type: Boolean,
+    default: false,
+  },
+  canModerate: {
     type: Boolean,
     default: false,
   },

@@ -187,7 +187,6 @@ const handleLogin = async () => {
     url: "/api/login",
     data: {
       account: account.value.trim(),
-      account: account.value.trim(),
       password: password.value,
       remember: remember.value,
     },
@@ -196,9 +195,8 @@ const handleLogin = async () => {
       loginError.value = "";
       // 登入成功後前往首頁
       authStore.setLogin();
-      userStore.setAccount(account.value);
-      authStore.setLogin() 
-      userStore.setAccount(response.data.account
+      userStore.setAccount(response.data.uid
+      , response.data.account
       , response.data.name
       , response.data.permission);
 

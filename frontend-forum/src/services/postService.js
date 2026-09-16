@@ -21,11 +21,10 @@ export const deletePost = (postId) => {
 };
 
 // 取得看板文章
-export const getPostsByBoard = (boardId, page, size, sortBy = "latest") => {
+export const getPostsByBoard = (boardId, page, sortBy = "latest") => {
   return httpClient.get(`/api/posts/boards/${boardId}`, {
     params: {
       page,
-      size,
       sortBy,
     },
   });
@@ -45,14 +44,12 @@ export const increasePostViews = (postId) => {
 export const searchPosts = (
   title,
   page,
-  size,
   boardId = null,
   sortBy = "latest",
 ) => {
   const params = {
     title,
     page,
-    size,
     sortBy,
   };
 

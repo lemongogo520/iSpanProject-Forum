@@ -54,10 +54,11 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import BoardManagement from "@/components/admin/BoardManagement.vue";
 import BoardModeratorManagement from "@/components/admin/BoardModeratorManagement.vue";
 import CategoryManagement from "@/components/admin/CategoryManagement.vue";
+import httpClient from "@/services/httpClient";
 
 // ======================
 // 管理頁籤狀態
@@ -75,6 +76,19 @@ const categories = ref([]);
 
 // 從 BoardManagement 接收的討論版清單
 const boards = ref([]);
+const fetchBoards = () => {
+  return httpClient({
+    method: "get",
+    url: "/api/boards",
+  })
+    .then((response) => {
+      boards.value = response.data;
+    })
+    .catch((error) => {
+      console.error("取得討論版失敗：", error);
+      boards.value = [];
+    });
+};
 
 // ======================
 // 子元件參照
@@ -89,8 +103,12 @@ const boardManagementRef = ref(null);
 // ======================
 
 const refreshBoards = () => {
-  // BoardManagement 尚未建立時，回傳已完成的 Promise
-  return boardManagementRef.value?.fetchBoards() ?? Promise.resolve();
+  // 子元件已掛載：由子元件查詢，並透過 boards-updated 同步父層
+  if (boardManagementRef.value) {
+    return boardManagementRef.value?.fetchBoards();
+  }
+  // 子元件尚未掛載：由父元件直接查詢
+  return fetchBoards();
 };
 
 // ======================
@@ -108,4 +126,8 @@ const handleBoardsUpdated = (updatedBoards) => {
 const handleCategoriesUpdated = (updatedCategories) => {
   categories.value = updatedCategories;
 };
+
+onMounted(() => {
+  fetchBoards();
+});
 </script>

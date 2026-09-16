@@ -8,7 +8,10 @@ const route = useRoute();
 const { snackbar } = useNotification();
 
 const hideHeaderPaths = ["/login", "/register"];
-const showHeader = computed(() => !hideHeaderPaths.includes(route.path));
+const showHeader = computed(() => { 
+  return !hideHeaderPaths.includes(route.path) 
+  && !route.path.startsWith("/config"); 
+  });
 </script>
 
 <template>

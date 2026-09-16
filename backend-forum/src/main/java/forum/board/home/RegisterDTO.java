@@ -21,7 +21,7 @@ public class RegisterDTO {
     private String account;
 
     @NotBlank(message = "請輸入密碼")
-    @Size(min = 6, max = 20, message = "密碼長度必須介於6~20個字元")
+    @Size(min = 6, message = "密碼長度必須介於6~20個字元")
     @Pattern(
             regexp = "^(?=.*[A-Za-z])(?=.*\\d).{6,20}$",
             message = "密碼只能使用英文、數字、底線，並且包含英文或數字"

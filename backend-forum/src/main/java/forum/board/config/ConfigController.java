@@ -1,41 +1,33 @@
 package forum.board.config;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
+import java.util.List;
 
-import forum.board.enums.ConfigMenuType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import lombok.RequiredArgsConstructor;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/config")
 public class ConfigController {
 	
-    @GetMapping("/config")
-    public String config(Model model) {
-    	
-    	model.addAttribute("activeMenu", ConfigMenuType.CONFIG);
-        return "config/systemadmin";
-    }
-    
-    @GetMapping("/config/users")
-    public String configUsers(Model model) {
-    	
-    	model.addAttribute("activeMenu", ConfigMenuType.USERS);
-        return "config/users";
-    }
-    
-    @GetMapping("/config/permissions")
-    public String configPermissions(Model model) {
-    	
-    	model.addAttribute("activeMenu", ConfigMenuType.PERMISSIONS);
-        return "config/permissions";
-    }
-    
-    @GetMapping("/config/settings")
-    public String configSettings(Model model) {
-    	
-    	model.addAttribute("activeMenu", ConfigMenuType.SETTINGS);
-        return "config/settings";
-    }
+	private final ConfigSettingService configSettingService;
+	
+	@GetMapping("/settings")
+	public List<SettingsDTO> getAllConfigSettings() {
+	    return configSettingService.getAllSettings();
+	}
+	
+	@PutMapping("/settings")
+	public List<SettingsDTO> setAllConfigSettings(@RequestBody List<SettingsDTO> settings) {
+
+	    System.out.println("收到設定數量：" + settings.size());
+	    System.out.println("收到設定：" + settings);
+
+	    return configSettingService.setAllSettings(settings);
+	}
 }

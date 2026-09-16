@@ -11,9 +11,9 @@
       v-for="layer in sortedLayers"
       :key="layer.id"
       class="doll-layer"
-      :style="{ 
+      :style="{
         backgroundImage: `url(${baseUrl}${layer.filePath})`,
-        transform: `translate(-50%, -50%) scale(${scale})`
+        transform: `translate(-50%, ${avatarMode ? '-35%' : '-50%'}) scale(${scale})`,
       }"
     ></div>
   </div>
@@ -36,7 +36,12 @@ const props = defineProps({
   scale: {
     type: Number,
     default: 3,
-  }
+  },
+  // 大頭貼模式：如果開啟，會將人物往下移，讓畫面聚焦在上半身
+  avatarMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 //將物件轉為陣列，並依照分類的 zIndex (圖層高度) 進行排序

@@ -68,14 +68,19 @@ const routes = [
     component: () => import("@/views/doll/DollNewItemsView.vue"),
   },
   {
-    path: "/doll/cart",
-    name: "dollcart",
-    component: () => import("@/views/doll/DollCartItemsView.vue"),
+    path: "/doll/user",
+    name: "dolluser",
+    component: () => import("@/views/doll/DollUserItemsView.vue"),
   },
   {
     path: "/friends",
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
+  },
+  {
+    path: "/ava",
+    name: "ava",
+    component: () => import("@/views/doll/DollAvatarTestView.vue"),
   },
 
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="doll-canvas-container">
+  <div class="doll-canvas-container" :style="{ minHeight: `${64 * scale}px` }">
     <!-- 防呆：如果沒有任何裝備，顯示佔位符 -->
     <div v-if="sortedLayers.length === 0" class="empty-state">
       <v-icon icon="mdi-account" size="80" color="grey-darken-2"></v-icon>
@@ -11,7 +11,10 @@
       v-for="layer in sortedLayers"
       :key="layer.id"
       class="doll-layer"
-      :style="{ backgroundImage: `url(${baseUrl}${layer.filePath})` }"
+      :style="{
+        backgroundImage: `url(${baseUrl}${layer.filePath})`,
+        transform: `translate(-50%, ${avatarMode ? '-35%' : '-50%'}) scale(${scale})`,
+      }"
     ></div>
   </div>
 </template>
@@ -29,6 +32,16 @@ const props = defineProps({
     type: String,
     default: "http://localhost:8080/sprites/",
   },
+  // 縮放比例 (預設 3，如果是小頭像可以傳入 1 或 1.5)
+  scale: {
+    type: Number,
+    default: 3,
+  },
+  // 大頭貼模式：如果開啟，會將人物往下移，讓畫面聚焦在上半身
+  avatarMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 //將物件轉為陣列，並依照分類的 zIndex (圖層高度) 進行排序
@@ -44,7 +57,6 @@ const sortedLayers = computed(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 250px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,8 +71,7 @@ const sortedLayers = computed(() => {
   /* 根據 LPC 雪碧圖單個動作的框格大小調整，例如 64x64 */
   width: 64px;
   height: 64px;
-  /* 將圖片移回中心點並放大，保持像素邊緣清晰 */
-  transform: translate(-50%, -50%) scale(3);
+  /* 將圖片移回中心點 (縮放交由行內樣式綁定) */
 
   background-position: 0px -128px; /* 如果需要指定顯示雪碧圖的第一格正面，可在此微調 */
   background-repeat: no-repeat;

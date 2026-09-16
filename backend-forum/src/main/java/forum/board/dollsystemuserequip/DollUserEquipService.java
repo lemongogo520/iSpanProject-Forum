@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import forum.board.dollsystemcategories.DollCategory;
 import forum.board.dollsystemitem.DollItem;
 import forum.board.dollsystemitem.DollItemRepository;
 import forum.board.dollsystemitem.DollItemResponseDTO;
@@ -21,6 +22,7 @@ public class DollUserEquipService {
     private final UsersRepository usersRepo;
     private final DollItemRepository dollItemRepo;
     private final DollUserEquipRepository dollUserEquipRepo;
+    private final forum.board.dollsystemcategories.DollCategoryRepository dollCategoryRepo;
 
     @Transactional
     public void updateEquipItems(UUID userId, List<Integer> itemIds) {
@@ -50,12 +52,29 @@ public class DollUserEquipService {
         dollUserEquipRepo.saveAll(newEquipItems);
     }
 
-    //檢視穿著紀錄
+    // 檢視穿著紀錄
     public List<DollItemResponseDTO> getUserEquip(UUID userId) {
         List<DollUserEquip> equipList = dollUserEquipRepo.findByUserId(userId);
-        return equipList.stream()
-            .map(newEquip -> DollItemResponseDTO.fromEntity(newEquip.getItem()))
-            .collect(Collectors.toList());
+
+        // 如果使用者有儲存紀錄，直接回傳
+        if (equipList != null && !equipList.isEmpty()) {
+            return equipList.stream()
+                    .map(newEquip -> DollItemResponseDTO.fromEntity(newEquip.getItem()))
+                    .collect(Collectors.toList());
+        }
+
+        // 如果沒有儲存紀錄，找出所有設定為 isRequired=true 的圖層，回傳該圖層的第一個可用裝備作為預設
+        List<DollCategory> requiredCategories = dollCategoryRepo.findByIsRequiredTrue();
+        List<DollItemResponseDTO> defaultEquip = new java.util.ArrayList<>();
+
+        for (DollCategory cat : requiredCategories) {
+            DollItem defaultItem = dollItemRepo.findFirstByCategoryIdAndIsActiveTrueOrderByIdAsc(cat.getId());
+            if (defaultItem != null) {
+                defaultEquip.add(DollItemResponseDTO.fromEntity(defaultItem));
+            }
+        }
+
+        return defaultEquip;
     }
 
 }

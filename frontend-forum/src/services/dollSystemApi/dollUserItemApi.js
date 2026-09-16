@@ -11,15 +11,17 @@ export function listUserItems() {
   const dollItems = ref([]);
   const activeCategoryId = ref(null);
 
+  //呼叫後端Api
   function itemsByCategory(categoryId) {
     httpClient({
       method: "get",
 
-      url: `/api/dollitems/usercheck/${categoryId}`,
+      url: `/api/dollitem/userowned/${categoryId}`,
     })
       .then((response) => {
-        dollItems.value = response.data;
-        console.log(response.data);
+        //篩選出isOwned為true的資料，因為後端會回傳所有資料
+        dollItems.value = response.data.filter((item) => item.isOwned === true);
+        console.log("裝備資料載入成功", dollItems.value);
       })
 
       .catch((error) => console.log(error));

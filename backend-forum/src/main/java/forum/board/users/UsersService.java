@@ -58,6 +58,7 @@ public class UsersService {
 		user.setCreator(newId);
 		
 		UserDetail userDetail = new UserDetail();
+		//加入預設使用者圖片
 		userDetail.setUserId(newId);
 		userDetail.setCreateIp(registerIp);
 		userDetail.setCreator(newId);
@@ -79,7 +80,10 @@ public class UsersService {
 	 * @return
 	 */
 	public Users getUsersById(UUID userId) {
-		return usersRepository.findById(userId).get();
+		if(usersRepository.findById(userId) != null)
+			return usersRepository.findById(userId).get();
+		else
+			return null;
 	}
 	
 	/**
@@ -88,7 +92,10 @@ public class UsersService {
 	 * @return
 	 */
 	public Users getUsersByAccount(String account) {
-		return usersRepository.findByAccount(account).get();
+		if(usersRepository.findById(account) != null)
+			return usersRepository.findByAccount(account).get();
+		else
+			return null;
 	}
 
 	/**
@@ -98,24 +105,29 @@ public class UsersService {
 	 */
 	public UserDetailDTO getUserInfoByAccount(String account) {
 		
-		UserDetailDTO dto = new UserDetailDTO();
-		Users users = usersRepository.findByAccount(account).get();
-	    UserDetail ud = userDetailRepository.findByUserId(users.getId()).get();
-		dto.setId(users.getId());
-		dto.setAccount(users.getAccount());
-		dto.setPermission(userPermissionService.getPermissionRankByUserId(users.getId()));
-	    dto.setName(ud.getName());
-	    dto.setNickname(ud.getNickName());
-	    dto.setShowNickname(ud.getShowNickName());
-	    dto.setBirthday(ud.getBirthday());
-	    dto.setShowBirthday(ud.getShowBirthday());
-	    dto.setEmail(ud.getEmail());
-	    dto.setShowEmail(ud.getShowEmail());
-	    dto.setPhotoUrl(ud.getPhoto());
-	    dto.setShowPhoto(ud.getShowPhoto());
-	    dto.setCoin(coinService.getBalance(users.getId()));
+		if(usersRepository.findByAccount(account) != null) {
+			UserDetailDTO dto = new UserDetailDTO();
+
+			Users users = usersRepository.findByAccount(account).get();
+		    UserDetail ud = userDetailRepository.findByUserId(users.getId()).get();
+			dto.setId(users.getId());
+			dto.setAccount(users.getAccount());
+			dto.setPermission(userPermissionService.getPermissionRankByUserId(users.getId()));
+		    dto.setName(ud.getName());
+		    dto.setNickname(ud.getNickName());
+		    dto.setShowNickname(ud.getShowNickName());
+		    dto.setBirthday(ud.getBirthday());
+		    dto.setShowBirthday(ud.getShowBirthday());
+		    dto.setEmail(ud.getEmail());
+		    dto.setShowEmail(ud.getShowEmail());
+		    dto.setPhotoUrl(ud.getPhoto());
+		    dto.setShowPhoto(ud.getShowPhoto());
+		    dto.setCoin(coinService.getBalance(users.getId()));
+			
+			return dto;
+		}
 		
-		return dto;
+		return null;
 	}
 	
 	/**
@@ -148,44 +160,51 @@ public class UsersService {
 	public UserDetailDTO getUserDetail(String account) {
 		Users users = getUsersByAccount(account);
 	
-	    UserDetailDTO dto = new UserDetailDTO();
-	    Optional<UserDetail> userDetail = userDetailRepository.findByUserId(users.getId());
-	    if(userDetail != null) {
-	    	UserDetail ud = userDetail.get();
-		    dto.setAccount(account);
-		    dto.setName(ud.getName());
-		    dto.setNickname(ud.getNickName());
-		    dto.setShowNickname(ud.getShowNickName());
-		    dto.setBirthday(ud.getBirthday());
-		    dto.setShowBirthday(ud.getShowBirthday());
-		    dto.setEmail(ud.getEmail());
-		    dto.setShowEmail(ud.getShowEmail());
-		    dto.setPhotoUrl(ud.getPhoto());
-		    dto.setShowPhoto(ud.getShowPhoto());
-	    }
-	
-	    return dto;
+		if(users != null) {
+		    UserDetailDTO dto = new UserDetailDTO();
+		    Optional<UserDetail> userDetail = userDetailRepository.findByUserId(users.getId());
+		    if(userDetail != null) {
+		    	UserDetail ud = userDetail.get();
+			    dto.setAccount(account);
+			    dto.setName(ud.getName());
+			    dto.setNickname(ud.getNickName());
+			    dto.setShowNickname(ud.getShowNickName());
+			    dto.setBirthday(ud.getBirthday());
+			    dto.setShowBirthday(ud.getShowBirthday());
+			    dto.setEmail(ud.getEmail());
+			    dto.setShowEmail(ud.getShowEmail());
+			    dto.setPhotoUrl(ud.getPhoto());
+			    dto.setShowPhoto(ud.getShowPhoto());
+		    }
+		
+		    return dto;
+		}
+		
+		return null;
 	}
 
 	public UserDetail saveUserDetail(UserDetailDTO dto, UUID userId, HttpServletRequest request) {
 		
 		Users users = getUsersByAccount(dto.getAccount());
-	    Optional<UserDetail> op = userDetailRepository.findByUserId(users.getId());
-	    UserDetail ud = op.get();
-	    ud.setName(dto.getName());
-	    ud.setNickName(dto.getNickname());
-	    ud.setShowNickName(dto.getShowNickname());
-	    ud.setBirthday(dto.getBirthday());
-	    ud.setShowBirthday(dto.getShowBirthday());
-	    ud.setEmail(dto.getEmail());
-	    ud.setShowEmail(dto.getShowEmail());
-	    ud.setPhoto(dto.getPhotoUrl());
-	    ud.setShowPhoto(dto.getShowPhoto());
-		ud.setModifyTime(Instant.now());
-		ud.setModifier(userId);
-		ud.setModifyIp(IpUtil.getClientIp(request));
 		
-		userDetailRepository.save(ud);
+		if(users != null) {
+		    Optional<UserDetail> op = userDetailRepository.findByUserId(users.getId());
+		    UserDetail ud = op.get();
+		    ud.setName(dto.getName());
+		    ud.setNickName(dto.getNickname());
+		    ud.setShowNickName(dto.getShowNickname());
+		    ud.setBirthday(dto.getBirthday());
+		    ud.setShowBirthday(dto.getShowBirthday());
+		    ud.setEmail(dto.getEmail());
+		    ud.setShowEmail(dto.getShowEmail());
+		    ud.setPhoto(dto.getPhotoUrl());
+		    ud.setShowPhoto(dto.getShowPhoto());
+			ud.setModifyTime(Instant.now());
+			ud.setModifier(userId);
+			ud.setModifyIp(IpUtil.getClientIp(request));
+			
+			userDetailRepository.save(ud);
+		}
 		
 		return null;
 	}

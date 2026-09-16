@@ -171,6 +171,7 @@ const handleWindowScroll = () => {
 };
 
 //初始化確認使用者是否有填寫第一次資料
+//config頁面不載入
 onMounted(async () => {
   lastScrollY = window.scrollY;
   window.addEventListener("scroll", handleWindowScroll, { passive: true });

@@ -8,7 +8,7 @@
           v-for="friend in friendList"
           :key="friend.userId"
           :friend="friend"
-          @click="emit('select-friend', friend)"
+          @click="$emit('select-friend', friend)"
         />
       </template>
     </div>

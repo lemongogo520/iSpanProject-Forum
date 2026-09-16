@@ -1,7 +1,8 @@
 <template>
     <div class="friend-view">
         <FriendRequestList></FriendRequestList>
-        <div class="friend-page">
+        <div class="empty-text" v-if="friendList.length==0">還沒有好友哦~</div>
+        <div class="friend-page" v-else>
             <div class="friend-sidebar">
                 <FriendList @select-friend=selectFriend></FriendList>
             </div>
@@ -24,6 +25,8 @@ import { storeToRefs } from 'pinia';
 
 const friendStore = useFriendStore();
 const chatStore = useChatStore();
+
+const {friendList} = storeToRefs(friendStore);
 
 const {getConversation, getMessages} = chatStore;
 const {currentConversation} = storeToRefs(chatStore);

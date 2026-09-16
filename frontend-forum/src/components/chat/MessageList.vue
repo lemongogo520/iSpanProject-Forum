@@ -1,11 +1,11 @@
 <template>
-    <div ref="messageList" class="message-list" v-if="messages!=[]">
+    <div class="empty-text" v-if="messages.length==0">打聲招呼吧!</div>
+    <div ref="messageList" class="message-list" v-else>
         <MessageItem 
             v-for="message in messages" 
             :key="message.id" 
             :message="message"/>
     </div>
-    <div v-else class="empty-text">打聲招呼吧!</div>
 </template>
 <script setup>
 import { ref, watch, nextTick } from 'vue';

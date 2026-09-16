@@ -53,6 +53,7 @@ BEGIN
         @Creator,
         '127.0.0.1'
     );
+    SET @i = @i+1;
 END;
 
 

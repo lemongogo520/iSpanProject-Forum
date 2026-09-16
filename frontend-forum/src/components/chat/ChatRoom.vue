@@ -45,18 +45,20 @@ onMounted(()=>{
     right: 24px;
     bottom: 24px;
     width: 360px;
-    height: 500px;
+    height: 80%;
     z-index: 1000;
     background-color: var(--color-background);
     
 }
 .chat-header {
     flex-shrink: 0;
+    border-radius: 8px;
 }
 
 
 .message-input {
     flex-shrink: 0;
     padding: 0px 15px;
+    margin-top: auto;
 }
 </style>

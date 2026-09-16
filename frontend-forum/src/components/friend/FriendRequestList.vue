@@ -94,6 +94,7 @@ onMounted(() => {
     border-radius: 8px;
     box-sizing: border-box;
     background: var(--color-card);
+    /* background: #62a6d3; */
 }
 
 .result-text {

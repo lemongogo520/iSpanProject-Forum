@@ -1,8 +1,9 @@
-package forum.board.conversation;
+package forum.board.chat.conversation;
 
 import java.time.Instant;
 
 import forum.board.users.Users;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -22,7 +23,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "conversation_member")
-public class ConversationMember {
+public class ConversationMemberEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -30,14 +31,16 @@ public class ConversationMember {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id", nullable = false)
-    private ConversationEntity conversationId;
+    private ConversationEntity conversation;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
+    @Column (nullable = false)
     private Instant joinTime;
 
+    @Column (nullable = false)
     private Instant lastReadTime;
     
     @PrePersist

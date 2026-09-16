@@ -10,7 +10,6 @@ export const usePostSearch = () => {
   const searchError = ref("");
 
   const searchPage = ref(1);
-  const searchPageSize = 10;
   const searchTotalPages = ref(0);
   const searchTotalElements = ref(0);
 
@@ -25,7 +24,6 @@ export const usePostSearch = () => {
       const response = await searchPosts(
         activeKeyword.value,
         searchPage.value - 1,
-        searchPageSize,
       );
 
       searchResults.value = response.data.content;

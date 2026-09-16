@@ -21,4 +21,9 @@ public class ConfigSettingService {
                 })
                 .toList();
     }
+
+	public List<SettingsDTO> setAllSettings() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

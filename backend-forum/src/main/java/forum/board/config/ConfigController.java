@@ -3,6 +3,7 @@ package forum.board.config;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +18,11 @@ public class ConfigController {
 	
 	@GetMapping("/settings")
 	public List<SettingsDTO> getAllConfigSettings() {
+	    return configSettingService.getAllSettings();
+	}
+	
+	@PostMapping("/settings")
+	public List<SettingsDTO> setAllConfigSettings() {
 	    return configSettingService.getAllSettings();
 	}
 }

@@ -356,7 +356,7 @@ const hasChanges = () => {
     return false
   }
 
-  return JSON.stringify(getSettings()) !== JSON.stringify(originalSettings.value)
+  return JSON.stringify(getCurrentSettings()) !== JSON.stringify(originalSettings.value)
 }
 
 const saveSettings = async () => {
@@ -367,22 +367,13 @@ const saveSettings = async () => {
   saving.value = true
 
   try {
-    /*
-     * 這裡之後接你的 API
-     *
-     * const response = await configService.updateSettings(getSettings())
-     *
-     * 假設後端回傳儲存後的完整設定：
-     * const savedSettings = response.data
-     */
-
-    const savedSettings = getSettings()
+    const settings = await configService.saveSettings(getCurrentSettings())
 
     // 重新 bind v-model
-    bindSettings(savedSettings)
+    bindSettings(settings)
 
     // 更新「最後一次儲存」的資料
-    originalSettings.value = structuredClone(savedSettings)
+    originalSettings.value = structuredClone(settings)
   } catch (error) {
     console.error('儲存設定失敗：', error)
   } finally {

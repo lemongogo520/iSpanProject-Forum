@@ -18,7 +18,7 @@ export const configService = {
 
     console.log(settings);
     const response = await httpClient({
-      method: 'post',
+      method: 'put',
       url: '/api/config/settings',
       data: settings
     })

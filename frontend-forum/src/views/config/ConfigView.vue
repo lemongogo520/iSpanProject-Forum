@@ -4,7 +4,10 @@
 
     <div class="content">
       <div class="header">
-        <h1>網站設定</h1>
+        <h1>全站設定</h1>
+        <span v-if="hasChanges()" class="unsaved">
+          有更新尚未儲存
+        </span>
         <v-btn
           color="primary"
           :loading="saving"
@@ -261,6 +264,7 @@ const originalSettings = ref(null)
 const showLeaveDialog = ref(false)
 const pendingLeave = ref(null)
 
+//取得介面設定
 const getCurrentSettings = () => ({
   basic: {
     webSiteName: basicSettings.value.webSiteName,
@@ -284,6 +288,7 @@ const getCurrentSettings = () => ({
   }
 })
 
+//渲染資料給model
 const bindSettings = (settings) => {
   settings.forEach(setting => {
     switch (setting.item) {
@@ -335,6 +340,7 @@ const bindSettings = (settings) => {
   })
 }
 
+//取得設定資料
 const loadSettings = async () => {
   try {
     const settings = await configService.getSettings()
@@ -359,6 +365,67 @@ const hasChanges = () => {
   return JSON.stringify(getCurrentSettings()) !== JSON.stringify(originalSettings.value)
 }
 
+//儲存前準備資料
+const getSaveSettings = () => [
+  {
+    item: 'web_site_name',
+    value: basicSettings.value.webSiteName
+  },
+  {
+    item: 'web_site_description',
+    value: basicSettings.value.webSiteDescription
+  },
+  {
+    item: 'login_logo',
+    value: basicSettings.value.loginLogo
+  },
+  {
+    item: 'token_active',
+    value: String(basicSettings.value.tokenActive)
+  },
+  {
+    item: 'allow_register',
+    value: String(userSettings.value.allowRegister)
+  },
+  {
+    item: 'account_min_length',
+    value: String(userSettings.value.accountMinLength)
+  },
+  {
+    item: 'account_max_length',
+    value: String(userSettings.value.accountMaxLength)
+  },
+  {
+    item: 'password_min_length',
+    value: String(userSettings.value.passwordMinLength)
+  },
+  {
+    item: 'allow_change_password',
+    value: String(userSettings.value.allowChangePassword)
+  },
+  {
+    item: 'post_paper_page',
+    value: String(forumSettings.value.postPaperPage)
+  },
+  {
+    item: 'comment_paper_page',
+    value: String(forumSettings.value.commentPaperPage)
+  },
+  {
+    item: 'allow_edit_post',
+    value: String(forumSettings.value.allowEditPost)
+  },
+  {
+    item: 'edit_post_days',
+    value: String(forumSettings.value.editPostDays)
+  },
+  {
+    item: 'allow_delete_post',
+    value: String(forumSettings.value.allowDeletePost)
+  }
+]
+
+//儲存
 const saveSettings = async () => {
   if (saving.value) {
     return
@@ -367,7 +434,7 @@ const saveSettings = async () => {
   saving.value = true
 
   try {
-    const settings = await configService.saveSettings(getCurrentSettings())
+    const settings = await configService.saveSettings(getSaveSettings())
 
     // 重新 bind v-model
     bindSettings(settings)
@@ -436,12 +503,21 @@ onBeforeRouteLeave((to, from, next) => {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: 20px;
 }
 
 .header h1 {
   margin: 0;
+}
+
+.unsaved {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #1976d2;
+}
+
+.header .v-btn {
+  margin-left: auto;
 }
 
 .tabs {

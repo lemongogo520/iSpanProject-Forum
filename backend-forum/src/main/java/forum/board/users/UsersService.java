@@ -92,7 +92,7 @@ public class UsersService {
 	 * @return
 	 */
 	public Users getUsersByAccount(String account) {
-		if(usersRepository.findById(account) != null)
+		if(usersRepository.findByAccount(account) != null)
 			return usersRepository.findByAccount(account).get();
 		else
 			return null;

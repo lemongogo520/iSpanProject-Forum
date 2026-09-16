@@ -9,7 +9,7 @@ const features = [
   { title: "好友", description: "好友管理、即時聊天，和夥伴保持聯繫", icon: "mdi-account-group-outline", color: "cyan", to: "/friends" },
   { title: "我的角色", description: "紙娃娃、裝備與背包，打造專屬角色", icon: "mdi-account-circle-outline", color: "deep-purple", to: "/avatar" },
   { title: "商城", description: "使用點數購買商品、道具與裝飾", icon: "mdi-storefront-outline", color: "green", to: "/shop" },
-  { title: "任務活動", description: "參與任務與活動，獲得豐富獎勵", icon: "mdi-trophy-outline", color: "pink", to: "/tasks" },
+  { title: "任務活動", description: "參與任務與活動，獲得豐富獎勵", icon: "mdi-trophy-outline", color: "pink", to: "/member/tasks" },
 ];
 
 const topics = [

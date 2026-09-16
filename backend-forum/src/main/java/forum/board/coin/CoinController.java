@@ -16,15 +16,21 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.dao.ConcurrencyFailureException;
 
 
 @Controller
 public class CoinController {
-
     private final CoinService coinService;
+    private final DailyTaskService dailyTaskService;
 
-    public CoinController(CoinService coinService) {
+    public CoinController(
+            CoinService coinService,
+            DailyTaskService dailyTaskService) {
+
         this.coinService = coinService;
+        this.dailyTaskService = dailyTaskService;
     }
 
     /*
@@ -134,84 +140,14 @@ public class CoinController {
         return ResponseEntity.ok(response);
     }
     
-    
-    
-    
-    /*
-     * 管理員替指定會員加幣或扣幣。
+    /**
+     * 查詢目前登入會員今天的任務。
+     *
+     * GET /api/coins/tasks/today
      */
     @ResponseBody
-    @PostMapping("/api/admin/coins/adjust")
-    public ResponseEntity<MessageResponse> adjustCoins(
-            @RequestBody CoinAdjustRequest request,
-            HttpSession session) {
-
-        UUID adminUserId = getLoginUserId(session);
-
-        /*
-         * 尚未登入。
-         */
-        if (adminUserId == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(new MessageResponse(false,"請先登入"));
-        }
-
-        try {
-            Long balanceAfter =
-                    coinService.adjustCoins(
-                        adminUserId,
-                        request
-                    );
-
-            return ResponseEntity.ok(
-                new MessageResponse(
-                    true,
-                    "調整成功，目前餘額為 " + balanceAfter + " 枚"));
-
-        } catch (SecurityException e) {
-
-            /*
-             * 已登入，但不是 systemadmin。
-             */
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(new MessageResponse(
-                        false,
-                        e.getMessage()
-                    ));
-
-        } catch (IllegalArgumentException e) {
-
-            /*
-             * 帳號、金額或操作內容錯誤。
-             */
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse(
-                        false,
-                        e.getMessage()
-                    ));
-
-        } catch (Exception e) {
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse(
-                        false,
-                        "調整失敗，請稍後再試"
-                    ));
-        }
-    }
-    
-    
-
-    /*
-     * 領取每日獎勵。
-     */
-    @ResponseBody
-    @PostMapping("/api/coins/daily-reward")
-    public ResponseEntity<MessageResponse> claimDailyReward(
+    @GetMapping("/api/coins/tasks/today")
+    public ResponseEntity<?> getTodayTasks(
             HttpSession session) {
 
         UUID userId = getLoginUserId(session);
@@ -220,44 +156,95 @@ public class CoinController {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body(new MessageResponse(
-                        false,
-                        "請先登入"
-                    ));
+                            false,
+                            "請先登入"));
         }
 
         try {
-            Long rewardAmount =
-                    coinService.claimDailyReward(userId);
+            List<DailyTaskResponse> tasks =
+                    dailyTaskService.getTodayTasks(userId);
 
-            return ResponseEntity.ok(
-                new MessageResponse(
-                    true,
-                    "成功領取每日獎勵 "
-                        + rewardAmount
-                        + " 枚"
-                )
-            );
+            return ResponseEntity.ok(tasks);
+
+        } catch (ConcurrencyFailureException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(new MessageResponse(
+                            false,
+                            "任務資料正在更新，請重新查詢"));
 
         } catch (IllegalArgumentException e) {
 
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse(
-                        false,
-                        e.getMessage()
-                    ));
+                            false,
+                            e.getMessage()));
+        }
+    }
 
-        } catch (Exception e) {
+    /**
+     * 手動領取每日任務獎勵。
+     *
+     * POST /api/coins/tasks/{taskId}/claim
+     *
+     * 不接受前端指定會員 ID 或獎勵金額。
+     */
+    @ResponseBody
+    @PostMapping("/api/coins/tasks/{taskId}/claim")
+    public ResponseEntity<?> claimTaskReward(
+            @PathVariable("taskId") UUID taskId,
+            HttpSession session) {
+
+        UUID userId = getLoginUserId(session);
+
+        if (userId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse(
+                            false,
+                            "請先登入"));
+        }
+
+        try {
+            DailyTaskClaimResponse response =
+                    dailyTaskService.claimReward(
+                            userId,
+                            taskId);
+
+            return ResponseEntity.ok(response);
+
+        } catch (ConcurrencyFailureException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(new MessageResponse(
+                            false,
+                            "資料正在更新，請重新查詢任務狀態後再試"));
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse(
+                            false,
+                            e.getMessage()));
+
+        } catch (IllegalStateException e) {
 
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse(
-                        false,
-                        "領取失敗，請稍後再試"
-                    ));
+                            false,
+                            "任務或入帳紀錄異常，請聯絡系統管理員"));
         }
     }
+    
+  
+    
 
+   
     /*
      * 執行會員轉帳。
      */
@@ -330,6 +317,47 @@ public class CoinController {
 
         return null;
     }
+    
+    /**
+     * 完成今日簽到。
+     * 完成後仍需另外呼叫領獎 API。
+     */
+    @ResponseBody
+    @PostMapping("/api/coins/tasks/check-in")
+    public ResponseEntity<?> checkIn(HttpSession session) {
+
+        UUID userId = getLoginUserId(session);
+
+        if (userId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse(
+                            false,
+                            "請先登入"));
+        }
+
+        try {
+            return ResponseEntity.ok(
+                    dailyTaskService.checkIn(userId));
+
+        } catch (ConcurrencyFailureException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(new MessageResponse(
+                            false,
+                            "簽到資料正在更新，請重新查詢"));
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse(
+                            false,
+                            e.getMessage()));
+        }
+    }
+    
     
    
     

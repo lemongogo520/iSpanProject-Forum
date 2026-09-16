@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import forum.board.config.Settings;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,6 +33,8 @@ public class PostController {
 	private final PostsHistoryService postsHistoryService;
 
 	private final PostImageService postImageService;
+
+	private final Settings settings;
 
 	// 取得全部文章
 	@GetMapping("/api/posts")
@@ -66,7 +70,9 @@ public class PostController {
 	public Page<Posts> findByBoardIdpage(@PathVariable Integer boardId,
 			@RequestParam(defaultValue = "latest") String sortBy, Pageable pageable) {
 
-		return postService.findByBoardId(boardId, sortBy, pageable);
+		Pageable configuredPageable = PageRequest.of(pageable.getPageNumber(),getPostPageSize(),pageable.getSort());
+
+		return postService.findByBoardId(boardId, sortBy, configuredPageable);
 	}
 
 	// 用posttitle找文章
@@ -172,4 +178,12 @@ public class PostController {
 		}
 	}
 
+	private int getPostPageSize() {
+		try {
+			int size = Integer.parseInt(settings.get("post_paper_page"));
+			return size > 0 && size <= 100 ? size : 10;
+		} catch (Exception e) {
+			return 10;
+		}
+	}
 }

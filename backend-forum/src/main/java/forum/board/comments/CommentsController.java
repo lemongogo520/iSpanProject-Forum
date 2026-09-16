@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import forum.board.config.Settings;
 import forum.board.users.Users;
 import forum.board.users.UsersRepository;
 import jakarta.servlet.http.HttpSession;
@@ -31,6 +33,8 @@ public class CommentsController {
 	private final UsersRepository usersRepo;
 
 	private final CommentsHistoryService commentsHistoryService;
+
+	private final Settings settings;
 
 	// 新增留言 如果沒加parentCommentId代表為主要留言
 	@PostMapping("/api/comments/posts/{postId}")
@@ -66,7 +70,9 @@ public class CommentsController {
 	@GetMapping("/api/comments/posts/{postId}")
 	public Page<Comments> findByPostId(@PathVariable Integer postId, Pageable pageable) {
 
-		return commentsService.findByPostId(postId, pageable);
+		Pageable configuredPageable = PageRequest.of(pageable.getPageNumber(),getCommentPageSize(),pageable.getSort());
+
+		return commentsService.findByPostId(postId, configuredPageable);
 	}
 
 	@GetMapping("/api/comments/{parentId}/children")
@@ -105,8 +111,8 @@ public class CommentsController {
 
 	// 刪除留言
 	@DeleteMapping("/api/comments/{commentId}")
-	public ResponseEntity<?> delete(@PathVariable Integer commentId,@RequestBody(required = false)
-        DeleteRequestDTO request, HttpSession session) {
+	public ResponseEntity<?> delete(@PathVariable Integer commentId,
+			@RequestBody(required = false) DeleteRequestDTO request, HttpSession session) {
 
 		UUID userId = (UUID) session.getAttribute("loginUserId");
 		if (userId == null) {
@@ -164,6 +170,13 @@ public class CommentsController {
 
 	}
 
-	// 管理員功能之後補做
+	private int getCommentPageSize() {
+		try {
+			int size = Integer.parseInt(settings.get("comment_paper_page"));
+			return size > 0 && size <= 100 ? size : 5;
+		} catch (Exception e) {
+			return 5;
+		}
+	}
 
 }

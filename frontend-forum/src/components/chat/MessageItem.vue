@@ -1,13 +1,11 @@
 <template>
-    <div class="message-item"
-        :class="{
-            'my-message': props.message.mine,
-            'other-message': !props.message.mine
-        }">
-        <div class="time-stamp">{{ formatDate(message.createTime) }}</div>
+    <div class="message-row" 
+    :class="{'mine': props.message.mine}"
+    >
         <div class="message-content">
             {{ message.content }}
         </div>
+        <div class="message-time">{{ formatDate(message.createTime) }}</div>
     </div>
 </template>
 <script setup>
@@ -53,30 +51,51 @@ const formatDate = (dateString) => {
 
 </script>
 <style>
-    .message-item{
+    .message-row{
         display: flex;
+        align-items: flex-end;
+        gap: 8px;
         margin: 8px 0;
         color: var(--color-title);
         font-weight: 500;
     }
-    .my-message {
+
+    /* 自己 */
+    .message-row.mine{
         justify-content: flex-end;
     }
+    .message-row.mine .message-content{
+        order: 2;
+    }
+    .message-row.mine .message-time {
+        order: 1;
+    }
 
-    .other-message {
+    /* 對方 */
+    .message-row:not(.mine) {
         justify-content: flex-start;
     }
 
-    .time-stamp{
-        color: var(--color-text);
-        font-weight: 400;
-        font-size: small;
-        margin-top: auto;
+    .message-row:not(.mine) .message-content{
+        order: 1;
     }
+
+    .message-row:not(.mine) .message-time {
+        order: 2;
+    }
+
 
     .message-content {
         padding: 8px 12px;
         border-radius: 12px;
         background-color: var(--color-card);
     }
+    
+    .message-time{
+        color: var(--color-text);
+        font-weight: 400;
+        font-size: small;
+        margin-top: auto;
+    }
+
 </style>

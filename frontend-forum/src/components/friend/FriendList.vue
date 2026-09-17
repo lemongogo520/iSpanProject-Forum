@@ -1,5 +1,5 @@
 <template>
-    <p class="title">你的朋友</p>
+    <!-- <p class="title">你的朋友</p> -->
     <div class="friends-list">
 
         <div v-if="friendList.length === 0" class="empty-text">
@@ -33,9 +33,13 @@ onMounted(()=>{
 
 </script>
 <style>
+.friend-list {
+    display: flex;
+    flex-direction: column;
 
-.friends-list{
-    padding-left: 24px;
-    gap: 10px;
+    padding: 10px;
+
+    max-height: 500px;
+    overflow-y: auto;
 }
 </style>

@@ -3,7 +3,7 @@
         <FriendRequestList></FriendRequestList>
         <div class="empty-text" v-if="friendList.length==0">還沒有好友哦~</div>
         <div class="friend-page" v-else>
-            <div class="friend-sidebar">
+            <div class="friend-list">
                 <FriendList @select-friend=selectFriend></FriendList>
             </div>
             <div class="friend-detail">
@@ -70,7 +70,7 @@ onMounted(() => {
     min-height: 0;
 }
 
-.friend-sidebar {
+.friend-list{
     width: 30%;
 
 }

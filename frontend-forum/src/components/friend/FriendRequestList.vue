@@ -8,16 +8,16 @@
             <div v-for="request in requestList" :key="request.id" class="request-item">
                 <FriendItem  :friend="request.friend">
                 </FriendItem>
-                <div class="action-btn">
-                    <span v-if="processing[request.id] === 'accepted'" class="result-text">已接受</span>
-                    <span v-else-if="processing[request.id] === 'rejected'" class="result-text">已拒絕</span>
+                <div class="request-actions">
+                    <span v-if="processing[request.id] === 'accepted'" class="btn result">已接受</span>
+                    <span v-else-if="processing[request.id] === 'rejected'" class="btn result">已拒絕</span>
 
                     <template v-else>
-                        <v-btn class="accept-btn" :disabled="!!processing[request.id]" 
+                        <v-btn class="btn accept" :disabled="!!processing[request.id]" 
                         @click="acceptRequest(request.id)">
                             {{ processing[request.id] === 'accepting' ? '處理中...' : '接受' }}
                         </v-btn>
-                        <v-btn class="reject-btn" :disabled="!!processing[request.id]" 
+                        <v-btn class="btn reject" :disabled="!!processing[request.id]" 
                         @click="rejectRequest(request.id)">
                             {{ processing[request.id] === 'rejecting' ? '處理中...' : '拒絕' }}
                         </v-btn>
@@ -97,36 +97,61 @@ onMounted(() => {
     /* background: #62a6d3; */
 }
 
-.result-text {
-    margin-right: 20px;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text);
-    font-weight: 600;
-}
-.action-btn {
+.request-actions{
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
 }
 
+.btn {
+    padding: 8px 16px;
+    margin: 8px;
+
+    border-radius: 10px;
+    border: 2px solid;
+    color: white;
+
+    font-weight: 700;
+    cursor: pointer;
+
+    transition: 0.1s;
+}
 /* 接受 */
-.accept-btn {
-    background: var(--color-primary);
-    color: white;
+.btn.accept{
+    background: #8bbce0;
+    box-shadow: 0 3px 0 #5f91b5;
+    border-color: #5f91b5; 
+}
+.btn.accept:hover{
+    background: #a6cce8;
 }
 
-/* 拒絕 */
-.reject-btn {
-    background-color: #d97979;
-    color: white;
+/* 拒絕  */
+.btn.reject {
+    background: #d99a9a;
+    box-shadow: 0 3px 0 #b97878;
+    border-color: #b97878;
 }
 
-.accept-btn:hover,
-.reject-btn:hover {
-    background: #fff1f1;
-    color: #d97979;
+.btn.reject:hover{
+    background: #e2aaaa;
 }
+/* 按下 */
+.btn:active{
+    transform: translateY(3px);
+    box-shadow: 0 0 0 currentColor;
+}
+
+/* 已處理 */
+.btn.result {
+    background: #b8b8b8;
+    border-color: #8f8f8f;
+    box-shadow: 0 3px 0 #8f8f8f;
+
+    cursor: default;
+}
+
+
+
 
 </style>

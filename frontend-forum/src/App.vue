@@ -21,19 +21,14 @@ const isFriendOpen = ref(false);
 </script>
 
 <template>
-  <v-app class="app" :class="{ open: isFriendOpen }">
+  <v-app class="app-layout">
     <HomeHeader v-if="showHeader && authStore.checked && authStore.isLogin" />
 
-    <v-main class="main">
+    <v-main class="main-content" :class="{'open':isFriendOpen}">
       <RouterView />
     </v-main>
 
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="3000"
-      location="top"
-    >
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" location="top">
       {{ snackbar.message }}
 
       <template #actions>
@@ -42,46 +37,33 @@ const isFriendOpen = ref(false);
     </v-snackbar>
 
     <!-- 好友側邊欄 -->
-    <div class="friend-wrapper">
-      <FriendSidebar
-        v-if="
-          showHeader && authStore.checked && authStore.isLogin && isFriendOpen
-        "
-        :isOpen="isFriendOpen"
-      />
-      <button class="friend-button" @click="isFriendOpen = !isFriendOpen">
-        {{ isFriendOpen ? ">" : "<" }}
-      </button>
-    </div>
+
+    <FriendSidebar v-if="
+      showHeader && authStore.checked && authStore.isLogin && isFriendOpen
+    " :isOpen="isFriendOpen" />
+    <button class="friend-button" @click="isFriendOpen = !isFriendOpen">
+      {{ isFriendOpen ? ">" : "<" }} </button>
+
   </v-app>
 </template>
 
 <style>
-.main {
-  margin-right: 32px;
-  width: calc(100vh-352px);
+.main-content{
+  transition: margin-right 0.3s ease;
 }
 
-.friend-wrapper {
-  position: fixed;
-  top: 64px;
-  right: 0;
-
-  width: 352px;
-  height: 100%;
-
-  transform: translateX(320px);
-  z-index: 1000;
-}
-.friend-wrapper.open {
-  transform: translateX(0);
+.main-content.open {
+  margin-right: 352px;
 }
 
 .friend-button {
-  position: absolute;
+  position: fixed;
   right: 0;
-  width: 100%;
+  top: 0;
+  width: 32px;
   height: 100%;
+  align-items: center;
+  justify-content: center;
 
   background: white;
   color: #8bbce0;
@@ -96,7 +78,5 @@ const isFriendOpen = ref(false);
 .friend-button:hover {
   background: #9fc9e5;
 }
-.app.open .main {
-  margin-right: 350px;
-}
+
 </style>

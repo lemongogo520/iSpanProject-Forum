@@ -66,6 +66,8 @@ public class DollItemService {
         dollItem.setCategory(categoryId);
         dollItem.setName(dollItemDTO.getName());
         dollItem.setFilePath(relativeFilePath);
+        // 設定價格，如果前端沒有傳或是 null，預設給 0 元
+        dollItem.setPrice(dollItemDTO.getPrice() != null ? dollItemDTO.getPrice() : 0);
         dollItem.setIsActive(dollItem.getIsActive() != null ? dollItemDTO.getIsActive() : true);
         return iRepo.save(dollItem);
     }
@@ -75,6 +77,14 @@ public class DollItemService {
         DollItem dollItem = iRepo.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("找不到對應的道具 ID: " + itemId));
         dollItem.setName(newName);
+        return iRepo.save(dollItem);
+    }
+
+    // 更改部件價格
+    public DollItem updateItemPrice(Integer itemId, Integer newPrice) {
+        DollItem dollItem = iRepo.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("找不到對應的道具 ID: " + itemId));
+        dollItem.setPrice(newPrice);
         return iRepo.save(dollItem);
     }
 

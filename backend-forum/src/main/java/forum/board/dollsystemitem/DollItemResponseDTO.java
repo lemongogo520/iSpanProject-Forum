@@ -9,6 +9,7 @@ public class DollItemResponseDTO {
     private Integer id;
     private String name;
     private String filePath;
+    private Integer price;
     private Boolean isActive;
     private Boolean isOwned;
     private DollCategoryDTO category;
@@ -22,6 +23,7 @@ public class DollItemResponseDTO {
         dto.setId(item.getId());
         dto.setName(item.getName());
         dto.setFilePath(item.getFilePath());
+        dto.setPrice(item.getPrice()); // 將 Entity 的價格塞入 DTO
         dto.setIsActive(item.getIsActive());
 
         if (item.getCategory() != null) {

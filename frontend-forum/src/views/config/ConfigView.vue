@@ -159,7 +159,7 @@
               />
             </div>
 
-            <div class="setting-item">
+            <div class="setting-item" style="display: none">
               <label>允許編輯文章</label>
               <v-switch
                 v-model="forumSettings.allowEditPost"
@@ -168,7 +168,7 @@
               />
             </div>
 
-            <div class="setting-item">
+            <div class="setting-item" style="display: none">
               <label>編輯文章日期限制</label>
               <v-text-field
                 v-model="forumSettings.editPostDays"
@@ -181,7 +181,7 @@
               />
             </div>
 
-            <div class="setting-item">
+            <div class="setting-item" style="display: none">
               <label>允許刪除文章</label>
               <v-switch
                 v-model="forumSettings.allowDeletePost"
@@ -232,9 +232,11 @@ import { ref , onMounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import Sidebar from '@/components/config/ConfigSidebar.vue'
 import { configService } from '@/services/configService'
+import { useConfigStore } from '@/stores/config'
 
 const currentTab = ref('basic')
 const saving = ref(false)
+const configStore = useConfigStore();
 
 const basicSettings = ref({
   webSiteName: '',
@@ -434,8 +436,9 @@ const saveSettings = async () => {
   saving.value = true
 
   try {
-    const settings = await configService.saveSettings(getSaveSettings())
+    await configStore.saveSettings(getSaveSettings())
 
+    const settings = await configService.getSettings()
     // 重新 bind v-model
     bindSettings(settings)
 

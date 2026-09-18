@@ -9,7 +9,6 @@ export const configService = {
       url: '/api/config/settings'
     })
 
-    console.log(response.data);
     return response.data
   },
 

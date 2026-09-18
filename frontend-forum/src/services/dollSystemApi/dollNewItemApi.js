@@ -8,6 +8,7 @@ export function addNewDollItem() {
   const formData = ref({
     categoryId: null,
     name: "",
+    price: 0,
   });
   const selectedFile = ref(null);
 
@@ -40,6 +41,7 @@ export function addNewDollItem() {
     const itemData = {
       categoryId: formData.value.categoryId,
       name: formData.value.name,
+      price: formData.value.price,
       isActive: true,
     };
 
@@ -65,6 +67,7 @@ export function addNewDollItem() {
       alert("部件新增成功!");
 
       formData.value.name = "";
+      formData.value.price = 0;
       selectedFile.value = null;
     } catch (error) {
       alert("新增失敗，請檢察檔案格式!");

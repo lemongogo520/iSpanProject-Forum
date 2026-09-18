@@ -1,7 +1,9 @@
 <template>
-  <v-card theme="dark" class="bg-grey-darken-4" rounded="lg">
-    <v-card-title class="d-flex align-center pa-4 border-b border-grey-darken-3">
-      <v-icon start icon="mdi-pencil-outline" color="cyan-accent-3"></v-icon>
+  <v-card class="bg-white" rounded="lg" elevation="6">
+    <v-card-title
+      class="d-flex align-center pa-4 border-b font-weight-bold text-primary-darken-1"
+    >
+      <v-icon start icon="mdi-pencil-outline" color="primary"></v-icon>
       編輯圖層資訊
     </v-card-title>
 
@@ -10,7 +12,8 @@
         v-model="formData.typeName"
         label="分類名稱 (TypeName)"
         variant="outlined"
-        color="cyan-accent-3"
+        color="primary"
+        bg-color="grey-lighten-4"
         density="comfortable"
         class="mb-4"
         hide-details
@@ -18,10 +21,11 @@
 
       <v-text-field
         v-model.number="formData.zIndex"
-        label="圖層高度 (Z-Index)"
+        label="圖層 (Z-Index)"
         type="number"
         variant="outlined"
-        color="cyan-accent-3"
+        color="primary"
+        bg-color="grey-lighten-4"
         density="comfortable"
         hide-details
       ></v-text-field>
@@ -31,16 +35,16 @@
       <v-spacer></v-spacer>
       <v-btn
         variant="outlined"
-        color="grey-lighten-1"
+        color="grey-darken-1"
         class="px-4"
         @click="emit('close')"
       >
         取消
       </v-btn>
       <v-btn
-        color="cyan-accent-3"
+        color="primary-darken-1"
         variant="flat"
-        class="px-4 text-grey-darken-4 font-weight-bold"
+        class="px-4 text-white font-weight-bold"
         @click="handleSave"
       >
         儲存
@@ -49,7 +53,7 @@
   </v-card>
 </template>
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch } from "vue";
 
 const props = defineProps({
   category: {
@@ -78,6 +82,4 @@ const handleSave = () => {
   emit("save", formData.value);
 };
 </script>
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -1,5 +1,6 @@
 import httpClient from "../httpClient";
 import { listAllCategories } from "./dollAllCategoryApi";
+import { ref } from "vue";
 
 // 圖片基底網址 (常數，移到最外面讓大家共用)
 const baseUrl = "http://localhost:8080/sprites/";

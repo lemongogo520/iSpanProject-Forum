@@ -62,11 +62,6 @@ const routes = [
     component: () => import("@/views/doll/DollCategoriesView.vue"),
   },
   {
-    path: "/doll/newitem",
-    name: "dollnewitem",
-    component: () => import("@/views/doll/DollNewItemsView.vue"),
-  },
-  {
     path: "/doll/user",
     name: "dolluser",
     component: () => import("@/views/doll/DollUserItemsView.vue"),
@@ -96,14 +91,24 @@ const routes = [
   {
     path: "/config/doll",
     name: "ConfigDoll",
-    component: () => import("@/views/config/ConfigDollView.vue"),
+    component: () => import("@/views/doll/DollCategoriesView.vue"),
+  },
+  {
+    path: "/config/doll/newitem",
+    name: "dollNewItem",
+    component: () => import("@/views/doll/DollNewItemsView.vue"),
+  },
+  {
+    path: "/config/doll/adminitems",
+    name: "dollAdminItems",
+    component: () => import("@/views/doll/DollAdminItemsView.vue"),
   },
 
   //商城
   {
-    path: '/shop',
-    name: 'shop',
-    component: () => import('@/views/ShopView.vue')
+    path: "/shop",
+    name: "shop",
+    component: () => import("@/views/ShopView.vue"),
   },
   {
     path: "/member/tasks",
@@ -114,7 +119,7 @@ const routes = [
     path: "/member/transactions",
     name: "CoinTransactions",
     component: () => import("@/views/coin/CoinTransactionsView.vue"),
-  }
+  },
 ];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -123,7 +128,7 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
-   const userStore = useUserStore();
+  const userStore = useUserStore();
 
   // 登入、註冊頁不用檢查
   if (to.path === "/login" || to.path === "/register") {

@@ -67,7 +67,7 @@
           <v-icon start>mdi-shield-account</v-icon>
           論壇管理
         </v-btn>
-        <v-btn variant="text" @click="goTo('/paper-doll')">
+        <v-btn variant="text" @click="goTo('/doll/user')">
           <v-icon start>mdi-account-star</v-icon>
           紙娃娃系統
         </v-btn>

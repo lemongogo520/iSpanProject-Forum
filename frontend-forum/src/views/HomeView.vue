@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { RouterLink } from "vue-router";
+import { useDisplay } from "vuetify";
 import heroBanner from "@/assets/home/hero-banner.png";
 import forumImage from "@/assets/home/forum.png";
 import friendsImage from "@/assets/home/friends.png";
@@ -49,7 +49,7 @@ function selectSlide(index) {
   startCarousel();
 }
 function syncVisibility() { pageHidden.value = document.hidden; }
-function syncMotion() { paused.value = motionQuery.matches; }
+function syncMotion() { paused.value = motionQuery.matches; lowerPaused.value = motionQuery.matches; }
 watch([paused, pageHidden], startCarousel);
 onMounted(() => {
   motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -60,9 +60,15 @@ onMounted(() => {
   // 預先載入後面的圖片，減少第一次換圖時的等待。
   slides.forEach(slide => { const image = new Image(); image.src = slide.image; });
   startCarousel();
+  lowerTimer = window.setInterval(() => {
+    if (lowerPaused.value || pageHidden.value || lowerHover.value || lowerFocus.value) return;
+    topicPage.value = (topicPage.value + 1) % topicPageCount.value;
+    announcementIndex.value = (announcementIndex.value + 1) % announcements.length;
+  }, 6000);
 });
 onUnmounted(() => {
   stopCarousel();
+  window.clearInterval(lowerTimer);
   motionQuery?.removeEventListener("change", syncMotion);
   document.removeEventListener("visibilitychange", syncVisibility);
 });
@@ -75,7 +81,31 @@ const topics = [
   { category: "作品展示", color: "pink", title: "我的紙娃娃角色設計分享！", user: "設計小天才", views: "367", comments: 6 },
 ];
 
+const topicExcerpts = {
+  "Spring Boot 啟動失敗問題求解": "啟動專案時遇到錯誤，想請教大家如何找出原因與排查問題。",
+  "請問如何在 Java 中連接 SQL Server？": "剛開始學習資料庫連線，想了解設定步驟與需要注意的地方。",
+  "自學 Java 的心路歷程分享": "分享從零開始學習 Java 的經驗，與正在努力的夥伴一起交流。",
+  "關於 Thread 和 Runnable 的疑問": "整理多執行緒的學習疑問，討論不同實作方式的使用時機。",
+  "我的紙娃娃角色設計分享！": "分享角色搭配與造型靈感，歡迎一起交流喜歡的裝扮風格。",
+};
+
 const announcements = ["系統維護公告", "點數獎勵活動開跑！", "新版商城上線囉"];
+
+// 示範文章僅展示；取得文章 API 後再接實際文章路由。
+const { smAndUp, lgAndUp } = useDisplay();
+const topicPage = ref(0);
+const pageSize = computed(() => lgAndUp.value ? 3 : smAndUp.value ? 2 : 1);
+const topicPageCount = computed(() => Math.ceil(topics.length / pageSize.value));
+const visibleTopics = computed(() => topics.slice(topicPage.value * pageSize.value, (topicPage.value + 1) * pageSize.value));
+watch(pageSize, () => { topicPage.value = 0; });
+const lowerPaused = ref(false);
+const lowerHover = ref(false);
+const lowerFocus = ref(false);
+const announcementIndex = ref(0);
+let lowerTimer = null;
+function changeTopicPage(direction) { topicPage.value = (topicPage.value + direction + topicPageCount.value) % topicPageCount.value; }
+function handleLowerFocusOut(event) { lowerFocus.value = event.currentTarget.contains(event.relatedTarget); }
+
 const dialogContent = computed(() => infoDialog.value === "about"
   ? { title: "關於我們", text: "iSpanProject 是結合論壇、好友、角色、點數與商城的交流平台，讓分享與學習成為每天的日常。" }
   : { title: "聯絡我們", text: "聯絡方式尚未公布，請留意後續系統公告。" });
@@ -87,7 +117,7 @@ const dialogContent = computed(() => infoDialog.value === "about"
       <section class="hero-carousel" aria-label="首頁功能輪播" aria-roledescription="輪播" @keydown.left.prevent="selectSlide(activeSlide - 1)" @keydown.right.prevent="selectSlide(activeSlide + 1)">
         <div class="carousel-stage" :aria-live="paused ? 'polite' : 'off'">
           <Transition name="banner-fade" mode="out-in">
-            <component :is="currentSlide.to ? RouterLink : 'div'" :key="currentSlide.title" v-bind="currentSlide.to ? { to: currentSlide.to } : {}" :class="['slide-link', { 'slide-display-only': !currentSlide.to }]" :aria-label="currentSlide.to ? `前往${currentSlide.title}` : currentSlide.title" @focus="paused = true">
+            <div :key="currentSlide.title" :class="['slide-link', { 'slide-display-only': !currentSlide.to }]" :aria-label="currentSlide.title">
               <img :src="currentSlide.image" :alt="`${currentSlide.title}主題圖片`" class="slide-image" />
               <div v-if="currentSlide.to" class="slide-shade"></div>
               <div v-if="currentSlide.to" class="slide-copy">
@@ -96,7 +126,7 @@ const dialogContent = computed(() => infoDialog.value === "about"
                 <h2>{{ currentSlide.subtitle }}</h2>
                 <p>{{ currentSlide.description }}</p>                
               </div>
-            </component>
+            </div>
           </Transition>
           <button type="button" class="carousel-arrow arrow-prev" aria-label="上一張圖片" @click="selectSlide(activeSlide - 1)"><v-icon icon="mdi-chevron-left" /></button>
           <button type="button" class="carousel-arrow arrow-next" aria-label="下一張圖片" @click="selectSlide(activeSlide + 1)"><v-icon icon="mdi-chevron-right" /></button>
@@ -106,39 +136,44 @@ const dialogContent = computed(() => infoDialog.value === "about"
         </button>
       </section>
 
-      <section class="feature-section" aria-labelledby="feature-title">
-        <div class="section-heading"><h2 id="feature-title">今天，想探索什麼？</h2><span class="muted">從這裡開始你的旅程</span></div>
-        <div class="feature-grid">
-          <RouterLink v-for="(feature, index) in features" :key="feature.to" :to="feature.to" class="feature-card" :style="{ '--accent': feature.color, '--tint': feature.background, '--delay': `${index * -0.65}s` }">
-            <div class="feature-art feature-photo">
-              <img :src="featureImages[feature.art]" :alt="`${feature.title}插畫`" loading="lazy" />
-            </div>
-            <div class="feature-copy"><h3>{{ feature.title }}<v-icon icon="mdi-arrow-top-right" size="19" /></h3><p>{{ feature.description }}</p></div>
-          </RouterLink>
-        </div>
-      </section>
-
-      <div class="community-grid">
-        <section class="panel" aria-labelledby="topics-title">
-          <div class="panel-heading"><h2 id="topics-title"><v-icon icon="mdi-fire" color="orange" size="23" />熱門討論</h2><v-chip size="x-small" variant="tonal">示範資料</v-chip></div>
-          <RouterLink v-for="topic in topics" :key="topic.title" to="/forum" class="topic-item">
-            <v-chip :color="topic.color" size="small" variant="tonal">{{ topic.category }}</v-chip>
-            <div class="topic-copy"><h3>{{ topic.title }}</h3><p>{{ topic.user }} <span>· {{ topic.views }} 次瀏覽 · {{ topic.comments }} 則回覆</span></p></div>
-            <v-icon icon="mdi-chevron-right" size="20" color="grey" />
-          </RouterLink>
-          <div class="panel-action"><v-btn to="/forum" color="primary" variant="text" append-icon="mdi-arrow-right">查看全部文章</v-btn></div>
+      <div class="community-area" @mouseenter="lowerHover = true" @mouseleave="lowerHover = false" @focusin="lowerFocus = true" @focusout="handleLowerFocusOut">
+        <section class="announcement-ticker panel" aria-label="系統公告跑馬燈">
+          <h2><v-icon icon="mdi-bullhorn-outline" color="primary" />系統公告</h2>
+          <div class="ticker-window" :aria-live="lowerPaused ? 'polite' : 'off'">
+            <Transition name="ticker" mode="out-in"><p :key="announcementIndex">{{ announcements[announcementIndex] }}</p></Transition>
+          </div>
+          <v-chip size="x-small" variant="tonal">示範資料</v-chip>
+          <button type="button" class="lower-control" :aria-label="lowerPaused ? '播放公告與討論輪播' : '暫停公告與討論輪播'" @click="lowerPaused = !lowerPaused"><v-icon :icon="lowerPaused ? 'mdi-play' : 'mdi-pause'" /></button>
         </section>
-        <aside class="panel announcement-panel" aria-labelledby="announcement-title">
-          <div class="panel-heading"><h2 id="announcement-title"><v-icon icon="mdi-bullhorn-outline" color="primary" size="23" />系統公告</h2><v-chip size="x-small" variant="tonal">示範資料</v-chip></div>
-          <ul class="announcement-list"><li v-for="announcement in announcements" :key="announcement">{{ announcement }}</li></ul>
-          <div class="friend-invitation"><v-icon icon="mdi-chat-processing-outline" size="36" /><h3>和夥伴聊聊吧</h3><p>讓每個想法，都有分享的對象。</p><v-btn to="/friends" color="primary" variant="tonal" rounded="pill">前往好友</v-btn></div>
-        </aside>
+        <div class="community-grid">
+          <section class="panel topics-panel" aria-labelledby="topics-title" aria-roledescription="輪播">
+            <div class="panel-heading"><h2 id="topics-title"><v-icon icon="mdi-fire" color="orange" size="23" />熱門討論</h2><v-chip size="x-small" variant="tonal">示範資料</v-chip></div>
+            <div class="topic-carousel">
+              <button type="button" class="topic-prev lower-control" aria-label="上一組熱門討論" @click="changeTopicPage(-1)"><v-icon icon="mdi-chevron-left" /></button>
+              <div class="topic-grid" :style="{ '--columns': pageSize }">
+                <article v-for="topic in visibleTopics" :key="topic.title" class="discussion-card">
+                  <div class="discussion-body">
+                    <v-chip :color="topic.color" size="small" variant="tonal">{{ topic.category }}</v-chip>
+                    <h3>{{ topic.title }}</h3>
+                    <p class="discussion-excerpt">{{ topicExcerpts[topic.title] }}</p>
+                    <p class="discussion-author"><v-icon icon="mdi-account-circle-outline" size="20" />{{ topic.user }}</p>
+                    <p class="discussion-stats"><span><v-icon icon="mdi-eye-outline" size="16" /> {{ topic.views }}</span><span><v-icon icon="mdi-comment-outline" size="16" /> {{ topic.comments }} 則回覆</span></p>
+                  </div>
+                </article>
+              </div>
+              <button type="button" class="topic-next lower-control" aria-label="下一組熱門討論" @click="changeTopicPage(1)"><v-icon icon="mdi-chevron-right" /></button>
+            </div>
+            <div class="topic-dots"><button v-for="page in topicPageCount" :key="page" type="button" :class="{ active: topicPage === page - 1 }" :aria-label="`第 ${page} 組熱門討論`" :aria-current="topicPage === page - 1 ? 'true' : undefined" @click="topicPage = page - 1"><span></span></button></div>
+          </section>
+          <aside class="panel friend-panel" aria-label="好友聊天入口">
+            <div class="friend-invitation"><v-icon icon="mdi-chat-processing-outline" size="36" /><h3>和夥伴聊聊吧</h3><p>讓每個想法，都有分享的對象。</p><v-btn color="primary" rounded="pill" @click="chatOpen = true">開啟聊天視窗</v-btn></div>
+          </aside>
+        </div>
       </div>
     </div>
 
     <footer class="footer"><button type="button" @click="infoDialog = 'about'">關於我們</button><span aria-hidden="true">｜</span><button type="button" @click="infoDialog = 'contact'">聯絡我們</button></footer>
 
-    <v-btn class="chat-floating" color="primary" icon="mdi-chat-outline" size="large" elevation="5" aria-label="開啟好友聊天" @click="chatOpen = true" />
     <v-dialog v-model="chatOpen" max-width="400">
       <v-card rounded="xl">
         <v-card-title class="dialog-heading">好友聊天<v-btn icon="mdi-close" variant="text" aria-label="關閉好友聊天" @click="chatOpen = false" /></v-card-title>
@@ -180,7 +215,7 @@ const dialogContent = computed(() => infoDialog.value === "about"
 .section-heading h2, .panel-heading h2 { font-size: 19px; font-weight: 700; }
 .feature-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
 .feature-card { display: block; color: inherit; text-decoration: none; border: 1px solid #e7edf5; border-radius: 18px; background: white; overflow: hidden; transition: transform 0.25s ease, box-shadow 0.25s ease; }
-.feature-card:hover { transform: translateY(-6px); box-shadow: 0 14px 30px #304b7212; }
+.feature-card { cursor: default; }
 .feature-card:focus-visible, .topic-item:focus-visible, .footer button:focus-visible { outline: 3px solid #3478d4; outline-offset: 4px; }
 .feature-art { padding: 12px 8px 18px; background: var(--tint); color: var(--accent); text-align: center; }
 .feature-svg { display: block; width: 100%; height: 150px; }
@@ -331,4 +366,55 @@ const dialogContent = computed(() => infoDialog.value === "about"
   -webkit-mask-image: none;
   mask-image: none;
 }
+
+/* 首頁功能卡片僅展示；唯一功能導覽保留在 HomeHeader。 */
+.announcement-ticker { display: flex; align-items: center; gap: 16px; padding: 16px 22px; margin-bottom: 24px; }
+.announcement-ticker h2 { display: flex; align-items: center; gap: 10px; flex-shrink: 0; font-size: 19px; }
+.ticker-window { flex: 1; min-width: 0; overflow: hidden; border-left: 1px solid #dce5f1; padding-left: 20px; }
+.ticker-window p { margin: 0; line-height: 1.7; font-size: 14px; overflow-wrap: anywhere; }
+.ticker-enter-active, .ticker-leave-active { transition: transform .3s ease, opacity .3s ease; }
+.ticker-enter-from { transform: translateY(100%); opacity: 0; }
+.ticker-leave-to { transform: translateY(-100%); opacity: 0; }
+.community-grid { grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr); align-items: start; }
+.topic-carousel { position: relative; padding: 22px 26px 4px; }
+.topic-grid { display: grid; grid-template-columns: repeat(var(--columns), minmax(0, 1fr)); gap: 16px; }
+.discussion-card { overflow: hidden; border: 1px solid #e7edf5; border-radius: 16px; background: white; }
+.discussion-card > img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; background: #12243e; }
+.discussion-body { padding: 16px; }
+.discussion-body h3 { font-size: 16px; line-height: 1.6; min-height: 77px; margin: 12px 0; overflow-wrap: anywhere; }
+.discussion-author, .discussion-stats { display: flex; align-items: center; gap: 8px; color: #74869d; font-size: 12px; }
+.discussion-stats { flex-wrap: wrap; justify-content: space-between; margin-top: 12px; }
+.lower-control { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; padding: 0; border: 1px solid #dfe8f4; border-radius: 50%; background: #f4f8fe; color: #3478d4; cursor: pointer; }
+.lower-control:focus-visible, .topic-dots button:focus-visible { outline: 3px solid #3478d4; outline-offset: 3px; }
+.topic-prev, .topic-next { position: absolute; top: 35%; z-index: 1; background: white; box-shadow: 0 2px 8px #203a571a; }
+.topic-prev { left: 6px; } .topic-next { right: 6px; }
+.topic-dots { display: flex; justify-content: center; padding: 12px; }
+.topic-dots button { display: grid; place-items: center; width: 32px; height: 32px; border: 0; background: transparent; cursor: pointer; }
+.topic-dots span { width: 10px; height: 10px; border-radius: 50%; background: #dce4f0; }
+.topic-dots .active span { background: #3478d4; }
+.friend-panel { padding: 18px; }
+.friend-cover { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 14px; }
+.friend-invitation { margin: 0; padding: 24px 8px 8px; background: white; }
+.footer button { appearance: none; background: transparent; border: 0; padding: 4px; }
+@media (max-width: 959px) { .community-grid { grid-template-columns: 1fr; } .friend-cover { max-height: 220px; object-fit: contain; background: #102b3d; } }
+@media (max-width: 599px) { .announcement-ticker { gap: 10px; padding: 14px; flex-wrap: wrap; } .announcement-ticker h2 { font-size: 16px; } .ticker-window { order: 4; flex-basis: 100%; padding: 0; border: 0; } .announcement-ticker > .lower-control { margin-left: auto; } .discussion-body h3 { min-height: 0; } }
+@media (prefers-reduced-motion: reduce) { .ticker-enter-active, .ticker-leave-active { transition: none; } }
+
+
+/* 新版首頁：插畫集中於大圖，其餘區塊以文字呈現。 */
+.community-area { margin-top: 28px; }
+.discussion-card { display: flex; min-height: 260px; }
+.discussion-body { display: flex; flex-direction: column; width: 100%; padding: 20px 16px; }
+.discussion-body > .v-chip { align-self: flex-start; }
+.discussion-body h3 { min-height: 77px; margin: 12px 0 8px; font-weight: 700; }
+.discussion-excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; color: #60738a; font-size: 13px; line-height: 1.8; min-height: 47px; margin-bottom: 20px; }
+.discussion-author { margin-top: auto; padding-top: 14px; border-top: 1px solid #e7edf5; }
+.topic-prev, .topic-next { top: 45%; }
+.friend-panel { align-self: stretch; display: flex; align-items: center; justify-content: center; }
+.friend-invitation { width: 100%; padding: 30px 8px; }
+.friend-invitation > .v-icon { font-size: 56px !important; height: 64px; width: 64px; }
+.friend-invitation h3 { font-size: 22px; margin-top: 18px; }
+.friend-invitation p { margin: 12px 0 24px; font-size: 13px; }
+.friend-invitation .v-btn { width: 100%; min-height: 44px; }
+@media (max-width: 599px) { .discussion-body h3 { min-height: 0; } .community-area { margin-top: 22px; } }
 </style>

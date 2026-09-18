@@ -1,13 +1,12 @@
 <script setup>
 import { computed, ref, watch } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { useRoute } from "vue-router";
 import { useDisplay } from "vuetify";
 
 // 組員串接：傳入會員資料與路由，或監聽 profile、logout 事件。
 const props = defineProps({
   member: { type: Object, default: () => ({ name: "", account: "", avatarUrl: "", points: null }) },
-  profileTo: { type: String, default: "" },
-  pointsTo: { type: String, default: "/member/transactions" },
+  profileTo: { type: String, default: "" },  
   logoutReady: { type: Boolean, default: false },
 });
 const emit = defineEmits(["profile", "logout"]);
@@ -29,9 +28,9 @@ const pointsText = computed(() => {
 });
 const navItems = [
   { title: "首頁", icon: "mdi-home-outline", to: "/home" },
-  { title: "討論區", icon: "mdi-forum-outline", to: "/forum" },
+  { title: "討論區", icon: "mdi-forum-outline", to: "/categories" },
   { title: "點數", icon: "mdi-star-circle-outline", to: "/member/transactions" },
-  { title: "我的角色", icon: "mdi-account-circle-outline", to: "/avatar" },
+  { title: "我的角色", icon: "mdi-account-circle-outline", to: "/doll/user" },
   { title: "商城", icon: "mdi-storefront-outline", to: "/shop" },
   { title: "任務活動", icon: "mdi-clipboard-check-outline", to: "/member/tasks" },
 ];
@@ -57,7 +56,7 @@ watch(mdAndUp, value => { if (value) drawer.value = false; });
   <v-app-bar color="#0f1f35" height="72" elevation="2">
     <div class="header-container">
       <v-app-bar-nav-icon v-if="!mdAndUp" color="white" aria-label="開啟導覽選單" @click="drawer = !drawer; memberMenu = false" />
-      <RouterLink to="/home" class="brand">xx論壇</RouterLink>
+      <span class="brand">xx論壇</span>
       <nav v-if="mdAndUp" class="main-nav" aria-label="主要導覽">
         <v-btn v-for="item in navItems" :key="item.to" :to="item.to" :class="{ 'nav-button--active': isActive(item.to) }" class="nav-button" color="#c8d1de" variant="text" rounded="0">
           <v-icon :icon="item.icon" size="18" class="mr-1" />{{ item.title }}
@@ -84,7 +83,12 @@ watch(mdAndUp, value => { if (value) drawer.value = false; });
             </v-avatar>
             <div class="profile-identity"><div class="profile-name">{{ displayName }}</div><div class="profile-caption">歡迎回來，開啟你的社群日常</div></div>
           </div>
-          <div class="point-summary"><div><div class="point-label"><v-icon icon="mdi-star-circle" size="18" />目前點數</div><div class="point-value">{{ pointsText }}<span>點</span></div></div><v-btn :to="pointsTo" size="small" color="#8a621a" variant="text" append-icon="mdi-chevron-right" @click="closeMenus">查看紀錄</v-btn></div>
+          <div class="point-summary">
+  <div>
+    <div class="point-label"><v-icon icon="mdi-star-circle" size="18" />目前點數</div>
+    <div class="point-value">{{ pointsText }}<span>點</span></div>
+  </div>
+</div>
           <v-list class="member-actions" aria-label="會員功能">
             <v-list-item :to="profileTo || undefined" rounded="lg" prepend-icon="mdi-account-outline" title="會員個人資料" @click="openProfile"><template #append><v-icon icon="mdi-chevron-right" size="18" /></template></v-list-item>
             <v-list-item to="/friends" rounded="lg" prepend-icon="mdi-account-group-outline" title="好友" @click="closeMenus">

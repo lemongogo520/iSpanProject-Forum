@@ -26,3 +26,4 @@ Thumbs.db
 # Uploaded images
 /uploads/img/*
 !/uploads/img/.gitkeep
+/spritesheets

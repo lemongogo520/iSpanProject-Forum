@@ -14,7 +14,7 @@
     </div>
 </template>
 <script setup>
-import { useChatStore } from '@/stores/chat';
+import { useChatStore } from '@/stores/conversation';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { VTextField } from 'vuetify/components';

@@ -8,24 +8,19 @@
         <template v-else>
             <FriendItem 
             v-for="friend in friendList" 
-            :key="friend.userId" :friend="friend"
-            @click="emit('select-friend',friend)">
+            :key="friend.userId" :friend="friend">
         </FriendItem>
     </template>
     </div>
 </template>
 <script setup>
-import { onMounted} from 'vue';
 import FriendItem from '@/components/friend/FriendItem.vue';
+import { onMounted} from 'vue';
 import { storeToRefs } from 'pinia';
 import { useFriendStore } from '@/stores/friend';
-
-
 const friendstore = useFriendStore();
 const {friendList} = storeToRefs(friendstore);
 const {getFriendList} = friendstore;
-
-const emit = defineEmits(['select-friend'])
 
 onMounted(()=>{
     getFriendList();

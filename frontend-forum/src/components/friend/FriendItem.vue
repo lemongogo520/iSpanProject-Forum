@@ -1,8 +1,11 @@
 <template>
   <div class="friend-item">
-    <v-avatar :badge="{ color: 'success', location: 'bottom end' }" size="default">
-      <v-img v-if="friend.photo" src="@/assets/avatar.jpg" width="100%"></v-img>
-      <v-icon v-else icon="mdi-account-circle" size="x-large"></v-icon>
+    <v-avatar
+      :badge="{ color: 'success', location: 'bottom end' }"
+      size="default"
+    >
+      <DollAvatar :userId="friend.userId" :scale="1.5" :size="100" />
+      <!-- <v-icon v-else icon="mdi-account-circle" size="x-large"></v-icon> -->
       <!-- 紙娃娃頭像 -->
     </v-avatar>
     <div class="friend-info">
@@ -11,15 +14,15 @@
   </div>
 </template>
 <script setup>
-import { VIcon, VImg } from 'vuetify/components';
+import { VIcon, VImg } from "vuetify/components";
+import DollAvatar from "@/components/doll/DollAvatar.vue";
 
-const props = defineProps({
+defineProps({
   friend: {
     type: Object,
     required: true,
   },
 });
-
 </script>
 <style>
 .friend-item {
@@ -32,14 +35,13 @@ const props = defineProps({
   padding: 12px 16px;
   margin-bottom: 8px;
 
-  background: #f7fbff;
+  /* background: #f7fbff;
   border: 2px solid #dcecf8;
-  border-radius: 10px;
+  border-radius: 10px; */
 
   cursor: pointer;
   transition: 0.15s;
   box-sizing: border-box;
-
 }
 
 /* 滑過 */

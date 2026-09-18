@@ -11,24 +11,29 @@ const { snackbar } = useNotification();
 const authStore = useAuthStore();
 
 const hideHeaderPaths = ["/login", "/register"];
-const showHeader = computed(() => { 
-  return !hideHeaderPaths.includes(route.path) 
-  && !route.path.startsWith("/config"); 
-  });
+const showHeader = computed(() => {
+  return (
+    !hideHeaderPaths.includes(route.path) && !route.path.startsWith("/config")
+  );
+});
 
-const isFriendSidebarOpen = ref(false)
-
+const isFriendOpen = ref(false);
 </script>
 
 <template>
-  <v-app>
+  <v-app class="app" :class="{ open: isFriendOpen }">
     <HomeHeader v-if="showHeader && authStore.checked && authStore.isLogin" />
 
-    <v-main>
+    <v-main class="main">
       <RouterView />
     </v-main>
 
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" location="top">
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="3000"
+      location="top"
+    >
       {{ snackbar.message }}
 
       <template #actions>
@@ -37,68 +42,61 @@ const isFriendSidebarOpen = ref(false)
     </v-snackbar>
 
     <!-- 好友側邊欄 -->
-    <div
-        class="friend-sidebar-wrapper"
-        :class="{ open: isFriendSidebarOpen }"
-    >
-        <button v-if="!isFriendSidebarOpen"
-          class="friend-button"
-          @click="isFriendSidebarOpen = !isFriendSidebarOpen">
-        好友
-        </button>
-        <FriendSidebar v-if="showHeader && authStore.checked && authStore.isLogin"
-          :isOpen="isFriendSidebarOpen" @close="isFriendSidebarOpen = false"
-        />
+    <div class="friend-wrapper">
+      <FriendSidebar
+        v-if="
+          showHeader && authStore.checked && authStore.isLogin && isFriendOpen
+        "
+        :isOpen="isFriendOpen"
+      />
+      <button class="friend-button" @click="isFriendOpen = !isFriendOpen">
+        {{ isFriendOpen ? ">" : "<" }}
+      </button>
     </div>
   </v-app>
 </template>
 
 <style>
-.friend-sidebar-wrapper {
-    position: fixed;
-    top: 64px;
-    right: 0;
-
-    width: 280px;
-    height: calc(100vh - 64px);
-
-    transform: translateX(100%);
-    transition: transform 0.25s ease;
-
-    z-index: 900;
+.main {
+  margin-right: 32px;
+  width: calc(100vh-352px);
 }
 
-.friend-sidebar-wrapper.open {
-    transform: translateX(0);
+.friend-wrapper {
+  position: fixed;
+  top: 64px;
+  right: 0;
+
+  width: 352px;
+  height: 100%;
+
+  transform: translateX(320px);
+  z-index: 1000;
+}
+.friend-wrapper.open {
+  transform: translateX(0);
 }
 
 .friend-button {
-    position: absolute;
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 100%;
 
-    left: -64px;
-    bottom: 20px;
+  background: white;
+  color: #8bbce0;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
 
-    width: 64px;
-    height: 52px;
-
-    border: 3px solid #5f91b5;
-    border-right: none;
-    border-radius: 10px 0 0 10px;
-
-    background: #8bbce0;
-    color: white;
-
-    font-size: 15px;
-    font-weight: 700;
-
-    box-shadow: 0 4px 0 #5f91b5;
-
-    cursor: pointer;
-
-    transition: 0.1s;
+  transition: 0.1s;
 }
 
 .friend-button:hover {
-    background: #9fc9e5;
+  background: #9fc9e5;
+}
+.app.open .main {
+  margin-right: 350px;
 }
 </style>

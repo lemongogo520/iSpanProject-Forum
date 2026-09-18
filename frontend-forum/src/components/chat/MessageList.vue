@@ -9,7 +9,7 @@
 </template>
 <script setup>
 import { ref, watch, nextTick } from 'vue';
-import { useChatStore } from '@/stores/chat.js';
+import { useChatStore } from '@/stores/conversation.js';
 import MessageItem from './MessageItem.vue';
 import { storeToRefs } from 'pinia';
 const chatStore = useChatStore();

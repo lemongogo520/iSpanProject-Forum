@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import forum.board.board.Board;
+
 
 
 public interface ConversationRepository extends JpaRepository<ConversationEntity,Long>{
@@ -21,6 +23,10 @@ public interface ConversationRepository extends JpaRepository<ConversationEntity
             AND m1.user.id = :user1Id AND m2.user.id = :user2Id
             """)
     Optional<ConversationEntity> findDirectConversation(UUID user1Id, UUID user2Id);
+
+    Optional<ConversationEntity> findByBoard(Board board);
+
+
 
 
 

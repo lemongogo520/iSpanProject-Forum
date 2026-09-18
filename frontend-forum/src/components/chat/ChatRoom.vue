@@ -13,7 +13,7 @@ import ChatHeader from './ChatHeader.vue';
 import MessageInput from './MessageInput.vue';
 import MessageList from './MessageList.vue';
 
-import { useChatStore } from '@/stores/chat.js';
+import { useChatStore } from '@/stores/conversation.js';
 
 defineProps({
     friend:{

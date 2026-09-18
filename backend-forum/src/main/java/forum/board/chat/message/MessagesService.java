@@ -88,6 +88,10 @@ public class MessagesService {
 
         Users sender = findUser(senderId);
 
+        if(request.content() == null || request.content().trim().isEmpty()){
+            throw new BusinessException("訊息不能為空");
+        }
+
         // 建立Message
         MessagesEntity msg = new MessagesEntity();
         msg.setType(ChatType.TEXT);

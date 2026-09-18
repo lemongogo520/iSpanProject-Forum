@@ -21,30 +21,30 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-
-
-@RestController 
-@RequiredArgsConstructor 
-@RequestMapping("/api/chat/message")
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/chat")
 public class MessagesController {
     private final MessagesService mService;
     private final ConversationService cService;
 
     /*
-    /api/chat/message/{conversationId}
-    */
-   @GetMapping("/{conversationId}")
-   public ResponseEntity<?> getMessages(@PathVariable Long conversationId
-    ,HttpSession session) {
-    UUID loginUserId = (UUID) session.getAttribute("loginUserId");
-    List<MessageResponseDTO> messagesList = mService.getMessages(conversationId, loginUserId);
-     
-    return ResponseEntity.status(HttpStatus.OK).body(messagesList);
+     * /api/chat/{conversationId}/messages
+     * 取得某個對話的訊息(50則)
+     */
+    @GetMapping("/{conversationId}/messages")
+    public ResponseEntity<?> getMessages(@PathVariable Long conversationId, HttpSession session) {
+        UUID loginUserId = (UUID) session.getAttribute("loginUserId");
+        List<MessageResponseDTO> messagesList = mService.getMessages(conversationId, loginUserId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(messagesList);
     }
+
     /*
-    /api/chat/message
-    */
-    @PostMapping
+     * /api/chat/message
+     * 傳送訊息
+     */
+    @PostMapping("/message")
     public ResponseEntity<MessageResponseDTO> sendMessage(
             @RequestBody MessageRequestDTO request,
             HttpSession session) {
@@ -54,10 +54,8 @@ public class MessagesController {
         return ResponseEntity.ok(message);
     }
 
-
-
     /*
-    /api/message
-    */
-    
+     * /api/message
+     */
+
 }

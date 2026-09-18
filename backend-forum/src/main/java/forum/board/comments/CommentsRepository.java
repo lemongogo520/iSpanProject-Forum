@@ -17,7 +17,9 @@ public interface CommentsRepository extends JpaRepository<Comments,Integer>{
     // 撈某主留言中的子留言並按時間排序
     List<Comments> findByParentCommentIdOrderByCreateTimeAsc(Integer parentId);
 
-    // 計算子留言筆數
+    // 統計子留言筆數
     long countByParentCommentId(Integer parentId);
 
+    // 統計文章中尚未刪除的主留言和子回覆總數
+    long countByPostIdAndIsDeletedFalse(Integer postId);
 }

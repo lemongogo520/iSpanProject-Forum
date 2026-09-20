@@ -2,13 +2,13 @@ package forum.board.chat.message;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import forum.board.chat.conversation.ConversationService;
+import forum.board.chat.dto.MessagePageDTO;
 import forum.board.chat.dto.MessageRequestDTO;
 import forum.board.chat.dto.MessageResponseDTO;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -19,39 +19,42 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/chat")
+@RequestMapping("/api/chat/conversations/{conversationId}/messages")
 public class MessagesController {
     private final MessagesService mService;
-    private final ConversationService cService;
 
     /*
-     * /api/chat/{conversationId}/messages
-     * 取得某個對話的訊息(50則)
+     * /api/chat/conversations/{conversationId}/messages
+     * 取得某個對話的訊息
      */
-    @GetMapping("/{conversationId}/messages")
-    public ResponseEntity<?> getMessages(@PathVariable Long conversationId, HttpSession session) {
+    @GetMapping
+    public ResponseEntity<?> getMessages(
+            @PathVariable Long conversationId,
+            @RequestParam(required = false) Long before,
+            HttpSession session) {
         UUID loginUserId = (UUID) session.getAttribute("loginUserId");
-        List<MessageResponseDTO> messagesList = mService.getMessages(conversationId, loginUserId);
+        MessagePageDTO messagesPage = mService.getMessages(conversationId, loginUserId, before);
 
-        return ResponseEntity.status(HttpStatus.OK).body(messagesList);
+        return ResponseEntity.status(HttpStatus.OK).body(messagesPage);
     }
 
     /*
-     * /api/chat/message
+     * /api/chat/conversations/{conversationId}/message
      * 傳送訊息
      */
-    @PostMapping("/message")
+    @PostMapping
     public ResponseEntity<MessageResponseDTO> sendMessage(
-            @RequestBody MessageRequestDTO request,
+            @PathVariable Long conversationId,
+            @Valid @RequestBody MessageRequestDTO request,
             HttpSession session) {
         UUID loginUserId = (UUID) session.getAttribute("loginUserId");
-        MessageResponseDTO message = mService.sendMessage(loginUserId, request);
+        MessageResponseDTO message = mService.sendMessage(conversationId, loginUserId, request);
 
-        return ResponseEntity.ok(message);
+        return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
     /*

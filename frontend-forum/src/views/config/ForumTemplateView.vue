@@ -6,9 +6,10 @@
       <div class="page-header">
         <div>
           <h1>論壇初始化範本</h1>
-          <p class="text-medium-emphasis">
-            選擇適合的使用情境，系統會自動建立分類與討論版。
-          </p>
+          <v-alert type="red-darken-2" variant="tonal" class="mt-6">
+            請注意!!套用後會將以上分類與討論版寫入資料庫，
+            論壇已有分類時將無法套用。
+          </v-alert>
         </div>
       </div>
 
@@ -98,7 +99,10 @@
         </v-col>
       </v-row>
 
-      <section v-if="selectedTemplate || selectedCode === 'CUSTOM'" class="preview-section">
+      <section
+        v-if="selectedTemplate || selectedCode === 'CUSTOM'"
+        class="preview-section"
+      >
         <!-- 固定範本的預覽內容 -->
         <template v-if="selectedTemplate">
           <h2 class="mb-4">{{ selectedTemplate.name }}預覽</h2>
@@ -150,10 +154,44 @@
               </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
+          <div class="forum-preview mt-6">
+            <div class="preview-header">
+              <div>
+                <div class="text-overline text-primary">FORUM PREVIEW</div>
+                <h2>{{ selectedTemplate.name }}</h2>
+                <p class="text-medium-emphasis mb-0">
+                  以下為套用範本後的論壇分類與看板外觀
+                </p>
+              </div>
 
-          <v-alert type="warning" variant="tonal" class="mt-6">
-            套用後會將以上分類與討論版寫入資料庫， 論壇已有分類時將無法套用。
-          </v-alert>
+              <v-chip color="primary" variant="tonal">
+                {{ previewCategories.length }} 個分類
+              </v-chip>
+            </div>
+
+            <v-alert
+              v-if="previewCategories.length === 0"
+              type="info"
+              variant="tonal"
+            >
+              請至少選擇一個討論版以顯示預覽
+            </v-alert>
+
+            <div v-else class="preview-content">
+              <ForumCategorySection
+                v-for="category in previewCategories"
+                :key="category.id"
+                :category="category"
+                :get-category-icon="getCategoryIcon"
+                :get-category-style="getCategoryStyle"
+              />
+            </div>
+
+            <div class="preview-notice">
+              <v-icon icon="mdi-eye-outline" size="18" />
+              此區域僅供預覽，尚未建立任何分類或看板。
+            </div>
+          </div>
         </template>
 
         <!-- 下方操作按鈕 -->
@@ -183,20 +221,55 @@
         </div>
       </section>
 
-      <v-dialog v-model="confirmDialog" max-width="500">
-        <v-card>
-          <v-card-title> 確認套用範本 </v-card-title>
+      <v-dialog v-model="confirmDialog" max-width="520" persistent>
+        <v-card rounded="lg">
+          <v-card-title class="d-flex align-center">
+            <v-icon
+              color="red-darken-2"
+              icon="mdi-alert-outline"
+              class="mr-2"
+            />
+            再次確認套用範本
+          </v-card-title>
 
           <v-card-text>
-            確定要套用
-            <strong>{{ selectedTemplate?.name }}</strong>
-            嗎？系統將建立對應的分類與討論版。
+            <p>
+              確定要選擇
+              <strong class="text-primary">{{ selectedTemplate?.name }}</strong>
+              嗎？
+            </p>
+
+            <p class="mt-3 text-medium-emphasis">
+              系統將建立 {{ previewCategories.length }} 個分類，以及
+              {{
+                previewCategories.reduce(
+                  (total, category) => total + category.boards.length,
+                  0,
+                )
+              }}
+              個討論版。
+            </p>
+
+            <v-alert
+              color="red-darken-2"
+              variant="tonal"
+              icon="mdi-alert-outline"
+              class="mt-4"
+            >
+              套用後不能再次使用初始化範本，請確認選擇內容是否正確。
+            </v-alert>
           </v-card-text>
 
-          <v-card-actions>
+          <v-card-actions class="px-6 pb-5">
             <v-spacer />
 
-            <v-btn variant="text" @click="confirmDialog = false"> 取消 </v-btn>
+            <v-btn
+              variant="text"
+              :disabled="applying"
+              @click="confirmDialog = false"
+            >
+              返回修改
+            </v-btn>
 
             <v-btn
               color="primary"
@@ -217,6 +290,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import Sidebar from "@/components/config/ConfigSidebar.vue";
+import ForumCategorySection from "@/components/forum/ForumCategorySection.vue";
 import { forumTemplateService } from "@/services/forumTemplateService";
 import { useNotification } from "@/composables/useNotification";
 
@@ -236,6 +310,26 @@ const selectedTemplate = computed(() => {
   return templates.value.find(
     (template) => template.code === selectedCode.value,
   );
+});
+
+const previewCategories = computed(() => {
+  if (!selectedTemplate.value) return [];
+
+  return selectedTemplate.value.categories
+    .map((category, categoryIndex) => ({
+      ...category,
+      id: `preview-category-${categoryIndex}`,
+      boards: category.boards
+        .filter((board) =>
+          selectedBoards.value[category.name]?.includes(board.name),
+        )
+        .map((board, boardIndex) => ({
+          ...board,
+          id: `preview-board-${categoryIndex}-${boardIndex}`,
+          latestPost: null,
+        })),
+    }))
+    .filter((category) => category.boards.length > 0);
 });
 
 function getErrorMessage(error, fallback) {
@@ -340,6 +434,42 @@ function selectCustomTemplate() {
 function goToForumAdmin() {
   router.push("/admin/categories");
 }
+const getCategoryIcon = (name = "") => {
+  if (name.includes("遊戲")) return "🎮";
+  if (name.includes("影音")) return "🎬";
+  if (name.includes("科技")) return "💻";
+  if (name.includes("美食")) return "🍕";
+  if (name.includes("休閒")) return "🏖️";
+  if (name.includes("公告") || name.includes("資訊")) return "📢";
+  if (name.includes("工作")) return "💼";
+  if (name.includes("學習")) return "📚";
+  if (name.includes("校園")) return "🏫";
+  if (name.includes("生活")) return "☕";
+  return "📌";
+};
+const getCategoryStyle = (name = "") => {
+  let accent = "#2563eb";
+  let soft = "#eff6ff";
+
+  if (name.includes("美食")) {
+    accent = "#b45309";
+    soft = "#fff7ed";
+  } else if (name.includes("動漫")) {
+    accent = "#7c3aed";
+    soft = "#f5f3ff";
+  } else if (name.includes("科技")) {
+    accent = "#0e7490";
+    soft = "#ecfeff";
+  } else if (name.includes("休閒")) {
+    accent = "#047857";
+    soft = "#ecfdf5";
+  }
+
+  return {
+    "--category-accent": accent,
+    "--category-soft": soft,
+  };
+};
 onMounted(loadTemplates);
 </script>
 
@@ -386,5 +516,69 @@ onMounted(loadTemplates);
   display: flex;
   justify-content: flex-end;
   margin-top: 24px;
+}
+.forum-preview {
+  padding: 24px;
+  border: 1px solid #dbe3ee;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.preview-header h2 {
+  margin: 0;
+}
+.forum-preview {
+  padding: 28px;
+  border: 1px solid #dbe3ee;
+  border-radius: 16px;
+  background: #f5f7fa;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #dfe5ec;
+}
+
+.preview-header h2 {
+  margin: 0 0 6px;
+  color: #253349;
+}
+
+.preview-content {
+  pointer-events: none;
+}
+
+.preview-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #dfe5ec;
+  color: #6b7789;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  .forum-preview {
+    padding: 16px;
+  }
+
+  .preview-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 </style>

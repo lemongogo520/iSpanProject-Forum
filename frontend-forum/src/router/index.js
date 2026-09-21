@@ -76,11 +76,7 @@ const routes = [
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
   },
-  {
-    path: "/chat",
-    name: "chat",
-    component: () => import("@/views/chat/ChatView.vue"),
-  },
+
 
 
   //管理者設定

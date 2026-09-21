@@ -50,12 +50,11 @@
 
             <div class="setting-item">
               <label>登入頁 Logo</label>
-              <v-text-field
-                v-model="basicSettings.loginLogo"
-                variant="outlined"
-                density="compact"
-                hide-details
-              />
+                <FileUpload
+                  :existing-files="dialogData"
+                  :allowed-extensions="['jpg', 'jpeg']"
+                  @upload-complete="handleUploadComplete"
+                />
             </div>
 
             <div class="setting-item">
@@ -232,11 +231,12 @@ import { ref , onMounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import Sidebar from '@/components/config/ConfigSidebar.vue'
 import { configService } from '@/services/configService'
-import { useConfigStore } from '@/stores/config'
+import FileUpload from '@/components/file/FileUpload.vue'
+import fileService, { fileModule } from '@/services/uploadFileService'
 
 const currentTab = ref('basic')
 const saving = ref(false)
-const configStore = useConfigStore();
+const dialogData = ref([])
 
 const basicSettings = ref({
   webSiteName: '',
@@ -301,7 +301,16 @@ const bindSettings = (settings) => {
         basicSettings.value.webSiteDescription = setting.value
         break
       case 'login_logo':
-        basicSettings.value.loginLogo = setting.value
+          basicSettings.value.loginLogo = setting.value
+          dialogData.value = setting.value
+            ? [{
+                fileId: setting.value,
+                file: null,
+                name: '',
+                extension: '',
+                url: `/api/files/${setting.value}`
+              }]
+            : []
         break
       case 'token_active':
         basicSettings.value.tokenActive = Number(setting.value)
@@ -359,9 +368,20 @@ onMounted(() => {
   loadSettings()
 })
 
+const hasNewFile = () => {
+  return dialogData.value.some(
+    fileData => fileData.file instanceof File
+  )
+}
+
 const hasChanges = () => {
+  
   if (!originalSettings.value) {
     return false
+  }
+
+  if (hasNewFile()) {
+    return true
   }
 
   return JSON.stringify(getCurrentSettings()) !== JSON.stringify(originalSettings.value)
@@ -436,19 +456,47 @@ const saveSettings = async () => {
   saving.value = true
 
   try {
-    await configStore.saveSettings(getSaveSettings())
+      
+    const newFile = dialogData.value.filter(
+      fileData => fileData.file instanceof File
+    )
+
+    if (newFile) {
+      for (const fileData of dialogData.value) {
+          await fileService.uploadFile(
+            fileData.file,
+            fileModule.CONFIG
+          )
+      }
+    }
+
+    const saveData = getSaveSettings()
+
+    console.log(saveData)
+
+    const settings = await configService.saveSettings(saveData)
 
     const settings = await configService.getSettings()
     // 重新 bind v-model
     bindSettings(settings)
 
-    // 更新「最後一次儲存」的資料
+    // 更新最後一次儲存的資料
     originalSettings.value = structuredClone(getCurrentSettings())
+
+    // 清除暫存檔案
+    dialogData.value = []
+
   } catch (error) {
     console.error('儲存設定失敗：', error)
   } finally {
     saving.value = false
   }
+}
+
+//檔案上傳完成
+const handleUploadComplete = (file) => {
+  dialogData.value.push(file)
+  console.log(dialogData.value)
 }
 
 const saveAndLeave = async () => {

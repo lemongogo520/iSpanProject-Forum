@@ -147,12 +147,14 @@ import httpClient from "@/services/httpClient";
 import UserDetailView from "@/views/user/UserDetailView.vue";
 import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
+import { useAuthStore } from "@/stores/auth";
 
 const forumCategories = ref([]);
 
 const router = useRouter();
 const userDetailDialog = ref(false);
 const userStore = useUserStore();
+const authStore = useAuthStore();
 const isNavbarCompact = ref(false);
 let lastScrollY = 0;
 
@@ -246,6 +248,7 @@ const logout = () => {
       console.log("登出成功:", response.data);
       userStore.clearUser();
       router.push("/login");
+      authStore.isLogin = false;
     })
     .catch((error) => {
       console.error("登出失敗:", error);

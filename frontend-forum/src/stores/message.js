@@ -3,8 +3,8 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useChatStore } from "./conversation";
 export const useMessageStore = defineStore("message", () => {
-  const messagesMap = ref({});   // { [conversationId]: Message[] }  舊→新
-  const cursorMap = ref({});     // { [conversationId]: { hasMore, nextCursor } }
+  const messagesMap = ref({}); // { [conversationId]: Message[] }  舊→新
+  const cursorMap = ref({}); // { [conversationId]: { hasMore, nextCursor } }
   const loading = ref(false);
   const loadingOlder = ref(false);
   const sending = ref(false);
@@ -17,7 +17,7 @@ export const useMessageStore = defineStore("message", () => {
   });
 
   const currentHasMore = computed(
-    () => cursorMap.value[chatStore.currentConversationId]?.hasMore ?? false
+    () => cursorMap.value[chatStore.currentConversationId]?.hasMore ?? false,
   );
 
   const ensureList = (id) => {
@@ -31,7 +31,7 @@ export const useMessageStore = defineStore("message", () => {
     error.value = null;
     try {
       const { data } = await httpClient.get(
-        `/api/chat/conversations/${conversationId}/messages`
+        `/api/chat/conversations/${conversationId}/messages`,
       );
       messagesMap.value[conversationId] = data.items;
       cursorMap.value[conversationId] = {
@@ -53,9 +53,11 @@ export const useMessageStore = defineStore("message", () => {
     loadingOlder.value = true;
     try {
       const { data } = await httpClient.get(
-        `/api/chat/conversations/${conversationId}/messages`, {
-        params: { before: cursor.nextCursor },
-      });
+        `/api/chat/conversations/${conversationId}/messages`,
+        {
+          params: { before: cursor.nextCursor },
+        },
+      );
       ensureList(conversationId).unshift(...data.items);
       cursorMap.value[conversationId] = {
         hasMore: data.hasMore,
@@ -74,21 +76,28 @@ export const useMessageStore = defineStore("message", () => {
       await httpClient.patch(`/api/chat/conversations/${conversationId}/read`);
       chatStore.clearUnreadCount(conversationId);
     } catch (e) {
-      console.error('標記已讀失敗', e);
+      console.error("標記已讀失敗", e);
     }
   };
 
   // 傳送訊息
   const sendMessage = async (conversationId, content) => {
-    const text = content.value.trim();
-    if (!text) return; // 訊息為空
-
+    console.log("sendMessage", content);
+    const text = content;
+    if (!text) {
+      console.log("訊息為空", content);
+      return;
+    } // 訊息為空
     sending.value = true;
     try {
+      console.log("try post");
       const { data } = await httpClient.post(
-        `/api/chat/conversations/${conversationId}/messages`, {
-        content: text, clientMsgId: crypto.randomUUID()
-      });
+        `/api/chat/conversations/${conversationId}/messages`,
+        {
+          content: text,
+          clientMsgId: crypto.randomUUID(),
+        },
+      );
 
       addMessage(data);
       chatStore.applyIncoming(data, { isCurrent: true });
@@ -108,7 +117,7 @@ export const useMessageStore = defineStore("message", () => {
     const idx = list.findIndex(
       (m) =>
         (message.id && m.id === message.id) ||
-        (message.clientMsgId && m.clientMsgId === message.clientMsgId)
+        (message.clientMsgId && m.clientMsgId === message.clientMsgId),
     );
     if (idx >= 0) {
       list[idx] = message;
@@ -128,6 +137,12 @@ export const useMessageStore = defineStore("message", () => {
     }
   };
 
+  const reset = () => {
+    messagesMap.value = {};
+    cursorMap.value = {};
+    error.value = null;
+  };
+
   return {
     messagesMap,
     currentMessages,
@@ -144,5 +159,6 @@ export const useMessageStore = defineStore("message", () => {
     sendMessage,
     addMessage,
     clearMessages,
+    reset,
   };
 });

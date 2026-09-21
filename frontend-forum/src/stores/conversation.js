@@ -132,6 +132,13 @@ export const useChatStore = defineStore("chat", () => {
     conversationList.value.unshift(c);
   });
 
+  const reset = () => {
+  conversationList.value = [];
+  currentConversationId.value = null;
+  error.value = null;
+  closeChat();
+};
+
   return {
     conversationList,
     currentConversationId,
@@ -151,5 +158,6 @@ export const useChatStore = defineStore("chat", () => {
     openChat,
     closeChat,
     toggleMinimize,
+    reset,
   };
 });

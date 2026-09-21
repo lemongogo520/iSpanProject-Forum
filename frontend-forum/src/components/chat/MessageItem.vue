@@ -1,9 +1,11 @@
 <template>
-    <div class="message-row" :class="{ 'mine': props.message.mine }">
-        <div class="message-content">
-            {{ message.content }}
+    <div class="msg-row" :class="{ 'mine': props.message.mine }">
+        <div class="bubble">
+            <div class="bubble-text">
+                {{ message.content }}
+            </div>
+            <div class="bubble-time">{{ formatDate(message.createTime) }}</div>
         </div>
-        <div class="message-time">{{ formatDate(message.createTime) }}</div>
     </div>
 </template>
 <script setup>
@@ -49,52 +51,24 @@ const formatDate = (dateString) => {
 
 </script>
 <style>
-.message-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    margin: 8px 0;
-    color: var(--color-title);
-    font-weight: 500;
+.msg-row { display: flex; }
+.msg-row.mine { justify-content: flex-end; }
+.bubble {
+  max-width: 75%;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgb(var(--v-theme-surface-light));
+  color: rgb(var(--v-theme-on-surface-light));
+  word-break: break-word;
+}
+.msg-row.mine .bubble {
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
 }
 
-/* 自己 */
-.message-row.mine {
-    justify-content: flex-end;
-}
-
-.message-row.mine .message-content {
-    order: 2;
-}
-
-.message-row.mine .message-time {
-    order: 1;
-}
-
-/* 對方 */
-.message-row:not(.mine) {
-    justify-content: flex-start;
-}
-
-.message-row:not(.mine) .message-content {
-    order: 1;
-}
-
-.message-row:not(.mine) .message-time {
-    order: 2;
-}
+.bubble-text { font-size: .9rem; white-space: pre-wrap; }
+.bubble-time { font-size: .7rem; opacity: .7; text-align: right; margin-top: 2px; }
 
 
-.message-content {
-    padding: 8px 12px;
-    border-radius: 12px;
-    background-color: var(--color-card);
-}
 
-.message-time {
-    color: var(--color-text);
-    font-weight: 400;
-    font-size: small;
-    margin-top: auto;
-}
 </style>

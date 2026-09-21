@@ -1,15 +1,15 @@
 <template>
-  <v-card v-if="selected" flat border class="pa-6">
+  <v-card v-if="friendStore.selectedFriend" flat border class="pa-6">
     <div class="d-flex flex-column align-center">
 
-      <DollAvatar :userId="selected.userId" :scale="1.5" :size="96" />
+      <DollAvatar :userId="friendStore.selectedFriend.userId" :scale="1.5" :size="96" />
 
-      <div class="text-h6 mt-4">{{ selected.displayName }}</div>
+      <div class="text-h6 mt-4">{{ friendStore.selectedFriend.displayName }}</div>
       <div class="text-body-2 text-medium-emphasis">
-        @{{ selected.account }}
+        @{{ friendStore.selectedFriend.account }}
       </div>
 
-      <v-btn color="primary" prepend-icon="mdi-message-text" @click="startChat(selected)">
+      <v-btn color="primary" prepend-icon="mdi-message-text" @click="startChat(friendStore.selectedFriend)">
         私訊
       </v-btn>
     </div>
@@ -28,9 +28,9 @@ import { useChatStore } from "@/stores/conversation";
 const friendStore = useFriendStore();
 const chatStore = useChatStore();
 
-const selected = computed(() =>
-  friendStore.friendList.find(f => f.userId === friendStore.selectedFriendId) ?? null
-);
+// const selected = computed(() =>
+//   friendStore.friendList.find(f => f.userId === friendStore.selectedFriendId) ?? null
+// );
 
 const startChat = async (friend) => {
   const c = await chatStore.directConversation(friend.userId);

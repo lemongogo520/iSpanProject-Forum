@@ -44,7 +44,7 @@ public class MessagesEntity {
 	@JoinColumn(name = "conversation_id", updatable = false, nullable = false)
 	private ConversationEntity conversation;
 
-	@Enumerated(EnumType.STRING)
+	// @Enumerated(EnumType.STRING)
 	@Column(name = "type", updatable = false, nullable = false)
 	private ChatType type;
 

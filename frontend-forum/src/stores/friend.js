@@ -103,6 +103,15 @@ export const useFriendStore = defineStore("friend", () => {
   const refreshFriendData = () =>
     Promise.all([getFriendList(), getRequestList(), getSendRequestList()]);
 
+  const reset = () => {
+  friendList.value = [];
+  requestList.value = [];
+  sendRequest.value = [];
+  selectedFriendId.value = null;
+  processing.value = {};
+  error.value = null;
+};
+
   return {
     friendList, requestList, sendRequest,
     selectedFriendId, selectedFriend,
@@ -112,5 +121,6 @@ export const useFriendStore = defineStore("friend", () => {
     getFriendList, getRequestList, getSendRequestList,
     acceptFriendRequest, rejectFriendRequest,
     sendFriendRequest, refreshFriendData,
+    reset,
   };
 });

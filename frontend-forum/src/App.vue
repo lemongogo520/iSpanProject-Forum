@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import { useNotification } from "@/composables/useNotification";
 import { useAuthStore } from "@/stores/auth";
@@ -8,11 +8,13 @@ import { useFriendStore } from "./stores/friend";
 import HomeHeader from "@/components/home/HomeHeader.vue";
 import FriendSidebar from "@/views/friend/FriendSidebar.vue";
 import ChatDock from "@/views/chat/ChatDock.vue";
+import { useMessageStore } from "./stores/message";
 
 const route = useRoute();
 const authStore = useAuthStore();
 const chatStore = useChatStore();
 const friendStore = useFriendStore();
+const messageStore = useMessageStore();
 const { snackbar } = useNotification();
 
 const hideHeaderPaths = ["/login", "/register"];
@@ -22,11 +24,22 @@ const showHeader = computed(() => {
   );
 });
 
-onMounted(() => {
-  friendStore.getFriendList();
-  chatStore.getConversations();
-  chatStore.restoreWindow();
-});
+watch(
+  () => authStore.isLogin,
+  async (loggedIn) => {
+    if (loggedIn) {
+      friendStore.getFriendList();
+      await chatStore.getConversations();
+      chatStore.restoreWindow();
+    } else {
+      console.log("reset");
+      friendStore.reset();
+      chatStore.reset();
+      messageStore.reset();
+    }
+  },
+  { immediate: true }
+);
 
 </script>
 

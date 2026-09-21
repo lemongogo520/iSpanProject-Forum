@@ -76,6 +76,25 @@ const routes = [
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
   },
+  {
+    path: "/chat",
+    name: "chat",
+    component: () => import("@/views/chat/ChatView.vue"),
+    children: [
+      {
+        path: "",
+        name: "chat-empty",
+        component: () => import("@/views/chat/ChatEmpty.vue"),
+      },
+      {
+        path: ":conversationId",
+        name: "chat-detail",
+        component: () => import("@/views/chat/ChatPanel.vue"),
+        props: true,
+      },
+    ],
+  },
+
 
   //管理者設定
   {
@@ -123,7 +142,7 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
-   const userStore = useUserStore();
+  const userStore = useUserStore();
 
   // 登入、註冊頁不用檢查
   if (to.path === "/login" || to.path === "/register") {

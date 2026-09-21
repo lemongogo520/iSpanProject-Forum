@@ -1,35 +1,20 @@
 <template>
-    <div class="friend-view">
-        <FriendRequestList></FriendRequestList>
-        <div class="empty-text" v-if="friendList.length==0">還沒有好友哦~</div>
-        <div class="friend-page" v-else>
-            <div class="friend-list">
-                <FriendList @select-friend=selectFriend></FriendList>
-            </div>
-            <div class="friend-detail">
-                <ChatRoom v-if="selectedFriend && currentConversation" 
-                />
-                <div v-else class="empty-text">請選擇一位好友</div>
-            </div>
+    <div class="friends-page">
+        <div class="friends-left">
+            <FriendList />
+        </div>
+        <div class="friends-right">
+            <FriendDetail />
         </div>
     </div>
 </template>
 <script setup>
-import ChatRoom from '@/components/chat/ChatRoom.vue';
-import FriendList from '@/components/friend/FriendList.vue';
-import FriendRequestList from '@/components/friend/FriendRequestList.vue';
-import { useChatStore } from '@/stores/conversation';
+import { onMounted } from 'vue';
 import { useFriendStore } from '@/stores/friend';
-import { onMounted, ref } from 'vue';
-import { storeToRefs } from 'pinia';
+import FriendList from '@/components/friend/FriendList.vue';
+import FriendDetail from '@/components/friend/FriendDetail.vue';
 
 const friendStore = useFriendStore();
-const chatStore = useChatStore();
-
-const {friendList} = storeToRefs(friendStore);
-
-const {getConversation} = chatStore;
-const {currentConversation} = storeToRefs(chatStore);
 
 onMounted(() => {
     friendStore.refreshFriendData();
@@ -37,40 +22,24 @@ onMounted(() => {
 
 </script>
 <style src="@/assets/css/common.css"></style>
-<style>
-.title {
-    padding-left: 40px;
-    color: var(--color-title);
-    font-weight: 900;
-}
-
-.empty-text {
-    padding: 24px;
-    text-align: center;
-    color: var(--color-text);
-    font-size: 14px;
-}
-
-.friend-view{
+<style scoped>
+.friends-page {
     display: flex;
-    flex-direction: column;
-    height: 100vh;
+    flex-direction: row;
+    height: 100%;
+    gap: 16px;
+    padding: 16px;
 }
 
-.friend-page {
-    display: flex;
+.friends-left {
+    width: 300px;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+
+.friends-right {
     flex: 1;
-    min-height: 0;
-}
-
-.friend-list{
-    width: 30%;
-
-}
-
-.friend-detail {
-    width: 70%;
-    min-height: 0;
+    flex-shrink: 0;
     min-width: 0;
 }
 </style>

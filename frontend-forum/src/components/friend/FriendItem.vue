@@ -1,16 +1,9 @@
 <template>
-  <div class="friend-item">
-    <v-avatar
-      :badge="{ color: 'success', location: 'bottom end' }"
-      size="default"
-    >
-      <DollAvatar :userId="friend.userId" :scale="1.5" :size="100" />
-      <!-- <v-icon v-else icon="mdi-account-circle" size="x-large"></v-icon> -->
-      <!-- 紙娃娃頭像 -->
-    </v-avatar>
-    <div class="friend-info">
-      <span class="name"> {{ friend.displayName }} </span>
-    </div>
+  <DollAvatar :userId="friend.userId" :scale="1.5" :size="size" />
+
+  <div class="text-h6 mt-4">{{ friend.displayName }}</div>
+  <div class="text-body-2 text-medium-emphasis">
+    @{{ friend.account }}
   </div>
 </template>
 <script setup>
@@ -22,6 +15,10 @@ defineProps({
     type: Object,
     required: true,
   },
+  size:{
+    type: Number,
+    required:true
+  }
 });
 </script>
 <style>

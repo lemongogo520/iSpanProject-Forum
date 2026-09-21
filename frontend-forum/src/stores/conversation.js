@@ -1,18 +1,20 @@
 import httpClient from "@/services/httpClient";
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 export const useChatStore = defineStore("chat", () => {
   const conversationList = ref([]);
   const currentConversationId = ref(null);
+  const isMinimized = ref(true);
   const loading = ref(false);
   const error = ref(null);
 
+
   // 單一資料來源：從 list 取出
-  const currentConversation = computed(() => {
+  const currentConversation = computed(() =>
     conversationList.value.find(c =>
       c.id === currentConversationId.value ?? null
     )
-  });
+  );
 
   // 取得此使用者所有conversation
   const getConversations = async () => {
@@ -21,13 +23,58 @@ export const useChatStore = defineStore("chat", () => {
     try {
       const { data } = await httpClient.get("/api/chat/conversations");
       conversationList.value = data;
-    } catch (error) {
+    } catch (e) {
       error.value = "取得對話列表失敗"
-      console.log("取得conversation list失敗", error)
+      console.log("取得conversation list失敗", e)
     } finally {
       loading.value = false
     }
   };
+
+  // 重整後恢復
+  const restoreWindow = () => {
+    const saved = sessionStorage.getItem("chatWindow");
+    if (!saved) return;
+    try {
+      const { conversationId, minimized } = JSON.parse(saved);
+      currentConversationId.value = conversationId;
+      isMinimized.value = minimized;
+    } catch {
+      sessionStorage.removeItem("chatWindow");
+    }
+  };
+
+  const persistWindow = () => {
+    if (currentConversationId.value == null) {
+      sessionStorage.removeItem("chatWindow");
+    } else {
+      sessionStorage.setItem("chatWindow", JSON.stringify({
+        conversationId: currentConversationId.value,
+        minimized: isMinimized.value,
+      }));
+    }
+  };
+
+  const openChat = (conversationId) => {
+    currentConversationId.value = conversationId;
+    isMinimized.value = false;
+    persistWindow();
+  };
+
+  const closeChat = () => {
+    currentConversationId.value = null;
+    isMinimized.value = false;
+    persistWindow();
+  };
+
+  const toggleMinimize = () => {
+    isMinimized.value = !isMinimized.value;
+    persistWindow();
+  };
+
+  const totalUnread = computed(() =>
+    conversationList.value.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0)
+  );
 
   // 選擇對話
   const selectConversation = (conversationId) => {
@@ -41,18 +88,18 @@ export const useChatStore = defineStore("chat", () => {
         {
           targetUserId,
         })
-      const idx = conversationList.value.findIndex((c) => { c.id === data.id });
+
+      const idx = conversationList.value.findIndex((c) => c.id === data.id);
       if (idx >= 0) {
         conversationList.value[idx] = data;
       } else {
         conversationList.value.unshift(data);
       }
 
-      currentConversationId.value = data.id;
       return data; // 呼叫端要拿 id 導頁
-    } catch (error) {
+    } catch (e) {
       error.value = "建立私訊失敗";
-      console.error("建立私訊失敗", error);
+      console.error("建立私訊失敗", e);
       throw error;
     }
   };
@@ -89,13 +136,20 @@ export const useChatStore = defineStore("chat", () => {
     conversationList,
     currentConversationId,
     currentConversation,
+    isMinimized,
     loading,
     error,
+    totalUnread,
 
     getConversations,
-    selectConversation,
+    // selectConversation,
     directConversation,
     clearUnreadCount,
     applyIncoming,
+    restoreWindow,
+    persistWindow,
+    openChat,
+    closeChat,
+    toggleMinimize,
   };
 });

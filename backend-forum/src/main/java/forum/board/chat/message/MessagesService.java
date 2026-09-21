@@ -53,8 +53,7 @@ public class MessagesService {
         FriendResponseDTO senderDTO = new FriendResponseDTO(
                 sender.getId(),
                 sender.getAccount(),
-                sender.getUsersDetail().getName(),
-                sender.getUsersDetail().getPhoto());
+                sender.getUsersDetail().getName());
         return new MessageResponseDTO(
                 msg.getId(),
                 msg.getConversation().getId(),

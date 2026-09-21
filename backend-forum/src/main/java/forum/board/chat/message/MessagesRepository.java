@@ -28,6 +28,7 @@ public interface MessagesRepository extends JpaRepository<MessagesEntity, Long> 
         @Param("lastReadTime") Instant lastReadTime,
         @Param("userId") UUID userId
     );
+    
 
     Optional<MessagesEntity> findByConversationIdAndClientMsgId(
         Long conversationId, String clientMsgId);

@@ -1,6 +1,6 @@
 import httpClient from "@/services/httpClient";
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useChatStore } from "./conversation";
 export const useMessageStore = defineStore("message", () => {
   const messagesMap = ref({});   // { [conversationId]: Message[] }  舊→新
@@ -38,9 +38,9 @@ export const useMessageStore = defineStore("message", () => {
         hasMore: data.hasMore,
         nextCursor: data.nextCursor,
       };
-    } catch (error) {
+    } catch (e) {
       error.value = "取得訊息失敗";
-      console.log("取得訊息失敗", error);
+      console.log("取得訊息失敗", e);
     } finally {
       loading.value = false;
     }
@@ -61,8 +61,8 @@ export const useMessageStore = defineStore("message", () => {
         hasMore: data.hasMore,
         nextCursor: data.nextCursor,
       };
-    } catch (error) {
-      console.error("載入舊訊息失敗", error);
+    } catch (e) {
+      console.error("載入舊訊息失敗", e);
     } finally {
       loadingOlder.value = false;
     }
@@ -73,8 +73,8 @@ export const useMessageStore = defineStore("message", () => {
     try {
       await httpClient.patch(`/api/chat/conversations/${conversationId}/read`);
       chatStore.clearUnreadCount(conversationId);
-    } catch (error) {
-      console.error('標記已讀失敗', error);   // 不影響訊息顯示
+    } catch (e) {
+      console.error('標記已讀失敗', e);
     }
   };
 
@@ -93,7 +93,7 @@ export const useMessageStore = defineStore("message", () => {
       addMessage(data);
       chatStore.applyIncoming(data, { isCurrent: true });
       return data;
-    } catch (error) {
+    } catch (e) {
       error.value = "傳送訊息失敗";
       console.error("傳送訊息失敗", e);
       throw e;
@@ -132,6 +132,7 @@ export const useMessageStore = defineStore("message", () => {
     messagesMap,
     currentMessages,
     currentHasMore,
+    cursorMap,
     loading,
     loadingOlder,
     sending,

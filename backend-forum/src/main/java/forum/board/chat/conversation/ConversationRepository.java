@@ -31,7 +31,16 @@ public interface ConversationRepository extends JpaRepository<ConversationEntity
     
     Optional<ConversationEntity> findByBoard(Board board);
         
-    List<ConversationEntity> findByMembers(List<ConversationMemberEntity> members);
+    @Query("""
+    SELECT DISTINCT c FROM ConversationEntity c
+    JOIN c.members myMember
+    LEFT JOIN FETCH c.members allMembers
+    LEFT JOIN FETCH allMembers.user u
+    LEFT JOIN FETCH u.usersDetail
+    LEFT JOIN FETCH c.board
+    WHERE myMember.user.id = :userId
+    """)
+    List<ConversationEntity> findAllByUserIdWithMembers(@Param("userId") UUID userId);
 
 
 

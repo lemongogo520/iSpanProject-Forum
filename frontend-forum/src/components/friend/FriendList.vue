@@ -8,6 +8,7 @@
                     inline />
             </v-tab>
             <v-tab value="sent">已送出</v-tab>
+            <AddFriendDialog/>
         </v-tabs>
 
         <v-window v-model="tab">
@@ -51,7 +52,7 @@
             <!-- 已送出 -->
             <v-window-item value="sent">
                 <v-list nav>
-                    <v-list-item v-for="r in friendStore.sendRequest" :key="r.id">
+                    <v-list-item v-for="r in friendStore.sendRequestList" :key="r.id">
                         <template #prepend>
                             <DollAvatar :userId="r.friend.userId" :scale="1.5" :size="32" />
                         </template>
@@ -70,6 +71,7 @@
 import { ref } from 'vue';
 import { useFriendStore } from '@/stores/friend';
 import DollAvatar from "@/components/doll/DollAvatar.vue";
+import AddFriendDialog from './AddFriendDialog.vue';
 const friendStore = useFriendStore();
 const tab = ref("friends");
 

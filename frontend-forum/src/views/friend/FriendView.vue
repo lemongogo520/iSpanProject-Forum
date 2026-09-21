@@ -32,7 +32,7 @@ onMounted(() => {
 }
 
 .friends-left {
-    width: 300px;
+    width: 500px;
     flex-shrink: 0;
     overflow-y: auto;
 }

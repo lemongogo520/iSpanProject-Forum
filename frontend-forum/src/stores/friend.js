@@ -5,7 +5,7 @@ import { computed, ref } from "vue";
 export const useFriendStore = defineStore("friend", () => {
   const friendList = ref([]);
   const requestList = ref([]);
-  const sendRequest = ref([]);
+  const sendRequestList = ref([]);
   const selectedFriendId = ref(null);
   const loading = ref(false);
   const processing = ref({});
@@ -51,7 +51,7 @@ export const useFriendStore = defineStore("friend", () => {
   const getSendRequestList = async () => {
     try {
       const { data } = await httpClient.get("/api/friendship/request/send/list");
-      sendRequest.value = asArray(data);
+      sendRequestList.value = asArray(data);
     } catch (e) {
       console.error("取得寄出邀請列表失敗", e);
     }
@@ -99,6 +99,19 @@ export const useFriendStore = defineStore("friend", () => {
     }
   };
 
+  const cancelFriendRequest = async (friendshipId) => {
+    processing.value[friendshipId] = true;
+    try {
+      await httpClient.patch(`/api/friendship/request/${friendshipId}/cancel`);
+      sendRequestList.value = sendRequestList.value.filter((r) => r.id !== friendshipId);
+    } catch (e) {
+      error.value = "取消好友邀請失敗";
+      console.error("取消好友邀請失敗", e);
+    } finally {
+      delete processing.value[friendshipId];
+    }
+  }
+
   // 重新刷新好友列表
   const refreshFriendData = () =>
     Promise.all([getFriendList(), getRequestList(), getSendRequestList()]);
@@ -106,21 +119,22 @@ export const useFriendStore = defineStore("friend", () => {
   const reset = () => {
   friendList.value = [];
   requestList.value = [];
-  sendRequest.value = [];
+  sendRequestList.value = [];
   selectedFriendId.value = null;
   processing.value = {};
   error.value = null;
 };
 
   return {
-    friendList, requestList, sendRequest,
+    friendList, requestList, sendRequestList,
     selectedFriendId, selectedFriend,
     loading, processing, error,
 
     selectFriend,
     getFriendList, getRequestList, getSendRequestList,
     acceptFriendRequest, rejectFriendRequest,
-    sendFriendRequest, refreshFriendData,
+    sendFriendRequest, cancelFriendRequest,
+    refreshFriendData,
     reset,
   };
 });

@@ -1,14 +1,10 @@
 <template>
   <div ref="scroller" class="msg-list" @scroll.passive="onScroll">
-    <div v-if="chatStore.loadingOlder" class="text-center py-2">
-      <v-progress-circular size="20" indeterminate />
+    <div v-if="chatStore.loadingOlder" class="loading-older">
+      <v-progress-circular size="20" width="2" indeterminate class="mt-1"  />
     </div>
 
-    <MessageItem
-      v-for="message in messages"
-      :key="message.id ?? message.clientMsgId"
-      :message="message"
-    />
+    <MessageItem v-for="message in messages" :key="message.id ?? message.clientMsgId" :message="message" />
 
     <div v-if="!messages.length && !messageStore.loading" class="empty">
       開始對話吧
@@ -39,7 +35,6 @@ const hasMore = computed(
 );
 
 const chatStore = useChatStore();
-const messageList = ref(null);
 
 const scrollToBottom = async () => {
   await nextTick();
@@ -68,9 +63,10 @@ const onScroll = async () => {
   if (!el || el.scrollTop > 80 || !hasMore.value) return;
 
   const prevHeight = el.scrollHeight;
+  const prevTop = el.scrollTop;
   await messageStore.loadOlderMessages(props.conversationId);
   await nextTick();
-  el.scrollTop += el.scrollHeight - prevHeight; // 補償高度，避免畫面跳動
+  el.scrollTop = prevTop + (el.scrollHeight - prevHeight);
 };
 </script>
 <style scoped>
@@ -78,10 +74,22 @@ const onScroll = async () => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-anchor: none;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
+}
+
+.loading-older {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  height: 0;               
+  overflow: visible;
+  z-index: 1;
 }
 
 .empty {

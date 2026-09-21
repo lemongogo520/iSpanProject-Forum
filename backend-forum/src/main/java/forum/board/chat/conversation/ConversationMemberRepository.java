@@ -30,6 +30,7 @@ public interface ConversationMemberRepository extends JpaRepository<Conversation
              AND msg.deleteTime IS NULL
              AND (m.lastReadTime IS NULL OR msg.createTime > m.lastReadTime)
             WHERE m.user.id = :userId
+            AND m.conversation.type = ConversationType.DIRECT
             GROUP BY m.conversation.id
             """)
     List<Object[]> countUnreadByUser(@Param("userId") UUID userId);

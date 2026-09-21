@@ -73,7 +73,9 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const totalUnread = computed(() =>
-    conversationList.value.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0)
+    conversationList.value
+      .filter((c) => c.type === "DIRECT")
+      .reduce((sum, c) => sum + (c.unreadCount ?? 0), 0)
   );
 
   // 選擇對話
@@ -123,7 +125,7 @@ export const useChatStore = defineStore("chat", () => {
     const c = conversationList.value[idx];
     c.lastMessage = message.content;
     c.updateTime = message.createTime;
-    if (!isCurrent && !message.mine) {
+    if (!isCurrent && !message.mine && c.type === "DIRECT") {
       c.unreadCount = (c.unreadCount ?? 0) + 1;
     }
 
@@ -133,11 +135,11 @@ export const useChatStore = defineStore("chat", () => {
   });
 
   const reset = () => {
-  conversationList.value = [];
-  currentConversationId.value = null;
-  error.value = null;
-  closeChat();
-};
+    conversationList.value = [];
+    currentConversationId.value = null;
+    error.value = null;
+    closeChat();
+  };
 
   return {
     conversationList,

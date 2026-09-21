@@ -1,24 +1,25 @@
 < <template>
-  <aside class="friend-sidebar">
-    <div class="sidebar-title">好友</div>
+  <v-navigation-drawer class="friend-sidebar" location="right" permanent expand-on-hover rail  :rail-width="70" :width="240">
+    <v-list-subheader class="sidebar-title">好友</v-list-subheader>
 
     <v-list density="compact" nav>
       <v-list-item v-for="f in friendStore.friendList" :key="f.userId" @click="startChat(f)">
         <template #prepend>
           <DollAvatar :userId="f.userId" :scale="1.5" :size="32" />
         </template>
-        <v-list-item-title>{{ f.displayName }}</v-list-item-title>
+        <v-list-item-title class="ml-2">{{ f.displayName }}</v-list-item-title>
       </v-list-item>
 
       <v-list-item v-if="!friendStore.friendList.length">
         <v-list-item-subtitle>尚無好友</v-list-item-subtitle>
       </v-list-item>
     </v-list>
-  </aside>
+  </v-navigation-drawer>
 </template>
   <script setup>
   import { useChatStore } from "@/stores/conversation";
   import { useFriendStore } from "@/stores/friend";
+  import DollAvatar from "@/components/doll/DollAvatar.vue";
 
   const friendStore = useFriendStore();
   const chatStore = useChatStore();

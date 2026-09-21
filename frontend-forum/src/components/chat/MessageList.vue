@@ -1,10 +1,10 @@
 <template>
   <div ref="scroller" class="msg-list" @scroll.passive="onScroll">
     <div v-if="chatStore.loadingOlder" class="loading-older">
-      <v-progress-circular size="20" width="2" indeterminate class="mt-1"  />
+      <v-progress-circular size="20" width="2" indeterminate class="mt-1" />
     </div>
 
-    <MessageItem v-for="message in messages" :key="message.id ?? message.clientMsgId" :message="message" />
+    <MessageItem v-for="message in messages" :key="message.clientMsgId ?? m.id" :message="message" :conversationId = "conversationId"/>
 
     <div v-if="!messages.length && !messageStore.loading" class="empty">
       開始對話吧
@@ -54,7 +54,9 @@ onMounted(scrollToBottom);
 watch(
   () => messages.value.length,
   (len, prev) => {
-    if (len > prev && nearBottom()) scrollToBottom();
+    if (len <= prev) return;
+    const last = messages.value[len - 1];
+    if (last?.status === 'sending' || nearBottom()) scrollToBottom();
   },
 );
 
@@ -87,7 +89,7 @@ const onScroll = async () => {
   top: 0;
   display: flex;
   justify-content: center;
-  height: 0;               
+  height: 0;
   overflow: visible;
   z-index: 1;
 }

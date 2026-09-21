@@ -7,7 +7,6 @@ export const useMessageStore = defineStore("message", () => {
   const cursorMap = ref({}); // { [conversationId]: { hasMore, nextCursor } }
   const loading = ref(false);
   const loadingOlder = ref(false);
-  const sending = ref(false);
   const error = ref(null);
 
   const chatStore = useChatStore();
@@ -81,34 +80,69 @@ export const useMessageStore = defineStore("message", () => {
   };
 
   // 傳送訊息
-  const sendMessage = async (conversationId, content) => {
-    console.log("sendMessage", content);
-    const text = content;
-    if (!text) {
-      console.log("訊息為空", content);
-      return;
-    } // 訊息為空
-    sending.value = true;
-    try {
-      console.log("try post");
-      const { data } = await httpClient.post(
-        `/api/chat/conversations/${conversationId}/messages`,
-        {
-          content: text,
-          clientMsgId: crypto.randomUUID(),
-        },
-      );
+  const genId = () =>
+    crypto.randomUUID?.() ??
+    "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
 
-      addMessage(data);
+  // 實際送出（首次送出與重送共用）
+  const postMessage = async (conversationId, content, clientMsgId) => {
+    try {
+      const { data } = await httpClient.post(`/api/chat/conversations/${conversationId}/messages`, {
+        content,
+        clientMsgId,
+      });
+      addMessage({ ...data, status: "sent" });
       chatStore.applyIncoming(data, { isCurrent: true });
       return data;
     } catch (e) {
-      error.value = "傳送訊息失敗";
+      patchByClientMsgId(conversationId, clientMsgId, { status: "failed" });
       console.error("傳送訊息失敗", e);
       throw e;
-    } finally {
-      sending.value = false;
     }
+  };
+
+  const sendMessage = async (conversationId, content) => {
+    const text = content;
+    if (!text) return;
+    const clientMsgId = genId();
+    ensureList(conversationId).push({
+      id: null,
+      clientMsgId,
+      conversationId,
+      content: text,
+      createTime: new Date().toISOString(),
+      mine: true,
+      status: "sending",
+    });
+
+    return postMessage(conversationId, text, clientMsgId);
+  };
+
+  // 重送
+  const retryMessage = async (conversationId, clientMsgId) => {
+    const msg = findByClientMsgId(conversationId, clientMsgId);
+    if (!msg || msg.status !== "failed") return;
+    msg.status = "sending";
+    return postMessage(conversationId, msg.content, clientMsgId);
+  };
+
+  // 放棄一則失敗訊息
+  const discardMessage = (conversationId, clientMsgId) => {
+    const list = messagesMap.value[conversationId];
+    if (!list) return;
+    const idx = list.findIndex((m) => m.clientMsgId === clientMsgId);
+    if (idx >= 0) list.splice(idx, 1);
+  };
+
+  const findByClientMsgId = (conversationId, clientMsgId) =>
+    messagesMap.value[conversationId]?.find((m) => m.clientMsgId === clientMsgId);
+
+  const patchByClientMsgId = (conversationId, clientMsgId, patch) => {
+    const msg = findByClientMsgId(conversationId, clientMsgId);
+    if (msg) Object.assign(msg, patch);
   };
 
   // 新增訊息 //比對clientMsgId 避免重複傳送
@@ -150,7 +184,6 @@ export const useMessageStore = defineStore("message", () => {
     cursorMap,
     loading,
     loadingOlder,
-    sending,
     error,
 
     getMessages,
@@ -158,6 +191,7 @@ export const useMessageStore = defineStore("message", () => {
     markAsRead,
     sendMessage,
     addMessage,
+    retryMessage, discardMessage,
     clearMessages,
     reset,
   };

@@ -1,17 +1,38 @@
 <template>
     <div class="msg-row" :class="{ 'mine': props.message.mine }">
-        <div class="bubble">
+        <div class="bubble" :class="{
+            failed: message.status === 'failed',
+            pending: message.status === 'sending'
+        }">
             <div class="bubble-text">
                 {{ message.content }}
             </div>
-            <div class="bubble-time">{{ formatDate(message.createTime) }}</div>
+            <div class="bubble-time">
+                <v-icon v-if="message.status === 'sending'" size="12">mdi-clock-outline</v-icon>
+                <template v-else>
+                    {{ formatDate(message.createTime) }}
+                </template>
+            </div>
+        </div>
+        <div v-if="message.status === 'failed'" class="failed-actions">
+            <v-btn icon="mdi-refresh" size="x-small" variant="text" color="error"
+                @click="messageStore.retryMessage(conversationId, message.clientMsgId)" />
+            <v-btn icon="mdi-close" size="x-small" variant="text"
+                @click="messageStore.discardMessage(conversationId, message.clientMsgId)" />
         </div>
     </div>
 </template>
 <script setup>
+import { useMessageStore } from '@/stores/message';
+
+const messageStore = useMessageStore();
 const props = defineProps({
     message: {
         type: Object,
+        required: true
+    },
+    conversationId: {
+        type: Number,
         required: true
     }
 })
@@ -51,24 +72,53 @@ const formatDate = (dateString) => {
 
 </script>
 <style>
-.msg-row { display: flex; }
-.msg-row.mine { justify-content: flex-end; }
+.msg-row {
+    display: flex;
+}
+
+.msg-row.mine {
+    justify-content: flex-end;
+    align-items: center;
+    gap: 2px;
+}
+
+.msg-row.mine .failed-actions {
+    order: -1;
+    display: flex;
+}
+
+.bubble.pending {
+    opacity: .6;
+}
+
+.bubble.failed {
+    outline: 1px solid rgb(var(--v-theme-error));
+    opacity: .8;
+}
+
 .bubble {
-  max-width: 75%;
-  padding: 6px 10px;
-  border-radius: 12px;
-  background: rgb(var(--v-theme-surface-light));
-  color: rgb(var(--v-theme-on-surface-light));
-  word-break: break-word;
+    max-width: 75%;
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: rgb(var(--v-theme-surface-light));
+    color: rgb(var(--v-theme-on-surface-light));
+    word-break: break-word;
 }
+
 .msg-row.mine .bubble {
-  background: rgb(var(--v-theme-primary));
-  color: rgb(var(--v-theme-on-primary));
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
 }
 
-.bubble-text { font-size: .9rem; white-space: pre-wrap; }
-.bubble-time { font-size: .7rem; opacity: .7; text-align: right; margin-top: 2px; }
+.bubble-text {
+    font-size: .9rem;
+    white-space: pre-wrap;
+}
 
-
-
+.bubble-time {
+    font-size: .7rem;
+    opacity: .7;
+    text-align: right;
+    margin-top: 2px;
+}
 </style>

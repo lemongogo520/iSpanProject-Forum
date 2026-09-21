@@ -1,25 +1,9 @@
 <template>
   <div class="msg-input">
-    <v-textarea
-      v-model="text"
-      placeholder="輸入訊息…"
-      rows="1"
-      max-rows="4"
-      auto-grow
-      hide-details
-      density="compact"
-      variant="solo-filled"
-      flat
-      @keydown.enter.exact.prevent="send"
-    />
-    <v-btn
-      icon="mdi-send"
-      variant="text"
-      color="primary"
-      :loading="messageStore.sending"
-      :disabled="!text.trim()"
-      @click="send()"
-    />
+    <v-textarea v-model="text" placeholder="輸入訊息…" rows="1" max-rows="4" auto-grow hide-details density="compact"
+      variant="solo-filled" flat @keydown.enter.exact.prevent="send" />
+    <v-btn icon="mdi-send" variant="text" color="primary" :disabled="!text.trim()"
+      @click="send()" />
   </div>
 </template>
 <script setup>
@@ -38,15 +22,11 @@ const text = ref("");
 
 const send = async () => {
   const content = text.value.trim();
-  console.log(props.conversationId, content);
-  if (!content || messageStore.sending) return;
+  // console.log(props.conversationId, content);
+  if (!content) return;
   text.value = "";
-  try {
-    await messageStore.sendMessage(props.conversationId, content);
-  } catch (e) {
-    text.value = content; // 失敗時還原，避免使用者重打
-    console.log("Message Input send 失敗", e);
-  }
+  messageStore.sendMessage(props.conversationId, content)
+    .catch(() => { });
 };
 </script>
 <style scoped>

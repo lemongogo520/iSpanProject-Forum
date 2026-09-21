@@ -23,6 +23,7 @@ public class DailyTaskService {
 
     private final MemberDailyTaskRepository taskRepository;
     private final DailyTaskConfig taskConfig;
+    private final DailyTaskQueryRepository taskQueryRepository;
     private final EntityManager entityManager;
     private final DailyTaskLikeRecordRepository likeRecordRepository;
     private final CoinService coinService;
@@ -38,9 +39,11 @@ public class DailyTaskService {
             CoinService coinService,
             CoinWalletRepository walletRepository,
             CoinTransactionRepository transactionRepository,
-            DailyTaskContentRecordRepository contentRecordRepository) {
+            DailyTaskContentRecordRepository contentRecordRepository,
+            DailyTaskQueryRepository taskQueryRepository) {
 
         this.taskRepository = taskRepository;
+        this.taskQueryRepository = taskQueryRepository;
         this.taskConfig = taskConfig;
         this.entityManager = entityManager;
         this.likeRecordRepository = likeRecordRepository;
@@ -66,7 +69,8 @@ public class DailyTaskService {
         for (DailyTaskType taskType
                 : taskConfig.getEnabledTaskTypes()) {
 
-            getOrCreateTask(userId, today, taskType);
+            MemberDailyTask task = getOrCreateTask(userId, today, taskType);
+            refreshDatabaseProgress(task);
         }
 
         return taskRepository
@@ -364,6 +368,9 @@ public class DailyTaskService {
                     "此任務今天已經領取過獎勵");
         }
 
+        // 領獎前重新核對來源資料，不信任先前畫面或事件留下的進度。
+        refreshDatabaseProgress(task);
+
         // 5. 確認任務進度有效且已達標。
         if (task.getTargetCount() == null
                 || task.getTargetCount() <= 0
@@ -629,4 +636,34 @@ public class DailyTaskService {
     
     
     
+
+    /**
+     * 以來源資料庫目前的有效資料覆寫未領獎任務進度。
+     * 呼叫前必須先 lockMember，且位於同一個交易。
+     * LOGIN、CHECK_IN 沿用原本流程；已領獎任務不再變動。
+     */
+    private void refreshDatabaseProgress(MemberDailyTask task) {
+        if (Boolean.TRUE.equals(task.getClaimed())) {
+            return;
+        }
+        DailyTaskType type = task.getTaskType();
+        if (type == DailyTaskType.LOGIN || type == DailyTaskType.CHECK_IN) {
+            return;
+        }
+        if (task.getTargetCount() == null || task.getTargetCount() <= 0) {
+            throw new IllegalStateException("任務目標設定異常");
+        }
+        LocalDate date = task.getTaskDate();
+        Instant start = date.atStartOfDay(TAIWAN_ZONE).toInstant();
+        Instant end = date.plusDays(1).atStartOfDay(TAIWAN_ZONE).toInstant();
+        long count = switch (type) {
+            case POST -> taskQueryRepository.countPosts(task.getUserId(), start, end);
+            case COMMENT -> taskQueryRepository.countComments(task.getUserId(), start, end);
+            case GIVE_LIKE -> taskQueryRepository.countGivenLikes(task.getUserId(), start, end);
+            case RECEIVE_LIKE -> taskQueryRepository.countReceivedLikes(task.getUserId(), start, end);
+            default -> throw new IllegalArgumentException("不支援的查詢任務類型：" + type);
+        };
+        task.setProgressCount((int) Math.min(count, (long) task.getTargetCount()));
+        taskRepository.save(task);
+    }
 }

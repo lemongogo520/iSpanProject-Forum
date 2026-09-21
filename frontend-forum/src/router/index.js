@@ -80,19 +80,6 @@ const routes = [
     path: "/chat",
     name: "chat",
     component: () => import("@/views/chat/ChatView.vue"),
-    children: [
-      {
-        path: "",
-        name: "chat-empty",
-        component: () => import("@/views/chat/ChatEmpty.vue"),
-      },
-      {
-        path: ":conversationId",
-        name: "chat-detail",
-        component: () => import("@/views/chat/ChatPanel.vue"),
-        props: true,
-      },
-    ],
   },
 
 

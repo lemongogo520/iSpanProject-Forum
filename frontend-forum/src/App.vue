@@ -47,8 +47,8 @@ onMounted(() => {
     </v-snackbar>
 
     <!-- 好友側邊欄 -->
-    <FriendSidebar />
-    <ChatDock />
+    <FriendSidebar v-if="showHeader && authStore.checked && authStore.isLogin"/>
+    <ChatDock v-if="showHeader && authStore.checked && authStore.isLogin"/>
   </v-app>
 </template>
 

@@ -1,11 +1,12 @@
 <template>
     <div class="friends-page">
-        <div class="friends-left">
+        <v-card class="friends-card auth-card" rounded="lg" elevation="6">
             <FriendList />
-        </div>
-        <div class="friends-right">
+        </v-card>
+        <v-card class="friends-card auth-card" rounded="lg" elevation="6">
+            <v-card-title class="text-center font-weight-bold pt-4 auth-title">好友資訊</v-card-title>
             <FriendDetail />
-        </div>
+        </v-card>
     </div>
 </template>
 <script setup>
@@ -24,22 +25,29 @@ onMounted(() => {
 <style src="@/assets/css/common.css"></style>
 <style scoped>
 .friends-page {
-    display: flex;
-    flex-direction: row;
-    height: 100%;
-    gap: 16px;
-    padding: 16px;
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px;
+    background: var(--color-background);
+    height: calc(100vh - var(--v-layout-top, 64px) - var(--v-layout-bottom, 0px));
+    height: calc(100dvh - var(--v-layout-top, 64px) - var(--v-layout-bottom, 0px));
 }
 
-.friends-left {
-    width: 500px;
-    flex-shrink: 0;
-    overflow-y: auto;
+.friends-card {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.friends-right {
-    flex: 1;
-    flex-shrink: 0;
-    min-width: 0;
+@media (max-width: 959px) {
+  .friends-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-rows: minmax(420px, auto);
+    height: auto;
+  }
 }
 </style>

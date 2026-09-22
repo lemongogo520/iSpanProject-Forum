@@ -10,7 +10,4 @@ public record FriendResponseDTO(
         
         ,String displayName
 
-        ,String Photo
-
-) {
-}
+) {}

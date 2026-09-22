@@ -111,8 +111,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import httpClient from '@/services/httpClient'
+import { useConfigStore } from '@/stores/config'
 
 const router = useRouter()
+const configStore = useConfigStore();
 
 // =========================
 // 表單資料
@@ -142,12 +144,15 @@ const accountRules = [
       return '請輸入帳號'
     }
 
-    if (value.length < 6 || value.length > 20) {
-      return '帳號長度必須介於6~20個字元'
+    const min = configStore.settings.account_min_length
+    const max = configStore.settings.account_max_length
+
+    if (value.length < min || value.length > max) {
+      return `帳號長度必須介於 ${min}~${max} 個字元`
     }
 
-    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]{6,20}$/.test(value)) {
-      return '帳號只能使用英文、數字、底線，並且包含英文或數字'
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]+$/.test(value)) {
+      return '帳號只能使用英文、數字、底線，並且包含英文和數字'
     }
 
     return true
@@ -164,11 +169,14 @@ const passwordRules = [
       return '請輸入密碼'
     }
 
-    if (value.length < 6 || value.length > 20) {
-      return '密碼長度必須介於6~20個字元'
+
+    const min = configStore.settings.password_min_length
+
+    if (value.length < min) {
+      return `密碼長度必須至少 ${min} 個字元`
     }
 
-    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]{6,20}$/.test(value)) {
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]+$/.test(value)) {
       return '密碼只能使用英文、數字、底線，並且包含英文或數字'
     }
 

@@ -78,3 +78,10 @@ export const getPostLikeStatus = (postId) => {
 export const togglePostLike = (postId) => {
   return httpClient.put(`/api/posts/${postId}/like`);
 };
+
+// 熱門文章查詢
+export const getHotPosts = (limit = 9) => {
+  return httpClient.get("/api/posts/hot", {
+    params: { limit },
+  });
+};

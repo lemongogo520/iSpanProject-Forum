@@ -72,6 +72,8 @@ const routes = [
     component: () => import("@/views/friend/FriendView.vue"),
   },
 
+
+
   //管理者設定
   {
     path: "/config/setting",
@@ -102,6 +104,14 @@ const routes = [
     path: "/config/doll/adminitems",
     name: "dollAdminItems",
     component: () => import("@/views/doll/DollAdminItemsView.vue"),
+  },
+  {
+    path: "/config/forum-template",
+    name: "ForumTemplate",
+    component: () => import("@/views/config/ForumTemplateView.vue"),
+    meta: {
+      requiresSystemAdmin: true,
+    },
   },
 
   //商城
@@ -134,7 +144,6 @@ router.beforeEach(async (to) => {
   if (to.path === "/login" || to.path === "/register") {
     return true;
   }
-
   // 其他頁面只檢查一次
   const isLogin = await authStore.checkLogin();
 
@@ -148,6 +157,11 @@ router.beforeEach(async (to) => {
   ) {
     return "/home";
   }
+   // 系統管理員 判斷
+  if (to.meta.requiresSystemAdmin && Number(userStore.permission) !== 1) {
+    return "/home";
+  }
+
   // 有登入 → 正常進入
   return true;
 });

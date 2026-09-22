@@ -36,6 +36,12 @@ public class PostController {
 
 	private final Settings settings;
 
+	// 取得熱門文章
+	@GetMapping("/api/posts/hot")
+	public List<HotPostDTO> findHotPosts(@RequestParam(defaultValue = "5") int limit) {
+		return postService.findHotPosts(limit);
+	}
+
 	// 取得全部文章
 	@GetMapping("/api/posts")
 	public List<Posts> findAll() {
@@ -83,8 +89,8 @@ public class PostController {
 			@RequestParam(defaultValue = "latest") String sortBy,
 			Pageable pageable) {
 
-		Pageable configuredPageable = PageRequest.of(pageable.getPageNumber(),getPostPageSize(),pageable.getSort());
-		
+		Pageable configuredPageable = PageRequest.of(pageable.getPageNumber(), getPostPageSize(), pageable.getSort());
+
 		return postService.searchPosts(title, boardId, sortBy, configuredPageable);
 	}
 

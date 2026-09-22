@@ -1,20 +1,27 @@
 <!-- 使用方式 -->
 <!-- 在script import DollAvatar from "@/components/doll/DollAvatar.vue"; -->
-<!-- 在template中要顯示的地方用
+<!-- 大頭貼模式 (預設)：
  <DollAvatar :userId="confirmedUserId" :scale="1.5" :size="100" /> 
  scale是人物大小 size是外框大小
- -->
+-->
+<!-- 全身畫布模式：
+ <DollAvatar :userId="confirmedUserId" :scale="3" isFullBody /> 
+-->
 
 <template>
   <v-sheet
-    class="d-inline-flex align-center justify-center pa-1 rounded-circle border"
+    :class="[
+      'd-inline-flex align-center justify-center pa-1',
+      isFullBody ? 'bg-transparent' : 'rounded-circle border'
+    ]"
     :style="{
-      background: 'var(--color-background-light)',
-      borderColor: 'var(--color-border) !important',
-      width: `${size}px`,
-      height: `${size}px`,
-      overflow: 'hidden',
+      background: isFullBody ? 'transparent' : 'var(--color-background-light)',
+      borderColor: isFullBody ? 'transparent' : 'var(--color-border) !important',
+      width: isFullBody ? 'auto' : `${size}px`,
+      height: isFullBody ? 'auto' : `${size}px`,
+      overflow: isFullBody ? 'visible' : 'hidden',
     }"
+    :elevation="0"
   >
     <!-- 載入中畫面 -->
     <template v-if="isLoading">
@@ -35,7 +42,7 @@
       <DollConvas
         :equippedItems="avatarItems"
         :scale="scale"
-        :avatarMode="true"
+        :avatarMode="!isFullBody"
       />
     </template>
   </v-sheet>
@@ -61,6 +68,11 @@ const props = defineProps({
   scale: {
     type: Number,
     default: 1.8,
+  },
+  // 是否為全身模式 (預設 false = 大頭貼模式)
+  isFullBody: {
+    type: Boolean,
+    default: false,
   },
 });
 

@@ -8,8 +8,6 @@ import forum.board.dollsystemcategories.DollCategory;
 
 import java.time.Instant;
 
-
-
 @Entity
 @Table(name = "doll_items")
 @Getter
@@ -32,9 +30,13 @@ public class DollItem {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    //圖片路徑
+    // 圖片路徑
     @Column(name = "file_path", length = 255)
     private String filePath;
+
+    // 價格
+    @Column(name = "price")
+    private Integer price;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

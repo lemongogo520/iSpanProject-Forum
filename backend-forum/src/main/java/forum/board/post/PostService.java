@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import forum.board.board.Board;
 import forum.board.board.BoardRepository;
 import forum.board.boardModerator.BoardModeratorService;
+import forum.board.comments.CommentsRepository;
 import forum.board.userpermission.UserPermissionService;
 import forum.board.users.Users;
 import forum.board.users.UsersRepository;
@@ -34,6 +35,8 @@ public class PostService {
 	private final UsersRepository usersRepo;
 
 	private final BoardRepository boardRepo;
+
+	private final CommentsRepository commentsRepo;
 
 	private final PostsHistoryService historyService;
 
@@ -553,4 +556,40 @@ public class PostService {
 				Sort.Order.desc("id"));
 	}
 
+	// 查全站熱門文章
+	public List<HotPostDTO> findHotPosts(int limit) {
+
+		int safeLimit = Math.max(1, Math.min(limit, 20));
+
+		Pageable pageable = PageRequest.of(0, safeLimit);
+
+		return postRepo
+				.findByIsDeletedFalseOrderByViewsDescCreateTimeDesc(pageable)
+				.stream()
+				.map(post -> new HotPostDTO(
+						post.getId(),
+						post.getTitle(),
+						post.getUsers().getId(),
+						post.getUsers().getAccount(),
+						post.getBoard().getId(),
+						post.getBoard().getName(),
+						post.getPostType(),
+						extractFirstImageUrl(post.getContent()),
+						post.getViews(),
+						commentsRepo.countByPostIdAndIsDeletedFalse(post.getId()),
+						post.getCreateTime()))
+				.toList();
+	}
+
+	private String extractFirstImageUrl(String content) {
+		if (content == null || content.isBlank()) {
+			return null;
+		}
+		var firstImage = Jsoup.parseBodyFragment(content).selectFirst("img[src]");
+		if (firstImage == null) {
+			return null;
+		}
+		String imageUrl = firstImage.attr("src");
+		return imageUrl.isBlank() ? null : imageUrl;
+	}
 }

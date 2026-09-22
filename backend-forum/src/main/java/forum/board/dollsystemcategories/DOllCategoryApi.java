@@ -2,9 +2,6 @@ package forum.board.dollsystemcategories;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import forum.board.login.LoginService;
-import forum.board.users.UsersService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpHeaders;
@@ -13,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -27,7 +23,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class DOllCategoryApi {
 
     private final DollCategoryService categoryService;
-    private final UsersService usersService;
 
     @GetMapping("/api/dollcategory")
     public ResponseEntity<?> categoryById(@RequestParam Integer id) {
@@ -65,8 +60,7 @@ public class DOllCategoryApi {
     @PatchMapping("/api/dollcategory/{id}")
     public ResponseEntity<Void> updateCategory(
             @PathVariable Integer id,
-            @RequestBody DollCategory newDollCategory,
-            HttpSession httpSession) {
+            @RequestBody DollCategory newDollCategory) {
 
         categoryService.updateCategory(id, newDollCategory.getTypeName(), newDollCategory.getZIndex());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

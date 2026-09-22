@@ -1,5 +1,6 @@
 package forum.board.dollsystemuserowneditem;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -77,6 +78,31 @@ public class DollUserOwnedService {
         dollUserOwned.setItem(item);
 
         ownedRepo.save(dollUserOwned);
+    }
+
+    // 使用者一次獲得多件裝備 (批次新增)
+    public void acquireItems(UUID userId, List<Integer> itemIds) {
+        Users user = usersRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("找不到使用者"));
+
+        // 找出所有傳入 ID 的裝備實體
+        List<DollItem> itemsToAcquire = itemRepo.findAllById(itemIds);
+        List<DollUserOwned> newOwnedItems = new ArrayList<>();
+
+        for (DollItem item : itemsToAcquire) {
+            // 檢查是否已經擁有了，沒有才加入新增清單
+            if (!ownedRepo.existsByUserIdAndItemId(userId, item.getId())) {
+                DollUserOwned dollUserOwned = new DollUserOwned();
+                dollUserOwned.setUser(user);
+                dollUserOwned.setItem(item);
+                newOwnedItems.add(dollUserOwned);
+            }
+        }
+
+        // 批次儲存，大幅提升效能並減少資料庫連線次數
+        if (!newOwnedItems.isEmpty()) {
+            ownedRepo.saveAll(newOwnedItems);
+        }
     }
 
 }

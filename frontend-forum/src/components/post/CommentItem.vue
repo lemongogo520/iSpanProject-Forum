@@ -1,8 +1,20 @@
 <template>
   <article class="comment-card">
     <div class="comment-layout">
-      <v-avatar size="40" color="light-blue-lighten-4" class="comment-avatar">
-        <v-icon icon="mdi-account" color="light-blue-darken-2" size="27" />
+      <DollAvatar
+        v-if="comment.users?.id"
+        :user-id="comment.users.id"
+        :size="56"
+        :scale="1.8"
+        class="comment-avatar"
+      />
+      <v-avatar
+        v-else
+        size="56"
+        color="light-blue-lighten-4"
+        class="comment-avatar"
+      >
+        <v-icon icon="mdi-account" color="light-blue-darken-2" size="32" />
       </v-avatar>
 
       <div class="comment-main">
@@ -69,7 +81,9 @@
               variant="text"
               :disabled="deletingCommentId === comment.id"
               :loading="deletingCommentId === comment.id"
-              @click.stop="emit('delete-comment', comment.id, null,comment.users?.id)"
+              @click.stop="
+                emit('delete-comment', comment.id, null, comment.users?.id)
+              "
             >
               刪除
             </v-btn>
@@ -151,10 +165,14 @@
             <div
               v-for="child in childComments"
               :key="child.id"
-              class="child-comment"
-            >
-              <v-avatar size="32" color="grey-lighten-3">
-                <v-icon icon="mdi-account" color="grey-darken-1" size="22" />
+              class="child-comment">
+              <DollAvatar
+                v-if="child.users?.id"
+                :user-id="child.users.id"
+                :size="44"
+                :scale="1.25"/>
+              <v-avatar v-else size="44" color="grey-lighten-3">
+                <v-icon icon="mdi-account" color="grey-darken-1" size="27" />
               </v-avatar>
 
               <div class="comment-main">
@@ -219,7 +237,14 @@
                       variant="text"
                       :disabled="deletingCommentId === child.id"
                       :loading="deletingCommentId === child.id"
-                      @click.stop="emit('delete-comment', child.id, comment.id,child.users?.id)"
+                      @click.stop="
+                        emit(
+                          'delete-comment',
+                          child.id,
+                          comment.id,
+                          child.users?.id,
+                        )
+                      "
                     >
                       刪除
                     </v-btn>
@@ -244,6 +269,8 @@
 </template>
 
 <script setup>
+import DollAvatar from "@/components/doll/DollAvatar.vue";
+
 const props = defineProps({
   comment: { type: Object, required: true },
   childComments: { type: Array, default: () => [] },

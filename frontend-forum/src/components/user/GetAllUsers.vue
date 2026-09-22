@@ -4,34 +4,14 @@
       選擇使用者
     </div>
 
-    <v-autocomplete
-      v-model="selectedUser"
-      :items="users"
-      :loading="loading"
-      :item-title="userTitle"
-      item-value="uid"
-      return-object
-      placeholder="輸入姓名或帳號"
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      clearable
-      no-data-text="找不到使用者"
-      :custom-filter="filterUsers"
-      @update:model-value="handleUserChange"
-    >
+    <v-autocomplete v-model="selectedUser" :items="availableUsers" :loading="loading" :item-title="userTitle" item-value="uid"
+      return-object placeholder="輸入姓名或帳號" prepend-inner-icon="mdi-magnify" variant="outlined" clearable
+      no-data-text="找不到使用者" :custom-filter="filterUsers" @update:model-value="handleUserChange">
       <template #item="{ props, item }">
-        <v-list-item
-          v-bind="props"
-          :title="displayName(item)"
-          :subtitle="item?.account"
-        >
+        <v-list-item v-bind="props" :title="displayName(item)" :subtitle="item?.account">
           <template #prepend>
             <v-avatar size="40">
-              <v-img
-                v-if="item?.photoUrl"
-                :src="item.photoUrl"
-                cover
-              />
+              <v-img v-if="item?.photoUrl" :src="item.photoUrl" cover />
               <v-icon v-else>
                 mdi-account
               </v-icon>
@@ -41,16 +21,9 @@
       </template>
 
       <template #selection="{ item }">
-        <div
-          v-if="item"
-          class="selected-user"
-        >
+        <div v-if="item" class="selected-user">
           <v-avatar size="32">
-            <v-img
-              v-if="item.photoUrl"
-              :src="item.photoUrl"
-              cover
-            />
+            <v-img v-if="item.photoUrl" :src="item.photoUrl" cover />
             <v-icon v-else>
               mdi-account
             </v-icon>
@@ -64,18 +37,11 @@
     </v-autocomplete>
 
     <div v-if="!immediateSelect" class="user-selector-actions">
-      <v-btn
-        variant="text"
-        @click="clearUser"
-      >
+      <v-btn variant="text" @click="clearUser">
         清除
       </v-btn>
 
-      <v-btn
-        color="primary"
-        :disabled="!selectedUser"
-        @click="confirmUser"
-      >
+      <v-btn color="primary" :disabled="!selectedUser" @click="confirmUser">
         確認
       </v-btn>
     </div>
@@ -83,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import httpClient from '@/services/httpClient'
 
 //types=0:取得全部使用者
@@ -101,6 +67,16 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // 添加篩選 沒傳入不會怎樣
+  excludeIds: {
+    type: Array,
+    default: () => [],
+  },
+})
+
+const availableUsers = computed(() => {
+  const excluded = new Set(props.excludeIds)
+  return users.value.filter((u) => !excluded.has(u.uid))
 })
 
 const emit = defineEmits([
@@ -180,6 +156,8 @@ function handleUserChange(user) {
     emit("select", user);
   }
 }
+
+defineExpose({ clearUser, reload: getAllUsers })
 
 onMounted(() => {
   getAllUsers()

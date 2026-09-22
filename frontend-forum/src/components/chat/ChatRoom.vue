@@ -1,64 +1,103 @@
 <template>
-    <div class="chat-room">
-        <ChatHeader :friend="friend"></ChatHeader>
-        <MessageList></MessageList>
-        <MessageInput/>
+    <div class="chat-window"
+        :class="{ minimized: chatStore.isMinimized, fullscreen: smAndDown && !chatStore.isMinimized }">
+        <header class="cw-header" @click="chatStore.toggleMinimize()">
+            <span class="cw-title">{{ conversation?.title ?? "對話" }}</span>
+
+            <v-badge v-if="chatStore.isMinimized && conversation?.unreadCount" :content="conversation.unreadCount"
+                color="error" inline />
+
+            <v-btn :icon="chatStore.isMinimized ? 'mdi-chevron-up' : 'mdi-minus'" size="x-small" variant="text"
+                @click.stop="chatStore.toggleMinimize()" />
+            <v-btn icon="mdi-close" size="x-small" variant="text" @click.stop="chatStore.closeChat()" />
+        </header>
+
+        <template v-if="!chatStore.isMinimized">
+            <MessageList :conversationId="conversationId" />
+            <MessageInput :conversationId="conversationId" />
+        </template>
     </div>
 </template>
+
 <script setup>
-import { onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
+import { computed, onMounted, watch } from "vue";
+import { useDisplay } from "vuetify";
+import { useChatStore } from "@/stores/conversation";
+import { useMessageStore } from "@/stores/message";
+import MessageList from "@/components/chat/MessageList.vue";
+import MessageInput from "@/components/chat/MessageInput.vue";
 
-import ChatHeader from './ChatHeader.vue';
-import MessageInput from './MessageInput.vue';
-import MessageList from './MessageList.vue';
+const props = defineProps({
+    conversationId: { type: Number, required: true },
+});
 
-import { useChatStore } from '@/stores/chat.js';
+const chatStore = useChatStore();
+const messageStore = useMessageStore();
+const { smAndDown } = useDisplay();
 
-defineProps({
-    friend:{
-        type: Object,
-        required:true
-    },
-})
+const conversation = computed(
+    () => chatStore.conversationList.find((c) => c.id === props.conversationId) ?? null
+);
 
-const chatStore = useChatStore();  
-const {currentConversation} = storeToRefs(chatStore);
-const {getMessages} = chatStore;
+onMounted(async () => {
+    await messageStore.getMessages(props.conversationId);
+    if (!chatStore.isMinimized) {
+        await messageStore.markAsRead(props.conversationId);
+    }
+});
 
-onMounted(()=>{
-    // console.log(currentConversation.value)
-    getMessages(currentConversation.value.id);
-})
-
-
+// 從最小化展開時才標已讀
+watch(
+    () => chatStore.isMinimized,
+    (min) => {
+        if (!min) messageStore.markAsRead(props.conversationId);
+    }
+);
 </script>
-<style>
-.chat-room{
+<style scoped>
+.chat-window {
+    width: 340px;
+    height: 500px;
     display: flex;
     flex-direction: column;
-    border: 3px solid var(--color-text);
-    border-radius: 8px;
-    box-sizing: border-box;
-    background: var(--color-card);
+    background: rgb(var(--v-theme-surface));
+    border: 1px solid rgb(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
+    overflow: hidden;
+}
+
+.chat-window.minimized {
+    height: 44px;
+}
+
+.chat-window.fullscreen {
     position: fixed;
-    right: 24px;
-    bottom: 24px;
-    width: 360px;
-    height: 80%;
-    z-index: 1000;
-    background-color: var(--color-background);
-    
-}
-.chat-header {
-    flex-shrink: 0;
-    border-radius: 8px;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
 }
 
-
-.message-input {
+.cw-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
     flex-shrink: 0;
-    padding: 0px 15px;
-    margin-top: auto;
+    padding: 0 4px 0 12px;
+    cursor: pointer;
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
+}
+
+.cw-title {
+    flex: 1;
+    min-width: 0;
+    font-size: .9rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 </style>

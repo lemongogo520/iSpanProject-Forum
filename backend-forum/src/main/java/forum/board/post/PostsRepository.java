@@ -79,4 +79,8 @@ public interface PostsRepository extends JpaRepository<Posts, Integer> {
 			""")
 	Page<Posts> findByBoardIdAndTitleOrderByLikeCount(@Param("boardId") Integer boardId,@Param("title") String title,Pageable pageable);
 
+	// 找熱門文章
+	List<Posts> findByIsDeletedFalseOrderByViewsDescCreateTimeDesc(Pageable pageable);
+
+
 }

@@ -12,23 +12,7 @@
       </div>
     </section>
 
-    <!-- ====================== -->
-    <!-- 測試會員 -->
-    <!-- ====================== -->
-
-    <section class="test-user-box">
-      <label> 測試會員 UUID </label>
-
-      <input
-        v-model="userId"
-        type="text"
-        placeholder="請輸入測試會員 UUID"
-        @change="saveUserId"
-      />
-
-      <small> 目前後端測試階段需要 userId， 正式登入整合後會移除此欄。 </small>
-    </section>
-
+    
     <!-- ====================== -->
     <!-- 商品分類 -->
     <!-- ====================== -->
@@ -94,9 +78,9 @@
 <script setup>
 import { onMounted, ref } from "vue";
 
-import ProductCard from "../components/shop/ProductCard.vue";
+import ProductCard from "@/components/shop/ProductCard.vue";
 
-import { getProducts, purchaseProduct } from "../services/shopApi";
+import { getProducts, purchaseProduct } from "@/services/shopApi";
 
 // ==============================
 // 商品
@@ -159,16 +143,6 @@ const categories = [
 ];
 
 // ==============================
-// 測試用會員 UUID
-// ==============================
-
-const userId = ref(localStorage.getItem("shopTestUserId") || "");
-
-function saveUserId() {
-  localStorage.setItem("shopTestUserId", userId.value);
-}
-
-// ==============================
 // 查詢商品
 // ==============================
 
@@ -205,12 +179,7 @@ async function selectCategory(type) {
 async function handlePurchase(product) {
   successMessage.value = "";
   errorMessage.value = "";
-
-  if (!userId.value) {
-    errorMessage.value = "請先輸入測試會員 UUID";
-
-    return;
-  }
+  
 
   const confirmed = window.confirm(
     `確定要花 ${product.price} 點購買「${product.name}」嗎？`,
@@ -223,7 +192,7 @@ async function handlePurchase(product) {
   purchasingProductId.value = product.id;
 
   try {
-    const result = await purchaseProduct(product.id, userId.value);
+    const result = await purchaseProduct(product.id);
 
     successMessage.value = `購買成功：${result.productName}，消耗 ${result.price} 點`;
 

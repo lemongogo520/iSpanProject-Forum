@@ -616,7 +616,6 @@ async function save() {
     isDirty.value = false;
     pointsNavigationError.value = "";
 
-    emit("saved");
   } catch (error) {
     console.error("儲存或確認會員資料失敗：", error);
     pointsNavigationError.value =

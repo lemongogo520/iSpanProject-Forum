@@ -476,7 +476,6 @@ const saveSettings = async () => {
 
     const settings = await configService.saveSettings(saveData)
 
-    const settings = await configService.getSettings()
     // 重新 bind v-model
     bindSettings(settings)
 

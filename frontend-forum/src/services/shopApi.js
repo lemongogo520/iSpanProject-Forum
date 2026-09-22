@@ -10,12 +10,13 @@ const BACKEND_URL =
 async function request(url, options = {}) {
 
   const response = await fetch(url, {
+    credentials: "include",
+    ...options,
     headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
     },
-    ...options
-  })
+  });
 
   if (!response.ok) {
 
@@ -74,29 +75,16 @@ export async function getProducts(type = null) {
 
 
 /**
- * 購買商品
- *
- * POST
- * /api/shop/products/{productId}/purchase
- * ?userId={userId}
+ * 購買商品：會員身分由後端登入狀態取得
  */
-export async function purchaseProduct(
-  productId,
-  userId
-) {
-
-  const params = new URLSearchParams()
-
-  params.append('userId', userId)
-
-  const url =
-    `${API_BASE_URL}/shop/products/${productId}/purchase?${params.toString()}`
+export async function purchaseProduct(productId) {
+  const url = `${API_BASE_URL}/shop/products/${productId}/purchase`;
 
   return request(url, {
-    method: 'POST'
-  })
+    method: "POST",
+    credentials: "include",
+  });
 }
-
 
 /**
  * 處理商品圖片網址

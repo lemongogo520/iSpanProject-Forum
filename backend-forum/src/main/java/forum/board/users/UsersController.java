@@ -12,16 +12,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import forum.board.config.Settings;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@RestController
+@RestController 
 @RequestMapping("/api/users")
 public class UsersController {
 
     private final UsersService userService;
+    
+    private final Settings settings;
 
     @GetMapping("/detail")
     public ResponseEntity<?> getUserDetail(@RequestParam String account) {
@@ -63,6 +66,18 @@ public class UsersController {
 	        @RequestParam List<Integer> types) {
 
 	    return userService.getAllUsersByTypes(types);
+	}
+	
+	@GetMapping("/users/config")
+	public UsersConfigDTO getUsersConfig() {
+		
+		UsersConfigDTO usersConfig = new UsersConfigDTO();
+		usersConfig.setAccountMinLength(settings.get("account_min_length")); 
+		usersConfig.setAccountMaxLength(settings.get("account_max_length")); 
+		usersConfig.setPasswordMinLength(settings.get("password_min_length")); 
+		usersConfig.setAllowChangePassword(Boolean.parseBoolean(settings.get("allow_change_password"))); 
+	
+		return usersConfig;
 	}
 }
     

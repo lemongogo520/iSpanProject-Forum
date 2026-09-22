@@ -8,7 +8,7 @@
     <v-card>
       <!-- 標題 -->
       <v-card-title class="text-h5 bg-blue-lighten-5">
-        使用者資訊
+        個人資訊
       </v-card-title>
 
       <v-divider />
@@ -21,8 +21,12 @@
 
             <div class="field-content">
               <v-text-field v-model="form.account" disabled hide-details />
-
-              <v-btn variant="outlined" class="ml-2" @click="changePassword">
+              <v-btn
+                v-if="configStore.settings.allow_change_password === 'true'"
+                variant="text"
+                color="primary"
+                @click="showChangePasswordDialog = true"
+              >
                 更改密碼
               </v-btn>
             </div>
@@ -123,7 +127,7 @@
           </div>
 
           <!-- 暱稱 -->
-          <div class="field-row">
+          <div class="field-row" style="display: none;">
             <div class="field-label">暱稱</div>
 
             <div class="field-content">
@@ -241,18 +245,24 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+  <ChangePasswordDialog v-model="showChangePasswordDialog" />
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from "vue";
+import { ref, reactive, computed, watch , onMounted } from "vue";
 import httpClient from "@/services/httpClient";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
+import { useConfigStore } from "@/stores/config"
+import ChangePasswordDialog from '@/components/user/ChangePasswordDialog.vue'
 
 const router = useRouter();
 const pointsNavigating = ref(false);
 const pointsNavigationError = ref("");
+const showChangePasswordDialog = ref(false)
+const configStore = useConfigStore();
+
 
 const transactionsRouteReady = computed(() =>
   router.hasRoute("CoinTransactions"),
@@ -517,6 +527,8 @@ const emailRules = [
 */
 
 async function openDialog() {
+  
+console.log(configStore.settings)
   pointsNavigationError.value = "";
   void loadPoints();
   try {

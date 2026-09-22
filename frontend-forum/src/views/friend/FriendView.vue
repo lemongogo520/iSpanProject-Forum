@@ -1,83 +1,53 @@
 <template>
-    <div class="friend-view">
-        <FriendRequestList></FriendRequestList>
-        <div class="empty-text" v-if="friendList.length==0">還沒有好友哦~</div>
-        <div class="friend-page" v-else>
-            <div class="friend-sidebar">
-                <FriendList @select-friend=selectFriend></FriendList>
-            </div>
-            <div class="friend-detail">
-                <ChatRoom v-if="selectedFriend && currentConversation" 
-                :friend=selectedFriend />
-                <div v-else class="empty-text">請選擇一位好友</div>
-            </div>
-        </div>
+    <div class="friends-page">
+        <v-card class="friends-card auth-card" rounded="lg" elevation="6">
+            <FriendList />
+        </v-card>
+        <v-card class="friends-card auth-card" rounded="lg" elevation="6">
+            <v-card-title class="text-center font-weight-bold pt-4 auth-title">好友資訊</v-card-title>
+            <FriendDetail />
+        </v-card>
     </div>
 </template>
 <script setup>
-import ChatRoom from '@/components/chat/ChatRoom.vue';
-import FriendList from '@/components/friend/FriendList.vue';
-import FriendRequestList from '@/components/friend/FriendRequestList.vue';
-import { useChatStore } from '@/stores/chat';
+import { onMounted } from 'vue';
 import { useFriendStore } from '@/stores/friend';
-import { onMounted, ref } from 'vue';
-import { storeToRefs } from 'pinia';
+import FriendList from '@/components/friend/FriendList.vue';
+import FriendDetail from '@/components/friend/FriendDetail.vue';
 
 const friendStore = useFriendStore();
-const chatStore = useChatStore();
 
-const {friendList} = storeToRefs(friendStore);
-
-const {getConversation, getMessages} = chatStore;
-const {currentConversation} = storeToRefs(chatStore);
-
-const selectedFriend = ref(null);
-
-const selectFriend = (friend) => {
-    selectedFriend.value = friend;
-    currentConversation.value = null;
-    getConversation(friend.userId);
-}
 onMounted(() => {
     friendStore.refreshFriendData();
 })
 
 </script>
 <style src="@/assets/css/common.css"></style>
-<style>
-.title {
-    padding-left: 40px;
-    color: var(--color-title);
-    font-weight: 900;
-}
-
-.empty-text {
+<style scoped>
+.friends-page {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 24px;
     padding: 24px;
-    text-align: center;
-    color: var(--color-text);
-    font-size: 14px;
+    background: var(--color-background);
+    height: calc(100vh - var(--v-layout-top, 64px) - var(--v-layout-bottom, 0px));
+    height: calc(100dvh - var(--v-layout-top, 64px) - var(--v-layout-bottom, 0px));
 }
 
-.friend-view{
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+.friends-card {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.friend-page {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-}
-
-.friend-sidebar {
-    width: 30%;
-
-}
-
-.friend-detail {
-    width: 70%;
-    min-height: 0;
-    min-width: 0;
+@media (max-width: 959px) {
+  .friends-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-rows: minmax(420px, auto);
+    height: auto;
+  }
 }
 </style>

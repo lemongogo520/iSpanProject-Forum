@@ -13,19 +13,17 @@ import lombok.Setter;
 public class RegisterDTO {
 
     @NotBlank(message = "請輸入帳號")
-    @Size(min = 6, max = 20, message = "帳號長度必須介於6~20個字元,並且包含英文或數字")
     @Pattern(
-            regexp = "^(?=.*[A-Za-z])(?=.*\\d).{6,20}$",
-            message = "帳號只能使用英文、數字、底線，並且包含英文或數字"
-    )
+    	    regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z0-9_]+$",
+    	    message = "帳號只能使用英文、數字、底線，並且包含英文和數字"
+    	)
     private String account;
 
     @NotBlank(message = "請輸入密碼")
-    @Size(min = 6, message = "密碼長度必須介於6~20個字元")
     @Pattern(
-            regexp = "^(?=.*[A-Za-z])(?=.*\\d).{6,20}$",
-            message = "密碼只能使用英文、數字、底線，並且包含英文或數字"
-    )
+    	    regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z0-9_]+$",
+    	    message = "密碼只能使用英文、數字、底線，並且包含英文和數字"
+    	)
     private String password;
 
     @NotBlank(message = "請再次輸入密碼")

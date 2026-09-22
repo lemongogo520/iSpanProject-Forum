@@ -1,19 +1,27 @@
 <template>
-  <p class="title">近期對話</p>
-  <div class="chat-list">
-    <div v-if="chatList.length === 0" class="empty-text">
-      點擊一名好友開始聊天吧
-      <template>
-        <FriendItem
-          v-for="friend in friendList"
-          :key="friend.userId"
-          :friend="friend"
-          @click="$emit('select-friend', friend)"
-        />
+  <v-list density="comfortable" nav>
+    <v-skeleton-loader v-if="chatStore.loading" type="list-item-avatar" />
+
+    <v-list-item v-for="c in chatStore.conversationList" :key="c.id" :to="`/chat/${c.id}`"
+      :active="c.id === chatStore.currentConversationId" lines="two">
+      <template #prepend>
+        <v-avatar color="grey-lighten-2">
+          {{ (c.title ?? "?").charAt(0) }}
+        </v-avatar>
       </template>
-    </div>
-    <div v-else></div>
-  </div>
+
+      <v-list-item-title>{{ c.title ?? "對話" }}</v-list-item-title>
+      <v-list-item-subtitle>{{ c.lastMessage ?? "尚無訊息" }}</v-list-item-subtitle>
+
+      <template #append>
+        <v-badge v-if="c.unreadCount > 0" :content="c.unreadCount > 99 ? '99+' : c.unreadCount" color="error" inline />
+      </template>
+    </v-list-item>
+  </v-list>
 </template>
-<script setup></script>
+<script setup>
+import { useChatStore } from '@/stores/conversation';
+
+const chatStore = useChatStore();
+</script>
 <style></style>

@@ -2,9 +2,8 @@ package forum.board.friends.dto;
 
 import java.util.UUID;
 
-/**
- * SendFriendRequestDTO
- */
+import jakarta.validation.constraints.NotNull;
+
 public record SendFriendDTO(
-    UUID targetUserId
+    @NotNull UUID targetUserId
 ) {}

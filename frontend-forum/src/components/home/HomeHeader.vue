@@ -72,7 +72,7 @@
           紙娃娃系統
         </v-btn>
 
-        <v-btn variant="text" @click="goTo('/daily-task')">
+        <v-btn v-if="!isAdmin" variant="text" @click="goTo('/daily-task')">
           <v-icon start>mdi-calendar-check</v-icon>
           每日任務
         </v-btn>
@@ -110,7 +110,7 @@
               <v-icon>mdi-account-circle</v-icon>
             </template>
 
-            <v-list-item-title>使用者資訊</v-list-item-title>
+            <v-list-item-title>個人資訊</v-list-item-title>
           </v-list-item>
 
           <v-list-item @click="goTo('/friends')">
@@ -147,12 +147,14 @@ import httpClient from "@/services/httpClient";
 import UserDetailView from "@/views/user/UserDetailView.vue";
 import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
+import { useAuthStore } from "@/stores/auth";
 
 const forumCategories = ref([]);
 
 const router = useRouter();
 const userDetailDialog = ref(false);
 const userStore = useUserStore();
+const authStore = useAuthStore();
 const isNavbarCompact = ref(false);
 let lastScrollY = 0;
 
@@ -185,8 +187,6 @@ onBeforeUnmount(() => {
 async function checkUserDetail() {
   try {
     const user = await userService.getUserDetail(userStore.account);
-
-    console.log("目前使用者資料：", user);
 
     // 沒有名稱
     if (!user.name || user.name.trim() === "") {
@@ -246,6 +246,7 @@ const logout = () => {
       console.log("登出成功:", response.data);
       userStore.clearUser();
       router.push("/login");
+      authStore.isLogin = false;
     })
     .catch((error) => {
       console.error("登出失敗:", error);

@@ -72,6 +72,8 @@ const routes = [
     component: () => import("@/views/friend/FriendView.vue"),
   },
 
+
+
   //管理者設定
   {
     path: "/config/setting",

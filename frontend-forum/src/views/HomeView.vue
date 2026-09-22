@@ -350,60 +350,6 @@ const chatMessages = [
         <span>關於我們 ｜ 使用條款 ｜ 隱私權政策 ｜ 聯絡我們</span>
       </v-container>
     </v-footer>
-
-    <v-dialog v-model="chatOpen" max-width="420">
-      <v-card rounded="xl">
-        <v-card-title class="d-flex align-center">
-          <v-icon icon="mdi-chat-outline" class="mr-2" />
-          好友聊天
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" @click="chatOpen = false" />
-        </v-card-title>
-
-        <v-divider />
-
-        <v-list lines="two">
-          <v-list-item
-            v-for="chat in chatMessages"
-            :key="chat.name"
-            :title="chat.name"
-            :subtitle="chat.message"
-          >
-            <template #prepend>
-              <v-avatar color="blue-grey-lighten-4">{{ chat.avatar }}</v-avatar>
-            </template>
-
-            <template #append>
-              <span class="text-caption text-medium-emphasis">{{
-                chat.time
-              }}</span>
-            </template>
-          </v-list-item>
-        </v-list>
-
-        <v-divider />
-
-        <v-card-text>
-          <v-text-field
-            label="輸入訊息"
-            variant="outlined"
-            density="comfortable"
-            hide-details
-            append-inner-icon="mdi-send"
-          />
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-
-    <v-badge class="chat-floating" color="error" content="2">
-      <v-btn
-        color="primary"
-        icon="mdi-chat"
-        size="x-large"
-        elevation="8"
-        @click="chatOpen = true"
-      />
-    </v-badge>
   </div>
 </template>
 
@@ -509,12 +455,6 @@ const chatMessages = [
   font-size: 13px;
 }
 
-.chat-floating {
-  position: fixed;
-  right: 30px;
-  bottom: 35px;
-  z-index: 50;
-}
 
 @media (max-width: 959px) {
   .home-content {
@@ -545,10 +485,6 @@ const chatMessages = [
     margin-right: 12px;
   }
 
-  .chat-floating {
-    right: 20px;
-    bottom: 24px;
-  }
 
   .footer .v-container {
     flex-direction: column;

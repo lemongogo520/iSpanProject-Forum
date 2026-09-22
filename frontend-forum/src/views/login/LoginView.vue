@@ -12,8 +12,7 @@
               <v-icon size="50">mdi-cpu</v-icon>
             </v-avatar>
 
-            <h1>XX論壇</h1>
-            <p class="auth-subtitle">論壇登入頁面</p>
+            <h1>{{ configStore.settings.web_site_name }}</h1>
 
             <div class="feature-list">
               <div class="feature-item">
@@ -24,11 +23,6 @@
               <div class="feature-item">
                 <v-icon>mdi-database-check</v-icon>
                 <span>最棒使用者體驗</span>
-              </div>
-
-              <div class="feature-item">
-                <v-icon>mdi-code-square</v-icon>
-                <span>無限制上傳內容</span>
               </div>
             </div>
           </div>
@@ -44,7 +38,7 @@
             <v-card-subtitle class="auth-subtitle login-subtitle"
               >請登入您的帳號</v-card-subtitle
             >
-
+            <br>
             <v-alert
               v-if="loginError"
               type="error"
@@ -58,6 +52,7 @@
               <v-text-field
                 v-model="account"
                 label="帳號"
+                active
                 placeholder="請輸入帳號"
                 prepend-inner-icon="mdi-account"
                 variant="outlined"
@@ -69,6 +64,7 @@
               <v-text-field
                 v-model="password"
                 label="密碼"
+                active
                 placeholder="請輸入密碼"
                 prepend-inner-icon="mdi-lock"
                 :type="showPassword ? 'text' : 'password'"
@@ -124,15 +120,18 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import httpClient from "@/services/httpClient";
 import { useAuthStore } from "@/stores/auth";
 import { useUserStore } from "@/stores/user";
+import { useConfigStore } from '@/stores/config'
+
 
 const authStore = useAuthStore();
 const router = useRouter();
 const userStore = useUserStore();
+const configStore = useConfigStore()
 
 // ========================
 // 表單資料

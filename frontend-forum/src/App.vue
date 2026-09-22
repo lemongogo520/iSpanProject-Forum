@@ -1,9 +1,11 @@
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import HomeHeader from "@/components/home/HomeHeader.vue";
 import { useNotification } from "@/composables/useNotification";
 import { useAuthStore } from "@/stores/auth";
+import { useConfigStore } from '@/stores/config'
+
 
 const route = useRoute();
 const { snackbar } = useNotification();
@@ -14,6 +16,13 @@ const showHeader = computed(() => {
   return !hideHeaderPaths.includes(route.path) 
   && !route.path.startsWith("/config"); 
   });
+  
+const configStore = useConfigStore()
+
+onMounted(() => {
+  configStore.loadSettings()
+})
+
 </script>
 
 <template>

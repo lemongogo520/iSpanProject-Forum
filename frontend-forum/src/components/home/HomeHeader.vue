@@ -72,7 +72,7 @@
           紙娃娃系統
         </v-btn>
 
-        <v-btn variant="text" @click="goTo('/daily-task')">
+        <v-btn v-if="!isAdmin" variant="text" @click="goTo('/daily-task')">
           <v-icon start>mdi-calendar-check</v-icon>
           每日任務
         </v-btn>
@@ -110,7 +110,7 @@
               <v-icon>mdi-account-circle</v-icon>
             </template>
 
-            <v-list-item-title>使用者資訊</v-list-item-title>
+            <v-list-item-title>個人資訊</v-list-item-title>
           </v-list-item>
 
           <v-list-item @click="goTo('/friends')">
@@ -185,8 +185,6 @@ onBeforeUnmount(() => {
 async function checkUserDetail() {
   try {
     const user = await userService.getUserDetail(userStore.account);
-
-    console.log("目前使用者資料：", user);
 
     // 沒有名稱
     if (!user.name || user.name.trim() === "") {

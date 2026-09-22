@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import forum.board.common.util.IpUtil;
+import forum.board.config.Settings;
 import forum.board.exception.AccountExistsException;
 import forum.board.response.ErrorResponse;
 import forum.board.response.SuccessResponse;
@@ -20,13 +21,40 @@ import forum.board.users.UsersService;
 public class RegisterController {
 
     private final UsersService usersService;
+    
+    private final Settings settings;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(
             @Valid @RequestBody RegisterDTO dto,
             HttpServletRequest request) {
 
+
+        int accountMinLength = Integer.parseInt(settings.get("account_min_length"));
+        int accountMaxLength = Integer.parseInt(settings.get("account_max_length"));
+        int passwordMinLength = Integer.parseInt(settings.get("password_min_length"));
     	
+        //驗證帳號長度
+        if (dto.getAccount().length() < accountMinLength ||
+                dto.getAccount().length() > accountMaxLength) {
+
+        	String message = String.format("帳號長度必須介於%s~%s個字元之間"
+        			, accountMinLength, accountMaxLength);
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ErrorResponse(message));
+        }
+
+        //驗證密碼長度
+        if (dto.getPassword().length() < passwordMinLength ||
+                dto.getConfirmPassword().length() < passwordMinLength) {
+
+        	String message = String.format("密碼長度必須大於%s個字元", passwordMinLength);
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ErrorResponse(message));
+        }
+        
     	System.out.printf("0");
         // 密碼一致驗證
         if (!dto.getPassword().equals(dto.getConfirmPassword())) {

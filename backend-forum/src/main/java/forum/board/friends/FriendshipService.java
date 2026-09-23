@@ -138,7 +138,7 @@ public class FriendshipService {
 				friend = friendship.getUser1();
 			}
 
-			return new FriendResponseDTO(friend.getId(), friend.getAccount(), friend.getUsersDetail().getName(),friend.getUsersDetail().getPhoto());
+			return new FriendResponseDTO(friend.getId(), friend.getAccount(), friend.getUsersDetail().getName());
 		}).toList();
 	}
 	
@@ -156,8 +156,7 @@ public class FriendshipService {
 			FriendResponseDTO friendDTO = new FriendResponseDTO(
 				friend.getId(),
 				friend.getAccount(), 
-				friend.getUsersDetail().getName(),
-				friend.getUsersDetail().getPhoto());
+				friend.getUsersDetail().getName());
 			return new FriendshipResponseDTO(friendship.getId(),friendship.getStatus(),friendDTO);
 		}).toList();
  
@@ -172,8 +171,7 @@ public class FriendshipService {
 			FriendResponseDTO friendDTO = new FriendResponseDTO(
 				friend.getId(),
 				friend.getAccount(), 
-				friend.getUsersDetail().getName(),
-				friend.getUsersDetail().getPhoto());
+				friend.getUsersDetail().getName());
 			return new FriendshipResponseDTO(friendship.getId(),friendship.getStatus(),friendDTO);
 		}).toList();
 	}

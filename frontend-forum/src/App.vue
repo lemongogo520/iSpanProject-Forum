@@ -1,23 +1,50 @@
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
-import HomeHeader from "@/components/home/HomeHeader.vue";
 import { useNotification } from "@/composables/useNotification";
 import { useAuthStore } from "@/stores/auth";
+import { useChatStore } from "./stores/conversation";
+import { useFriendStore } from "./stores/friend";
+import HomeHeader from "@/components/home/HomeHeader.vue";
+import FriendSidebar from "@/views/friend/FriendSidebar.vue";
+import ChatDock from "@/views/chat/ChatDock.vue";
+import { useMessageStore } from "./stores/message";
 
 const route = useRoute();
-const { snackbar } = useNotification();
 const authStore = useAuthStore();
+const chatStore = useChatStore();
+const friendStore = useFriendStore();
+const messageStore = useMessageStore();
+const { snackbar } = useNotification();
 
 const hideHeaderPaths = ["/login", "/register"];
-const showHeader = computed(() => { 
-  return !hideHeaderPaths.includes(route.path) 
-  && !route.path.startsWith("/config"); 
-  });
+const showHeader = computed(() => {
+  return (
+    !hideHeaderPaths.includes(route.path) && !route.path.startsWith("/config")
+  );
+});
+
+watch(
+  () => authStore.isLogin,
+  async (loggedIn) => {
+    if (loggedIn) {
+      friendStore.getFriendList();
+      await chatStore.getConversations();
+      chatStore.restoreWindow();
+    } else {
+      console.log("reset");
+      friendStore.reset();
+      chatStore.reset();
+      messageStore.reset();
+    }
+  },
+  { immediate: true }
+);
+
 </script>
 
 <template>
-  <v-app>
+  <v-app class="app-layout">
     <HomeHeader v-if="showHeader && authStore.checked && authStore.isLogin" />
 
     <v-main>
@@ -31,5 +58,11 @@ const showHeader = computed(() => {
         <v-btn variant="text" @click="snackbar.show = false">關閉</v-btn>
       </template>
     </v-snackbar>
+
+    <!-- 好友側邊欄 -->
+    <FriendSidebar v-if="showHeader && authStore.checked && authStore.isLogin"/>
+    <ChatDock v-if="showHeader && authStore.checked && authStore.isLogin"/>
   </v-app>
 </template>
+
+<style></style>

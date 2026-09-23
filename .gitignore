@@ -26,3 +26,7 @@ Thumbs.db
 # Uploaded images
 /uploads/img/*
 !/uploads/img/.gitkeep
+/spritesheets
+
+# Uploaded files
+/backend-forum/uploads/

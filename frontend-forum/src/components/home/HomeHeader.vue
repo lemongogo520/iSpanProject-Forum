@@ -1,161 +1,33 @@
-<template>
-  <v-app-bar
-    elevation="2"
-    color="white"
-    :height="isNavbarCompact ? 48 : 64"
-    :class="{ 'navbar-compact': isNavbarCompact }"
-  >
-    <v-container fluid class="navbar-container">
-      <div class="navbar-left">
-        <div class="logo" @click="goTo('/')">XX論壇</div>
-
-        <v-menu open-on-hover :open-delay="100" :close-delay="200">
-          <template #activator="{ props }">
-            <v-btn v-bind="props" variant="text" @click="goTo('/categories')">
-              <v-icon start>mdi-forum</v-icon>
-              討論版
-              <v-icon end>mdi-chevron-down</v-icon>
-            </v-btn>
-          </template>
-
-          <div
-            v-for="(category, index) in forumCategories"
-            :key="category.id"
-            class="forum-category"
-            :class="`category-color-${index % 4}`"
-          >
-            <div class="forum-category-title">
-              <div class="category-icon">
-                <v-icon size="18">mdi-shape-outline</v-icon>
-              </div>
-
-              <span>{{ category.name }}</span>
-
-              <span class="board-count">
-                {{ category.boards?.length ?? 0 }}
-              </span>
-            </div>
-
-            <div v-if="category.boards?.length" class="forum-board-list">
-              <button
-                v-for="board in category.boards"
-                :key="board.id"
-                type="button"
-                class="forum-board-item"
-                @click="goTo(`/boards/${board.id}`)"
-              >
-                <div class="board-icon">
-                  <v-icon size="18">mdi-chat-outline</v-icon>
-                </div>
-
-                <span>{{ board.name }}</span>
-
-                <v-icon class="forum-board-arrow" size="18">
-                  mdi-arrow-right
-                </v-icon>
-              </button>
-            </div>
-
-            <div v-else class="forum-empty">目前沒有討論版</div>
-          </div>
-        </v-menu>
-        <v-btn
-          v-if="canManageForum"
-          variant="text"
-          @click="goTo('/admin/categories')"
-        >
-          <v-icon start>mdi-shield-account</v-icon>
-          論壇管理
-        </v-btn>
-        <v-btn variant="text" @click="goTo('/paper-doll')">
-          <v-icon start>mdi-account-star</v-icon>
-          紙娃娃系統
-        </v-btn>
-
-        <v-btn variant="text" @click="goTo('/daily-task')">
-          <v-icon start>mdi-calendar-check</v-icon>
-          每日任務
-        </v-btn>
-
-        <v-btn v-if="isAdmin" variant="text" @click="goTo('/config/setting')">
-          <v-icon start>mdi-shield-crown</v-icon>
-          後台管理
-        </v-btn>
-      </div>
-
-      <v-spacer />
-
-      <v-menu>
-        <template #activator="{ props }">
-          <v-btn v-bind="props" variant="text" class="user-menu-btn">
-            <v-avatar
-              :size="isNavbarCompact ? 30 : 38"
-              class="mr-2 navbar-avatar"
-            >
-              <v-img v-if="user.avatar" :src="user.avatar" alt="使用者頭像" />
-              <v-icon v-else size="26"> mdi-account </v-icon>
-            </v-avatar>
-
-            <span class="username">
-              {{ user.name || user.account }}
-            </span>
-
-            <v-icon class="ml-1"> mdi-chevron-down </v-icon>
-          </v-btn>
-        </template>
-
-        <v-list min-width="180">
-          <v-list-item @click="openUserDetail">
-            <template #prepend>
-              <v-icon>mdi-account-circle</v-icon>
-            </template>
-
-            <v-list-item-title>使用者資訊</v-list-item-title>
-          </v-list-item>
-
-          <v-list-item @click="goTo('/friends')">
-            <template #prepend>
-              <v-icon>mdi-account-multiple</v-icon>
-            </template>
-            <v-list-item-title>好友</v-list-item-title>
-          </v-list-item>
-
-          <v-divider />
-
-          <v-list-item @click="logout">
-            <template #prepend>
-              <v-icon>mdi-logout</v-icon>
-            </template>
-            <v-list-item-title>登出</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-
-      <UserDetailView
-        v-model="userDetailDialog"
-        :account="userStore.account"
-        @saved="reloadPage"
-      />
-    </v-container>
-  </v-app-bar>
-</template>
-
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import httpClient from "@/services/httpClient";
 import UserDetailView from "@/views/user/UserDetailView.vue";
 import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
-
-const forumCategories = ref([]);
+import { useAuthStore } from "@/stores/auth";
+import { useDisplay } from "vuetify";
 
 const router = useRouter();
+const route = useRoute();
+const { mdAndUp } = useDisplay();
+
+const forumCategories = ref([]);
 const userDetailDialog = ref(false);
 const userStore = useUserStore();
+const authStore = useAuthStore();
+
 const isNavbarCompact = ref(false);
 let lastScrollY = 0;
 
+const drawer = ref(false);
+const memberMenu = ref(false);
+const noticeOpen = ref(false);
+const noticeText = ref("");
+
+// ==============================
+// Scroll 邏輯
+// ==============================
 const handleWindowScroll = () => {
   const currentScrollY = window.scrollY;
 
@@ -170,25 +42,13 @@ const handleWindowScroll = () => {
   lastScrollY = currentScrollY;
 };
 
-//初始化確認使用者是否有填寫第一次資料
-//config頁面不載入
-onMounted(async () => {
-  lastScrollY = window.scrollY;
-  window.addEventListener("scroll", handleWindowScroll, { passive: true });
-  await Promise.all([checkUserDetail(), fetchForumMenu()]);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("scroll", handleWindowScroll);
-});
-
+// ==============================
+// 第一次資料檢查
+// ==============================
 async function checkUserDetail() {
   try {
     const user = await userService.getUserDetail(userStore.account);
 
-    console.log("目前使用者資料：", user);
-
-    // 沒有名稱
     if (!user.name || user.name.trim() === "") {
       userDetailDialog.value = true;
     }
@@ -197,6 +57,9 @@ async function checkUserDetail() {
   }
 }
 
+// ==============================
+// 論壇選單 API
+// ==============================
 const fetchForumMenu = () => {
   return httpClient({
     method: "get",
@@ -213,8 +76,8 @@ const fetchForumMenu = () => {
           }).then((boardResponse) => ({
             ...category,
             boards: boardResponse.data ?? [],
-          })),
-        ),
+          }))
+        )
       );
     })
     .then((categories) => {
@@ -226,17 +89,29 @@ const fetchForumMenu = () => {
     });
 };
 
-//塞畫面資料
+// ==============================
+// 使用者畫面資料
+// ==============================
 const user = computed(() => ({
   name: userStore.name,
   account: userStore.account,
   role: userStore.permission,
 }));
-// 系統管理員或討論版管理員
+
+// ==============================
+// 權限判斷
+// ==============================
 const canManageForum = computed(() => {
   return [1, 2].includes(Number(userStore.permission));
 });
-//登出
+
+const isAdmin = computed(() => {
+  return userStore.permission === 1;
+});
+
+// ==============================
+// 登出
+// ==============================
 const logout = () => {
   httpClient({
     method: "post",
@@ -244,264 +119,628 @@ const logout = () => {
   })
     .then((response) => {
       console.log("登出成功:", response.data);
+
       userStore.clearUser();
       router.push("/login");
+      authStore.isLogin = false;
     })
     .catch((error) => {
       console.error("登出失敗:", error);
     });
 };
 
-//開啟明細設定
+// ==============================
+// 會員明細
+// ==============================
 function openUserDetail() {
   userDetailDialog.value = true;
 }
 
-//設定管理者才有的顯示
-const isAdmin = computed(() => {
-  return userStore.permission === 1;
-});
-
-//前往路由
+// ==============================
+// 路由設定
+// ==============================
 function goTo(path) {
   router.push(path);
 }
 
-//重新整理介面
+// ==============================
+// 重新整理
+// ==============================
 function reloadPage() {
   window.location.reload();
 }
+
+// ==============================
+// 第一篇版面需要的 UI 行為
+// 這些不會改變第二篇的資料邏輯
+// ==============================
+function closeMenus() {
+  memberMenu.value = false;
+  drawer.value = false;
+}
+
+function openProfile() {
+  closeMenus();
+  openUserDetail();
+}
+
+const isActive = (path) => {
+  return route.path === path || route.path.startsWith(`${path}/`);
+};
+
+onMounted(async () => {
+  lastScrollY = window.scrollY;
+
+  window.addEventListener("scroll", handleWindowScroll, {
+    passive: true,
+  });
+
+  await Promise.all([
+    checkUserDetail(),
+    fetchForumMenu(),
+  ]);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", handleWindowScroll);
+});
 </script>
 
+<template>
+  <v-app-bar
+    color="#0f1f35"
+    :height="isNavbarCompact ? 60 : 72"
+    elevation="2"
+    :class="{ 'navbar-compact': isNavbarCompact }"
+  >
+    <div class="header-container">
+      <!-- 手機版選單 -->
+      <v-app-bar-nav-icon
+        v-if="!mdAndUp"
+        color="white"
+        aria-label="開啟導覽選單"
+        @click="drawer = !drawer; memberMenu = false"
+      />
+
+      <!-- Logo -->
+      <span
+        class="brand"
+        @click="goTo('/home')"
+      >
+        xx論壇
+      </span>
+
+      <!-- 桌面版主導覽 -->
+      <nav
+        v-if="mdAndUp"
+        class="main-nav"
+        aria-label="主要導覽"
+      >
+        <v-btn
+          v-for="item in [
+            { title: '首頁', icon: 'mdi-home-outline', to: '/home' },
+            { title: '討論區', icon: 'mdi-forum-outline', to: '/categories' },
+            { title: '點數', icon: 'mdi-star-circle-outline', to: '/member/transactions' },
+            { title: '我的角色', icon: 'mdi-account-circle-outline', to: '/doll/user' },
+            { title: '商城', icon: 'mdi-storefront-outline', to: '/shop' },
+            { title: '任務活動', icon: 'mdi-clipboard-check-outline', to: '/member/tasks' },
+          ]"
+          :key="item.to"
+          :to="item.to"
+          :class="{ 'nav-button--active': isActive(item.to) }"
+          class="nav-button"
+          color="#c8d1de"
+          variant="text"
+          rounded="0"
+        >
+          <v-icon
+            :icon="item.icon"
+            size="18"
+            class="mr-1"
+          />
+          {{ item.title }}
+        </v-btn>
+
+        <!-- 論壇管理權限 -->
+        <v-btn
+          v-if="canManageForum"
+          class="nav-button"
+          color="#c8d1de"
+          variant="text"
+          rounded="0"
+          @click="goTo('/admin/categories')"
+        >
+          <v-icon
+            icon="mdi-shield-account"
+            size="18"
+            class="mr-1"
+          />
+          論壇管理
+        </v-btn>
+
+        <!-- 後台管理權限 -->
+        <v-btn
+          v-if="isAdmin"
+          class="nav-button"
+          color="#c8d1de"
+          variant="text"
+          rounded="0"
+          @click="goTo('/config/setting')"
+        >
+          <v-icon
+            icon="mdi-shield-crown"
+            size="18"
+            class="mr-1"
+          />
+          後台管理
+        </v-btn>
+      </nav>
+
+      <v-spacer />
+
+      <!-- 會員選單 -->
+      <v-menu
+        v-model="memberMenu"
+        location="bottom end"
+        :close-on-content-click="false"
+        :offset="10"
+        max-width="340"
+      >
+        <template #activator="{ props: menuProps }">
+          <v-btn
+            v-bind="menuProps"
+            class="user-button"
+            variant="text"
+            color="white"
+            aria-label="開啟會員選單"
+            @click="drawer = false"
+          >
+            <v-avatar
+              color="#3266a9"
+              size="36"
+            >
+              <v-icon
+                icon="mdi-account"
+                size="23"
+                color="white"
+              />
+            </v-avatar>
+
+            <span class="user-summary">
+              <span class="user-name">
+                {{ user.name || user.account }}
+              </span>
+
+              <span class="user-points">
+                <v-icon
+                  icon="mdi-star-circle"
+                  color="amber"
+                  size="14"
+                />
+                —
+                點
+              </span>
+            </span>
+
+            <v-icon
+              :icon="
+                memberMenu
+                  ? 'mdi-chevron-up'
+                  : 'mdi-chevron-down'
+              "
+              size="18"
+              class="menu-chevron"
+            />
+          </v-btn>
+        </template>
+
+        <!-- 會員卡片版面 -->
+        <v-card
+          class="profile-menu"
+          rounded="xl"
+          elevation="8"
+        >
+          <div class="profile-heading">
+            <v-avatar
+              color="#e8eff9"
+              size="48"
+            >
+              <v-icon
+                icon="mdi-account"
+                size="28"
+                color="#3266a9"
+              />
+            </v-avatar>
+
+            <div class="profile-identity">
+              <div class="profile-name">
+                {{ user.name || user.account }}
+              </div>
+
+              <div class="profile-caption">
+                歡迎回來，開啟你的社群日常
+              </div>
+            </div>
+          </div>
+
+          <div class="point-summary">
+            <div>
+              <div class="point-label">
+                <v-icon
+                  icon="mdi-star-circle"
+                  size="18"
+                />
+                目前點數
+              </div>
+
+              <div class="point-value">
+                —
+                <span>點</span>
+              </div>
+            </div>
+          </div>
+
+          <v-list
+            class="member-actions"
+            aria-label="會員功能"
+          >
+            <!-- 使用openUserDetail -->
+            <v-list-item
+              rounded="lg"
+              prepend-icon="mdi-account-outline"
+              title="會員個人資料"
+              @click="openProfile"
+            >
+              <template #append>
+                <v-icon
+                  icon="mdi-chevron-right"
+                  size="18"
+                />
+              </template>
+            </v-list-item>
+
+            <v-list-item
+              to="/friends"
+              rounded="lg"
+              prepend-icon="mdi-account-group-outline"
+              title="好友"
+              @click="closeMenus"
+            >
+              <template #append>
+                <v-icon
+                  icon="mdi-chevron-right"
+                  size="18"
+                />
+              </template>
+            </v-list-item>
+
+            <v-divider class="my-2" />
+
+            <!-- logout -->
+            <v-list-item
+              rounded="lg"
+              prepend-icon="mdi-logout"
+              title="登出"
+              class="logout-item"
+              @click="logout"
+            />
+          </v-list>
+        </v-card>
+      </v-menu>
+    </div>
+  </v-app-bar>
+
+  <!-- 手機版 Drawer -->
+  <v-navigation-drawer
+    v-model="drawer"
+    color="#0f1f35"
+    temporary
+    width="280"
+  >
+    <div class="drawer-title">
+      功能導覽
+    </div>
+
+    <v-divider />
+
+    <v-list nav>
+      <v-list-item
+        to="/home"
+        title="首頁"
+        prepend-icon="mdi-home-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
+
+      <v-list-item
+        to="/categories"
+        title="討論區"
+        prepend-icon="mdi-forum-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
+
+      <v-list-item
+        to="/member/transactions"
+        title="點數"
+        prepend-icon="mdi-star-circle-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
+
+      <v-list-item
+        to="/doll/user"
+        title="我的角色"
+        prepend-icon="mdi-account-circle-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
+
+      <v-list-item
+        to="/shop"
+        title="商城"
+        prepend-icon="mdi-storefront-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
+
+      <v-list-item
+        to="/member/tasks"
+        title="任務活動"
+        prepend-icon="mdi-clipboard-check-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
+
+      <v-divider class="my-2" />
+
+      <v-list-item
+        v-if="canManageForum"
+        title="論壇管理"
+        prepend-icon="mdi-shield-account"
+        rounded="lg"
+        @click="goTo('/admin/categories')"
+      />
+
+      <v-list-item
+        v-if="isAdmin"
+        title="後台管理"
+        prepend-icon="mdi-shield-crown"
+        rounded="lg"
+        @click="goTo('/config/setting')"
+      />
+    </v-list>
+  </v-navigation-drawer>
+
+  <!--UserDetailView -->
+  <UserDetailView
+    v-model="userDetailDialog"
+    :account="userStore.account"
+    @saved="reloadPage"
+  />
+
+  <v-snackbar
+    v-model="noticeOpen"
+    :timeout="3000"
+    location="bottom"
+  >
+    {{ noticeText }}
+
+    <template #actions>
+      <v-btn
+        variant="text"
+        @click="noticeOpen = false"
+      >
+        關閉
+      </v-btn>
+    </template>
+  </v-snackbar>
+</template>
+
 <style scoped>
-.navbar-container {
+.header-container {
   display: flex;
   align-items: center;
+  width: 100%;
+  max-width: 1400px;
   height: 100%;
+  margin: 0 auto;
   padding: 0 24px;
-  transition: padding 0.2s ease;
 }
 
-.navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.logo {
+.brand {
+  flex-shrink: 0;
+  margin-right: 28px;
+  color: white;
   font-size: 22px;
   font-weight: 700;
-  margin-right: 20px;
+  text-decoration: none;
   cursor: pointer;
-  color: #1976d2;
-  white-space: nowrap;
   transition:
     font-size 0.2s ease,
     margin-right 0.2s ease;
 }
 
-.user-menu-btn {
-  text-transform: none;
-  min-width: auto;
-  padding: 4px 8px;
-}
-
-.navbar-avatar,
-.username,
-:deep(.v-toolbar__content),
-:deep(.v-btn) {
-  transition: all 0.2s ease;
-}
-
-.navbar-compact .navbar-container {
-  padding-block: 0;
-}
-
-.navbar-compact .logo {
-  margin-right: 12px;
-  font-size: 18px;
-}
-
-.navbar-compact :deep(.v-btn) {
-  min-height: 36px;
-}
-
-.navbar-compact .username {
-  font-size: 14px;
-}
-
-.username {
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.dialog-title {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.user-info {
+.main-nav {
   display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 10px 0;
+  align-items: stretch;
+  height: 100%;
 }
 
-.user-info-text {
+.nav-button {
+  height: 72px !important;
+  padding: 0 13px !important;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.nav-button--active {
+  color: white !important;
+  background: #ffffff0d;
+  box-shadow: inset 0 -3px #649aea;
+}
+
+.user-button {
+  height: 58px !important;
+  padding: 0 8px !important;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.user-summary {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  align-items: flex-start;
+  margin: 0 10px;
+  line-height: 1.5;
 }
 
 .user-name {
-  font-size: 20px;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: white;
+  font-size: 14px;
   font-weight: 600;
 }
 
-.user-account {
-  font-size: 14px;
-  color: #777;
-}
-.forum-dropdown {
-  width: 340px;
-  overflow: hidden;
-  border: 1px solid #e8eaf0;
-  border-radius: 16px !important;
-  background: #ffffff;
-}
-
-.forum-dropdown-content {
-  max-height: 460px;
-  padding: 12px;
-  overflow-y: auto;
-  background: #f8f9fc;
-}
-
-.forum-category {
-  --category-color: #5c7cfa;
-  --category-light: #edf2ff;
-
-  margin-bottom: 12px;
-  padding: 10px;
-  border: 1px solid color-mix(in srgb, var(--category-color) 20%, white);
-  border-radius: 13px;
-  background: #ffffff;
-  box-shadow: 0 3px 10px rgb(31 41 55 / 5%);
-}
-
-.category-color-0 {
-  --category-color: #5c7cfa;
-  --category-light: #edf2ff;
-}
-
-.category-color-1 {
-  --category-color: #f06595;
-  --category-light: #fff0f6;
-}
-
-.category-color-2 {
-  --category-color: #20c997;
-  --category-light: #e6fcf5;
-}
-
-.category-color-3 {
-  --category-color: #ff922b;
-  --category-light: #fff4e6;
-}
-
-.forum-category-title {
+.user-points {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 3px 4px 9px;
-  color: #343a40;
-  font-size: 14px;
+  gap: 4px;
+  color: #edcf85;
+  font-size: 12px;
+}
+
+.profile-menu {
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  color: #243954;
+}
+
+.profile-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 20px 18px;
+}
+
+.profile-identity {
+  min-width: 0;
+}
+
+.profile-name {
+  overflow-wrap: anywhere;
+  font-size: 17px;
   font-weight: 700;
 }
 
-.category-icon {
-  display: flex;
-  width: 30px;
-  height: 30px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  color: var(--category-color);
-  background: var(--category-light);
+.profile-caption {
+  margin-top: 4px;
+  color: #78879a;
+  font-size: 11px;
 }
 
-.board-count {
-  min-width: 25px;
-  margin-left: auto;
-  padding: 2px 8px;
-  border-radius: 999px;
-  color: var(--category-color);
-  background: var(--category-light);
+.point-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 16px 12px;
+  padding: 16px;
+  border: 1px solid #ead9ae;
+  border-radius: 14px;
+  background: #faf3e2;
+}
+
+.point-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #8a621a;
   font-size: 12px;
-  text-align: center;
 }
 
-.forum-board-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.point-value {
+  margin-top: 5px;
+  color: #755014;
+  font-size: 27px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
-.forum-board-item {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 10px;
-  padding: 9px;
-  border: 0;
-  border-radius: 10px;
-  color: #495057;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 14px;
-  text-align: left;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    transform 0.2s ease;
+.point-value span {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 400;
 }
 
-.forum-board-item:hover {
-  color: var(--category-color);
-  background: var(--category-light);
-  transform: translateX(4px);
+.member-actions {
+  padding: 0 10px 12px;
 }
 
-.board-icon {
-  display: flex;
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: var(--category-color);
-  background: var(--category-light);
+.logout-item {
+  color: #b34d4d;
 }
 
-.forum-board-arrow {
-  margin-left: auto;
-  opacity: 0;
-  transform: translateX(-5px);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+.drawer-title {
+  padding: 24px;
+  color: white;
+  font-weight: 700;
 }
 
-.forum-board-item:hover .forum-board-arrow {
-  opacity: 1;
-  transform: translateX(0);
+/* 保留第二篇原本的縮小 Navbar 行為 */
+/* .navbar-compact .brand {
+  margin-right: 14px;
+  font-size: 18px;
+} */
+
+.navbar-compact .nav-button {
+  min-height: 36px;
 }
 
-.forum-empty {
-  padding: 8px 40px;
-  color: #adb5bd;
-  font-size: 13px;
+@media (max-width: 1100px) {
+  .nav-button {
+    padding: 0 7px !important;
+    font-size: 13px;
+  }
+
+  .brand {
+    margin-right: 14px;
+  }
+}
+
+@media (max-width: 599px) {
+  .header-container {
+    padding: 0 8px;
+  }
+
+  .brand {
+    margin-right: 4px;
+    font-size: 17px;
+  }
+
+  .user-summary {
+    margin: 0 6px;
+  }
+
+  .user-name {
+    max-width: 65px;
+    font-size: 12px;
+  }
+
+  .user-points {
+    font-size: 11px;
+  }
+
+  .user-button {
+    padding: 0 4px !important;
+  }
+
+  .menu-chevron {
+    display: none;
+  }
 }
 </style>

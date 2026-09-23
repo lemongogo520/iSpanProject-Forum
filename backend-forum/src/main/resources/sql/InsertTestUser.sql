@@ -18,7 +18,19 @@ BEGIN
     DECLARE @Creator UNIQUEIDENTIFIER = '803BB44C-4F12-4056-8733-9D254162CCAE';
 
     -- users
-    INSERT INTO users
+    INSERT INTO users(
+    id, 
+    account,
+    active,
+    create_ip,
+    create_time,
+    creator,
+    modify_ip,
+    modify_time,
+    modifier,
+    password,
+    reset
+    )
     VALUES (
        @UserId,
        @Account,

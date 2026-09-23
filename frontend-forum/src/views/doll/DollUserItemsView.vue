@@ -6,7 +6,7 @@
   >
     <v-row class="fill-height">
       <!-- 左側：紙娃娃預覽區 (佔 4 欄) -->
-      <v-col cols="12" md="4" class="d-flex flex-column">
+      <v-col cols="12" md="3" class="d-flex flex-column">
         <v-card
           class="flex-grow-1 d-flex flex-column auth-card"
           rounded="lg"
@@ -25,6 +25,47 @@
           >
             <DollConvas :equippedItems="equippedItems" :baseUrl="baseUrl" />
           </v-sheet>
+
+          <!-- ================= 新增：色相偏移拖拉條 ================= -->
+          <div
+            v-if="dyeableItems.length > 0"
+            class="px-4 w-100 overflow-y-auto"
+            style="max-height: 200px"
+          >
+            <div
+              v-for="item in dyeableItems"
+              :key="item.category.id"
+              class="mb-3"
+            >
+              <div class="d-flex align-center justify-space-between mb-1">
+                <span class="text-caption font-weight-bold text-grey-darken-2">
+                  {{ item.category.typeName }} 顏色 (色相)
+                </span>
+                <v-btn
+                  size="x-small"
+                  variant="text"
+                  color="grey"
+                  @click="resetColor(item.category.id)"
+                  >還原</v-btn
+                >
+              </div>
+
+              <!-- 改用單純的 Slider，並綁定 0~360 度的數值 -->
+              <v-slider
+                :model-value="item.color || 0"
+                @update:model-value="
+                  (val) => updateColor(item.category.id, val)
+                "
+                min="0"
+                max="360"
+                step="1"
+                hide-details
+                thumb-size="16"
+                class="rainbow-slider"
+              ></v-slider>
+            </div>
+          </div>
+          <!-- ========================================================== -->
 
           <v-card-actions class="px-4 pb-4 justify-center gap-2">
             <v-btn
@@ -50,7 +91,7 @@
       </v-col>
 
       <!-- 右側：部位分類與裝備選擇 (佔 8 欄) -->
-      <v-col cols="12" md="8" class="d-flex flex-column">
+      <v-col cols="12" md="9" class="d-flex flex-column">
         <!-- 載入新拆分的元件，並監聽 equip-item 事件 -->
         <DollItemSelector @equip-item="equipItem" />
       </v-col>
@@ -58,7 +99,7 @@
   </v-container>
 </template>
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import DollConvas from "@/components/doll/DollConvas.vue";
 import DollItemSelector from "@/components/doll/DollItemSelector.vue";
 import httpClient from "@/services/httpClient";
@@ -140,11 +181,55 @@ function saveEquippedItems() {
     });
 }
 
+// ================= 色相偏移相關邏輯 =================
+const allowedDyeCategories = ["頭髮", "上衣"];
+
+const dyeableItems = computed(() => {
+  return Object.values(equippedItems.value).filter((item) => {
+    if (!item || !item.category) return false;
+    return allowedDyeCategories.includes(item.category.typeName);
+  });
+});
+
+function updateColor(categoryId, hueValue) {
+  if (equippedItems.value[categoryId]) {
+    // 直接把 0~360 的數字存進去
+    equippedItems.value[categoryId].color = hueValue;
+    // 強制觸發深層響應式更新
+    equippedItems.value = { ...equippedItems.value };
+  }
+}
+
+function resetColor(categoryId) {
+  if (equippedItems.value[categoryId]) {
+    equippedItems.value[categoryId].color = null;
+    equippedItems.value = { ...equippedItems.value };
+  }
+}
+// =================================================
+
 onMounted(() => {
   loadEquippedItems();
 });
 </script>
 <style scoped>
+/* 讓 Slider 的軌道變成彩虹色，對應 0~360 度的色相 */
+.rainbow-slider :deep(.v-slider-track__background) {
+  background: linear-gradient(
+    to right,
+    #f00 0%,
+    #ff0 17%,
+    #0f0 33%,
+    #0ff 50%,
+    #00f 67%,
+    #f0f 83%,
+    #f00 100%
+  ) !important;
+  opacity: 1 !important;
+}
+.rainbow-slider :deep(.v-slider-track__fill) {
+  background: transparent !important; /* 隱藏左側的填滿顏色 */
+}
 .gap-2 {
   gap: 8px;
 }

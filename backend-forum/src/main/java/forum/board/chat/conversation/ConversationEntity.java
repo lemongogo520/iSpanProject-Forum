@@ -3,14 +3,18 @@ package forum.board.chat.conversation;
 import java.time.Instant;
 import java.util.List;
 
+import forum.board.board.Board;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -45,8 +49,12 @@ public class ConversationEntity {
 
     public enum ConversationType {
         DIRECT,
-        GROUP
+        BOARD
     }
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_id", unique = true)
+    private Board board;
 
     @OneToMany(mappedBy = "conversation")
     private List<ConversationMemberEntity> members;

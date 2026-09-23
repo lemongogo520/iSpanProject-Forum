@@ -62,11 +62,6 @@ const routes = [
     component: () => import("@/views/doll/DollCategoriesView.vue"),
   },
   {
-    path: "/doll/newitem",
-    name: "dollnewitem",
-    component: () => import("@/views/doll/DollNewItemsView.vue"),
-  },
-  {
     path: "/doll/user",
     name: "dolluser",
     component: () => import("@/views/doll/DollUserItemsView.vue"),
@@ -76,6 +71,8 @@ const routes = [
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
   },
+
+
 
   //管理者設定
   {
@@ -96,7 +93,17 @@ const routes = [
   {
     path: "/config/doll",
     name: "ConfigDoll",
-    component: () => import("@/views/config/ConfigDollView.vue"),
+    component: () => import("@/views/doll/DollCategoriesView.vue"),
+  },
+  {
+    path: "/config/doll/newitem",
+    name: "dollNewItem",
+    component: () => import("@/views/doll/DollNewItemsView.vue"),
+  },
+  {
+    path: "/config/doll/adminitems",
+    name: "dollAdminItems",
+    component: () => import("@/views/doll/DollAdminItemsView.vue"),
   },
   {
     path: "/config/forum-template",

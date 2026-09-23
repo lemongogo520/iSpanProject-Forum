@@ -2,6 +2,7 @@ package forum.board.forumtemplate;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -119,20 +120,22 @@ public class ForumTemplateService {
 
         for (SelectedCategoryDto selectedCategory : request.categories()) {
 
-            if (selectedCategory.categoryName() == null|| selectedCategory.categoryName().isBlank()) {
+            if (selectedCategory.categoryName() == null || selectedCategory.categoryName().isBlank()) {
                 throw new IllegalArgumentException("分類名稱不能為空白");
             }
             // 每個分類至少要一個討論版
-            if (selectedCategory.boardNames() == null|| selectedCategory.boardNames().isEmpty()) {
-                throw new IllegalArgumentException("分類至少需要選擇一個討論版："+ selectedCategory.categoryName());
+            if (selectedCategory.boardNames() == null || selectedCategory.boardNames().isEmpty()) {
+                throw new IllegalArgumentException("分類至少需要選擇一個討論版：" + selectedCategory.categoryName());
             }
             // 從完整範本中找出被選中的分類
-            CategoryTemplateDto categoryTemplate = template.categories().stream().filter(category -> category.name().equals(
+            CategoryTemplateDto categoryTemplate = template.categories().stream()
+                    .filter(category -> category.name().equals(
                             selectedCategory.categoryName()))
-                            .findFirst().orElseThrow(() -> new IllegalArgumentException("範本中不存在分類："+ selectedCategory.categoryName()));
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("範本中不存在分類：" + selectedCategory.categoryName()));
 
             if (categoryRepository.findByName(categoryTemplate.name()).isPresent()) {
-                throw new IllegalStateException("分類已存在："+ categoryTemplate.name());
+                throw new IllegalStateException("分類已存在：" + categoryTemplate.name());
             }
 
             Category category = new Category();
@@ -144,18 +147,18 @@ public class ForumTemplateService {
             // 6. 只遍歷前端選中的討論版名稱
             for (String selectedBoardName : selectedCategory.boardNames()) {
 
-                if (selectedBoardName == null|| selectedBoardName.isBlank()) {
+                if (selectedBoardName == null || selectedBoardName.isBlank()) {
 
-                    throw new IllegalArgumentException( "討論版名稱不能為空白");
+                    throw new IllegalArgumentException("討論版名稱不能為空白");
                 }
 
                 // 從此分類的完整範本中找出討論版
                 BoardTemplateDto boardTemplate = categoryTemplate.boards().stream().filter(board -> board.name().equals(
-                                selectedBoardName)).findFirst().orElseThrow(() -> new IllegalArgumentException(
-                                "分類「"+ categoryTemplate.name()+ "」不存在討論版："+ selectedBoardName));
+                        selectedBoardName)).findFirst().orElseThrow(() -> new IllegalArgumentException(
+                                "分類「" + categoryTemplate.name() + "」不存在討論版：" + selectedBoardName));
 
                 if (boardRepository.findByName(boardTemplate.name()).isPresent()) {
-                    throw new IllegalStateException( "討論版已存在："+ boardTemplate.name());
+                    throw new IllegalStateException("討論版已存在：" + boardTemplate.name());
                 }
                 Board board = new Board();
                 board.setName(boardTemplate.name());
@@ -166,5 +169,9 @@ public class ForumTemplateService {
                 boardRepository.save(board);
             }
         }
+    }
+
+    public boolean isInitialized() {
+        return categoryRepository.count() > 0;
     }
 }

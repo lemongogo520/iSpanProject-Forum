@@ -23,6 +23,10 @@ body {
   --color-primary: #8bbce0;
   --color-primary-hover: #78acd3;
 
+  --color-primary-deep: #477a9f;   /* 深底白字用 */
+  --color-primary-soft: rgba(139, 188, 224, 0.18);   /* hover / 選取底色 */
+  --color-shadow: rgba(80, 130, 180, 0.18);
+
   --color-background: #eaf4ff;
   --color-background-light: #f5faff;
 
@@ -33,6 +37,8 @@ body {
   --color-icon: #79a9cf;
 
   --color-border: #dcecf8;
+
+  --color-notify: #e8806f
 }
 
 

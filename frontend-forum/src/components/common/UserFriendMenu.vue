@@ -70,9 +70,9 @@ const accept = () =>
 const cancel = () =>
     run(() => friendStore.cancelFriendRequest(relation.value.friendshipId), "已取消好友邀請");
 const startChat = () =>
-    run(() => {
-        const c = chatStore.directConversation(props.userId);
-        chatStore.openChat(c);
+    run(async () => {
+        const c = await chatStore.directConversation(props.userId);
+        chatStore.openChat(c.id);
         open.value = false;
     });
 </script>

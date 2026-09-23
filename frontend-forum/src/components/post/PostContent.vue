@@ -6,8 +6,9 @@
       <v-col cols="12" md="2" class="author-column">
         <v-card elevation="1" class="author-area rounded-lg">
           <UserFriendMenu :userId="post.userId" :name="post.userName">
-            <template #default="{ menuProps }">
-              <v-avatar size="90" class="mb-4" v-bind="menuProps" @click.stop.prevent>
+            <template #default="{ props }">
+              <!-- <pre style="font-size:10px">{{ Object.keys(userMenuProps) }}</pre> -->
+              <v-avatar size="90" class="mb-4" v-bind="props" @click.stop.prevent>
                 <v-icon icon="mdi-account" size="55" />
               </v-avatar>
             </template>

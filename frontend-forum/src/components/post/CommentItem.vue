@@ -2,9 +2,9 @@
   <article class="comment-card">
     <div class="comment-layout">
       <UserFriendMenu :userId="comment.users?.id">
-        <template #default="{ menuProps }">
+        <template #default="{ props }">
           <DollAvatar v-if="comment.users?.id" :user-id="comment.users.id" :size="56" :scale="1.8"
-            class="comment-avatar" v-bind="menuProps" @click.stop.prevent />
+            class="comment-avatar" v-bind="props" @click.stop.prevent/>
           <v-avatar v-else size="56" color="light-blue-lighten-4" class="comment-avatar" v-bind="menuProps"
             @click.stop.prevent>
             <v-icon icon="mdi-account" color="light-blue-darken-2" size="32" />

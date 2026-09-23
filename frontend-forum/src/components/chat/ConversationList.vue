@@ -2,7 +2,7 @@
   <v-list density="comfortable" nav>
     <v-skeleton-loader v-if="chatStore.loading" type="list-item-avatar" />
 
-    <v-list-item v-for="c in chatStore.conversationList" :key="c.id" :to="`/chat/${c.id}`"
+    <v-list-item v-for="c in chatStore.conversationList" :key="c.id" @click="chatStore.openChat(c.id)"
       :active="c.id === chatStore.currentConversationId" lines="two">
       <template #prepend>
         <v-avatar color="grey-lighten-2">

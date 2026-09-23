@@ -1,10 +1,9 @@
 <template>
-    <v-menu v-model="open" location="bottom end" origin="top start" :close-on-content-click="false" max-width="280">
-        <template #activator="{ props: menuProps }">
-            <slot :props="menuProps"></slot>
+    <v-menu v-model="open" :disabled="disabled" location="bottom end" origin="top start" :close-on-content-click="false" max-width="280">
+        <template #activator="{ props: userMenuProps }">
+            <slot :props="userMenuProps"></slot>
         </template>
         <v-card class="quick-card" rounded="lg" elevation="8">
-
             <v-list v-if="relation.status !== 'self'" density="compact" nav>
                 <v-list-item v-if="relation.status === 'none'" prepend-icon="mdi-account-plus" title="加好友"
                     :disabled="busy" @click="addFriend" />
@@ -19,6 +18,7 @@
     </v-menu>
 </template>
 <script setup>
+import { useNotification } from '@/composables/useNotification';
 import { useChatStore } from '@/stores/conversation';
 import { useFriendStore } from '@/stores/friend';
 import { useUserStore } from '@/stores/user';
@@ -32,33 +32,32 @@ const props = defineProps({
 const friendStore = useFriendStore();
 const chatStore = useChatStore();
 const userStore = useUserStore();
+const { showMessage } = useNotification();
 
 const open = ref(false);
 const busy = ref(false);
-const snackbar = ref({ show: false, text: "", color: "success" });
 
 const relation = computed(() => friendStore.relationOf?.(props.userId, userStore.uid)) ?? { status: "unknown" };
-
+const disabled = computed(() => relation.value.status === "self" || !props.userId);
 // 打開時重新撈邀請列表
 watch(open, (v) => {
+    // console.log("選單 open =", v);
     if (v) {
         friendStore.getSendRequestList();
         friendStore.getRequestList();
     }
 });
 
-const notify = (text, color = "success") => {
-    snackbar.value = { show: true, text, color };
-}
+
 
 const run = async (fn, okText) => {
     if (busy.value) return;
     busy.value = true;
     try {
         await fn();
-        if (okText) notify(okText);
+        if (okText) showMessage(okText);
     } catch (error) {
-        notify(error.response?.data?.message ?? "操作失敗", "error");
+        showMessage(error.response?.data?.message ?? "操作失敗", "error");
     } finally {
         busy.value = false;
     }

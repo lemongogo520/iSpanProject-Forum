@@ -20,10 +20,6 @@
       />
     </v-card>
   </v-dialog>
-
-  <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500" location="top">
-    {{ snackbar.text }}
-  </v-snackbar>
 </template>
 <script setup>
 import { computed, ref } from "vue";
@@ -32,13 +28,14 @@ import { useFriendStore } from "@/stores/friend";
 import GetAllUsers from "@/components/user/GetAllUsers.vue";
 import { useUserStore } from "@/stores/user";
 
+import { useNotification } from "@/composables/useNotification";
+
 const friendStore = useFriendStore();
 const userStore = useUserStore();
 
 const open = ref(false);
 const picker = ref(null);
 const sending = ref(false);
-const snackbar = ref({ show: false, text: "", color: "success" });
 
 const excludeIds = computed(() =>
   [
@@ -55,19 +52,11 @@ const onSelect = async (user) => {
   try {
     console.log(user)
     await friendStore.sendFriendRequest(user.uid);
-    snackbar.value = {
-      show: true,
-      text: `已送出邀請給 ${user.name || user.account}`,
-      color: "success",
-    };
+    useNotification.showMessage(`已送出邀請給 ${user.name || user.account}`,success);
     picker.value?.clearUser();
     open.value = false;
   } catch (e) {
-    snackbar.value = {
-      show: true,
-      text: e.response?.data?.message ?? "送出失敗",
-      color: "error",
-    };
+    useNotification.showMessage(e.response?.data?.message ?? "送出失敗","error");
   } finally {
     sending.value = false;
   }

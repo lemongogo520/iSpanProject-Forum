@@ -71,6 +71,12 @@ const routes = [
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
   },
+  {
+    path: "/chat/:conversationId?",
+    name: "chat",
+    component: () => import("@/views/chat/ChatView.vue"),
+    props: true,
+  },
 
 
 
@@ -157,7 +163,7 @@ router.beforeEach(async (to) => {
   ) {
     return "/home";
   }
-   // 系統管理員 判斷
+  // 系統管理員 判斷
   if (to.meta.requiresSystemAdmin && Number(userStore.permission) !== 1) {
     return "/home";
   }

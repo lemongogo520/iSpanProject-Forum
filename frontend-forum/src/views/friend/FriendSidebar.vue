@@ -1,4 +1,4 @@
-< <template>
+<template>
   <v-navigation-drawer class="friend-sidebar" location="right" permanent expand-on-hover rail :rail-width="70"
     :width="240">
     <v-list-subheader class="sidebar-title">好友</v-list-subheader>

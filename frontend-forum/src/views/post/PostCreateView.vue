@@ -1,6 +1,7 @@
 <!-- src/views/PostCreate.vue -->
 <template>
-  <v-container class="py-8" max-width="800">
+  <div class="post-create-page">
+    <v-container class="post-create-container py-8" max-width="800">
     <!-- 返回看板 -->
     <v-btn
       variant="text"
@@ -17,7 +18,7 @@
       <div class="text-body-2 text-medium-emphasis mt-3">文章載入中...</div>
     </div>
 
-    <v-card v-else class="pa-6 rounded-xl">
+    <v-card v-else class="post-form-card pa-6" variant="flat">
       <v-card-title class="text-h5 mb-4">
         {{ isEditing ? "編輯文章" : "發表新文章" }}
       </v-card-title>
@@ -54,6 +55,7 @@
       </v-form>
     </v-card>
   </v-container>
+  </div>
 </template>
 
 <script setup>
@@ -222,4 +224,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.post-create-page {
+  min-height: 100vh;
+  background: var(--forum-page-bg);
+}
+
+.post-create-container {
+  width: 100%;
+}
+
+.post-form-card {
+  border: none;
+  border-radius: 16px;
+  background: #f3faf7;
+  box-shadow: 0 8px 24px rgba(55, 105, 88, 0.1);
+}
+
+.post-form-card :deep(.v-field) {
+  background: #fafffd;
+}
+
+.post-form-card :deep(.v-card-title) {
+  padding-left: 0;
+  color: var(--forum-title);
+  font-weight: 700;
+}
 </style>

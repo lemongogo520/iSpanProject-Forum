@@ -2,13 +2,14 @@
   <div>
     <div class="text-subtitle-1 text-medium-emphasis mb-2">文章內容</div>
 
-    <v-sheet border class="rounded-lg mb-6">
+    <v-sheet class="editor-shell mb-6">
       <QuillEditor
         v-model:content="content"
         content-type="html"
         theme="snow"
         :options="editorOptions"
         placeholder="請輸入文章內容..."
+        @ready="setToolbarTooltips"
       />
     </v-sheet>
   </div>
@@ -153,23 +154,66 @@ const editorOptions = {
     },
   },
 };
+
+const toolbarTooltips = {
+  ".ql-header": "文字格式",
+  ".ql-bold": "粗體",
+  ".ql-italic": "斜體",
+  ".ql-underline": "底線",
+  ".ql-strike": "刪除線",
+  '.ql-list[value="ordered"]': "編號清單",
+  '.ql-list[value="bullet"]': "項目清單",
+  ".ql-color": "文字顏色",
+  ".ql-background": "背景顏色",
+  ".ql-align": "文字對齊",
+  ".ql-blockquote": "引用",
+  ".ql-code-block": "程式碼區塊",
+  ".ql-link": "插入連結",
+  ".ql-video": "插入影片",
+  ".ql-image": "上傳圖片",
+  ".ql-clean": "清除格式",
+};
+
+function setToolbarTooltips(quill) {
+  const toolbar = quill.getModule("toolbar")?.container;
+
+  if (!toolbar) return;
+
+  Object.entries(toolbarTooltips).forEach(([selector, label]) => {
+    toolbar.querySelectorAll(selector).forEach((element) => {
+      element.setAttribute("data-tooltip", label);
+      element.setAttribute("aria-label", label);
+    });
+  });
+}
 </script>
 
 <style scoped>
+.editor-shell {
+  overflow: visible;
+  border: 1px solid #cfe3da;
+  border-radius: 12px;
+  background: #fafffd;
+}
 :deep(.ql-container) {
   min-height: 350px;
   font-size: 16px;
+  border-radius: 0 0 12px 12px;
 }
 
 :deep(.ql-toolbar) {
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  background-color: var(--forum-soft-bg);
+  border: none !important;
+  border-bottom: 1px solid #cfe3da !important;
+  background: #e7f4ef;
+  border-radius: 12px 12px 0 0;
 }
-
 :deep(.ql-container.ql-snow) {
   border: none !important;
+  background: #fafffd;
+}
+:deep(.ql-editor) {
+  color: var(--forum-title);
+  line-height: 1.8;
 }
 /* 中文輸入法組字時，聚焦後先隱藏 placeholder */
 :deep(.ql-editor.ql-blank:focus::before) {
@@ -218,6 +262,41 @@ const editorOptions = {
   width: min(420px, calc(100vw - 180px));
   max-width: calc(100% - 70px);
   font-size: 14px;
+}
+
+:deep(.ql-toolbar button),
+:deep(.ql-toolbar .ql-picker) {
+  position: relative;
+}
+
+:deep(.ql-toolbar [data-tooltip]::after) {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  z-index: 20;
+
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: #365f59;
+  color: #ffffff;
+
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+
+  content: attr(data-tooltip);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-3px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+:deep(.ql-toolbar [data-tooltip]:hover::after),
+:deep(.ql-toolbar [data-tooltip]:focus-visible::after) {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 @media (max-width: 600px) {

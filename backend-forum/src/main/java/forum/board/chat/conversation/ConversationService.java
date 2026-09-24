@@ -31,10 +31,11 @@ public class ConversationService {
     private final UsersRepository uRepo;
     private final BoardRepository bRepo;
 
-    private ConversationResponseDTO toDTO(ConversationEntity c, UUID currentUserId, Long unreadCount) {
+    private ConversationResponseDTO toDTO(ConversationEntity c, UUID currentUserId, boolean subscribed,
+            Long unreadCount) {
         String title;
-        String avatar = null;
         UUID targetUserId = null;
+        Integer boardId = null;
         if (c.getType() == ConversationType.DIRECT) {
             Users other = c.getMembers().stream()
                     .map(ConversationMemberEntity::getUser)
@@ -42,18 +43,20 @@ public class ConversationService {
                     .findFirst()
                     .orElseThrow(() -> new BusinessException("私訊對話缺少對方成員"));
             title = other.getUsersDetail().getName();
-            avatar = other.getUsersDetail().getPhoto();
             targetUserId = other.getId();
+
+            subscribed = true;
         } else {
             title = c.getBoard().getName();
-            avatar = null;
+            boardId = c.getBoard().getId();
         }
         return new ConversationResponseDTO(
                 c.getId(),
                 c.getType(),
                 title,
-                avatar,
                 targetUserId,
+                boardId,
+                subscribed,
                 c.getLastMessage(),
                 c.getCreateTime(),
                 c.getUpdateTime(),
@@ -76,7 +79,7 @@ public class ConversationService {
         ConversationMemberEntity member = cmRepo.findByConversationIdAndUserId(c.getId(), user1.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("找不到該對話成員"));
         Long unreadCount = mRepo.countUnreadMessages(c.getId(), member.getLastReadTime(), user1.getId());
-        return toDTO(c, user1Id, unreadCount);
+        return toDTO(c, user1Id, true, unreadCount);
     }
 
     // 新建私訊對話
@@ -100,28 +103,29 @@ public class ConversationService {
         return c;
     }
 
-    // 找到討論版對話 不存在就新建
-    @Transactional
-    public ConversationResponseDTO findOrCreateBoardConversation(UUID userId, Integer boardId) {
-        Users user = uRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
+    // 用conversationId找討論版對話
+    public ConversationResponseDTO getOneBoardConversation(Long conversationId, UUID userId) {
+        ConversationEntity c = cRepo.findById(conversationId).orElseThrow(() -> new ResourceNotFoundException("找不到對話"));
+        if (c.getType() == ConversationType.DIRECT) {
+            throw new BusinessException("找不到該對話");
+        }
+        boolean subscribed = cmRepo.existsByConversationIdAndUserId(conversationId, userId);
+        return toDTO(c, userId, subscribed, 0L);
+    }
 
-        // 先找看板在不在
+    // 用boardId 找到討論版對話 不存在就新建
+    @Transactional
+    public ConversationResponseDTO getBoardConversation(Integer boardId, UUID userId) {
+        // 找看板
         Board board = bRepo.findById(boardId).orElseThrow(() -> new ResourceNotFoundException("找不到該看板"));
 
-        // 先找看板對話存不存在
+        // 找對話
         ConversationEntity c = cRepo.findByBoard(board).orElseGet(() -> createBoardConversation(board));
 
-        // 確認使用者是否已經是聊天室成員 不是就加入
-        if (!isMember(userId, c.getId())) {
-            ConversationMemberEntity m = new ConversationMemberEntity();
-            m.setConversation(c);
-            m.setUser(user);
-            cmRepo.save(m);
-        }
-        ConversationMemberEntity member = cmRepo.findByConversationIdAndUserId(c.getId(), user.getId()).orElseThrow();
-        Long unreadCount = mRepo.countUnreadMessages(c.getId(), member.getLastReadTime(), user.getId());
+        boolean subscribed = cmRepo.existsByConversationIdAndUserId(c.getId(), userId);
+        Long unreadCount = (long) 0;
 
-        return toDTO(c, userId, unreadCount);
+        return toDTO(c, userId, subscribed, unreadCount);
     }
 
     // 建立討論版對話
@@ -133,11 +137,6 @@ public class ConversationService {
         return c;
     }
 
-    // 檢查是不是對話成員
-    private boolean isMember(UUID userId, Long conversationId) {
-        return cmRepo.existsByConversationIdAndUserId(conversationId, userId);
-    }
-
     // 抓所有的對話
     @Transactional
     public List<ConversationResponseDTO> getMyConversation(UUID userId) {
@@ -146,27 +145,50 @@ public class ConversationService {
                         row -> (Long) row[0],
                         row -> (Long) row[1]));
         return cRepo.findAllByUserIdWithMembers(userId).stream()
-                .map(c -> toDTO(c, userId, unreadMap.getOrDefault(c.getId(), 0L)))
+                .map(c -> toDTO(c, userId, true, unreadMap.getOrDefault(c.getId(), 0L)))
                 .sorted(Comparator.comparing(
                         ConversationResponseDTO::updateTime,
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
     }
 
+    // 更新閱讀時間
+    @Transactional
     public void markAsRead(Long conversationId, UUID userId) {
-        // 找到這個使用者
-        Users user = uRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
-        // 找到對話
-        ConversationEntity c = cRepo.findById(conversationId)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到該對話"));
-        // 找到對應的member
-        ConversationMemberEntity member = cmRepo.findByConversationIdAndUserId(c.getId(), user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("不是此對話的成員"));
-        // 更新最後閱讀時間
-        member.setLastReadTime(Instant.now());
-        cmRepo.save(member);
+        // 找到對應的member 更新最後閱讀時間
+        cmRepo.findByConversationIdAndUserId(conversationId, userId)
+                .ifPresent(m -> m.setLastReadTime(Instant.now()));
 
+    }
+
+    // 訂閱看板
+    @Transactional
+    public ConversationResponseDTO subscribeBoard(Integer boardId, UUID userId) {
+        Board b = bRepo.findById(boardId).orElseThrow(() -> new ResourceNotFoundException("找不到看板"));
+        // 找到看板聊天室 若不存在就建立
+        ConversationEntity c = cRepo.findByBoard(b).orElseGet(() -> createBoardConversation(b));
+
+        // 訂閱
+        if (!cmRepo.existsByConversationIdAndUserId(c.getId(), userId)) {
+            ConversationMemberEntity member = new ConversationMemberEntity();
+            member.setConversation(c);
+            member.setUser(uRepo.getReferenceById(userId));
+            cmRepo.save(member);
+        }
+
+        return toDTO(c, userId, true, 0L);
+    }
+
+    // 取消訂閱看板
+    @Transactional
+    public ConversationResponseDTO unsubscribeBoard(Integer boardId, UUID userId) {
+        Board b = bRepo.findById(boardId).orElseThrow(() -> new ResourceNotFoundException("找不到看板"));
+        // 找到看板聊天室 若不存在就建立
+        ConversationEntity c = cRepo.findByBoard(b).orElseGet(() -> createBoardConversation(b));
+        // 取消訂閱
+        cmRepo.findByConversationIdAndUserId(c.getId(), userId).ifPresent(cmRepo::delete);
+
+        return toDTO(c, userId, false, 0L);
     }
 
 }

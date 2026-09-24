@@ -27,6 +27,10 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  showSender: {
+    type: Boolean,
+    default: false
+  },
 });
 
 const messageStore = useMessageStore();

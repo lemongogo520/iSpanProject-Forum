@@ -54,7 +54,10 @@ const handleIncoming = (msg) => {
   const isOpen = chatStore.currentConversationId === msg.conversationId && !chatStore.isMinimized;
   chatStore.applyIncoming(msg, { isCurrent: isOpen });
 
-  if (isOpen && !msg.mine) messageStore.markAsRead(msg.conversationId);
+  const conversation = chatStore.findConversation(msg.conversationId);
+  if (isOpen && !msg.mine && conversation?.type === "DIRECT") {
+    messageStore.markAsRead(msg.conversationId);
+  }
 };
 
 const resync = async () => {

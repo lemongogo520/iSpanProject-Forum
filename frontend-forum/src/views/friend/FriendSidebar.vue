@@ -6,7 +6,7 @@
     <v-list density="compact" nav>
       <v-list-item v-for="f in sortedFriends" :key="f.userId" @click="startChat(f)">
         <template #prepend>
-          <FriendAvatar :userId="f.userId" :scale="1.0" :size="32" />
+          <DollAvatar :userId="f.userId" :scale="1.0" :size="32" />
         </template>
         <v-list-item-title class="ml-2">{{ f.displayName }}</v-list-item-title>
         <v-list-item-subtitle v-if="convByUser[f.userId]?.lastMessage" class="ml-3">
@@ -28,7 +28,6 @@
 import { useChatStore } from "@/stores/conversation";
 import { useFriendStore } from "@/stores/friend";
 import DollAvatar from "@/components/doll/DollAvatar.vue";
-import FriendAvatar from '@/components/friend/FriendAvatar.vue';
 import { computed } from "vue";
 
 const friendStore = useFriendStore();

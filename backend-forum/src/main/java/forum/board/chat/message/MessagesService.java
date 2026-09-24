@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import forum.board.chat.conversation.ConversationEntity;
+import forum.board.chat.conversation.ConversationEntity.ConversationType;
 import forum.board.chat.conversation.ConversationMemberRepository;
 import forum.board.chat.conversation.ConversationRepository;
 import forum.board.chat.dto.MessagePageDTO;
@@ -43,9 +44,17 @@ public class MessagesService {
                 .orElseThrow(() -> new ResourceNotFoundException("找不到該對話"));
     }
 
-    private void checkMember(Long conversationId, UUID userId) {
-        cmRepo.findByConversationIdAndUserId(conversationId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到該對話"));
+    // 檢查是不是對話成員
+    private void checkAccess(Long conversationId, UUID userId) {
+        // 確認使用者是否已經是聊天室成員
+        ConversationEntity cEntity= cRepo.findById(conversationId).orElseThrow(
+            () -> new ResourceNotFoundException("找不到對話")
+        );
+        if (cEntity.getType() == ConversationType.DIRECT) {
+            cmRepo.findByConversationIdAndUserId(conversationId, userId).orElseThrow(() -> new ResourceNotFoundException("找不到對話"));
+            return ;
+        }
+        // BOARD：目前看板都公開，不需要是對話成員
     }
 
     private MessageResponseDTO toResponseDTO(UUID currentUserId, MessagesEntity msg) {
@@ -69,7 +78,7 @@ public class MessagesService {
      /* ---------- 取得歷史訊息（cursor 分頁） ---------- */
     public MessagePageDTO getMessages(Long conversationId, UUID currentUserId, Long before) {
         // 確認使用者是對話成員
-        checkMember(conversationId, currentUserId);
+        checkAccess(conversationId, currentUserId);
 
         // 多取一筆判斷 hasMore
         List<MessagesEntity> rows = new ArrayList<>(
@@ -98,7 +107,7 @@ public class MessagesService {
     @Transactional 
     public MessageResponseDTO sendMessage(Long conversationId, UUID senderId, MessageRequestDTO request) {     
         // 確認使用者是對話成員
-        checkMember(conversationId, senderId);
+        checkAccess(conversationId, senderId);
 
         // 冪等檢查：重送同一個 clientMsgId 直接回既有訊息
         if (request.clientMsgId() != null) {

@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import forum.board.dollsystemitem.DollItem;
@@ -59,28 +58,6 @@ public class DollUserOwnedService {
                     return DollItemResponseDTO.fromEntity(item, isOwned);
                 })
                 .collect(Collectors.toList());
-    }
-
-    // 商城檢視 (分頁版，並標記使用者是否擁有)
-    public Page<DollItemResponseDTO> getShopItemsByPage(UUID userId, Integer categoryId, Integer pageNumber) {
-
-        // 1. 分頁設定
-        Pageable pgb = PageRequest.of(pageNumber - 1, 8, Sort.Direction.DESC, "createdAt");
-
-        // 2. 查詢該分頁的所有上架裝備
-        org.springframework.data.domain.Page<DollItem> page = itemRepo.findByCategoryIdAndIsActiveTrue(categoryId, pgb);
-
-        // 3. 找出使用者已經有的裝備 (用來比對)
-        List<DollItem> ownedItems = ownedRepo.findItemsByUserIdAndCategoryId(userId, categoryId);
-        Set<Integer> ownedItemsIds = ownedItems.stream()
-                .map(DollItem::getId)
-                .collect(Collectors.toSet());
-
-        // 4. 將 Page<DollItem> 轉換為 Page<DollItemResponseDTO>，並塞入 isOwned
-        return page.map(item -> {
-            boolean isOwned = ownedItemsIds.contains(item.getId());
-            return DollItemResponseDTO.fromEntity(item, isOwned);
-        });
     }
 
     // 使用者獲得裝備

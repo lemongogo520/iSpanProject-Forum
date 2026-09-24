@@ -56,12 +56,7 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const openChat = (conversationId) => {
-    const id = Number(conversationId);
-    if(!Number.isFinite(id)) {
-      console.error("openChat 需要對話 id，收到：", conversationId);
-      return;
-    }
-    currentConversationId.value = id;
+    currentConversationId.value = conversationId;
     isMinimized.value = false;
     persistWindow();
   };

@@ -18,6 +18,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,7 +27,17 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "conversation")
+@Table(name = "conversation",
+    uniqueConstraints = {
+        @UniqueConstraint(
+                name = "UK_conversation_user",
+                columnNames = {
+                        "conversation_id",
+                        "user_id"
+                }
+        )
+    }
+)
 public class ConversationEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,7 +58,7 @@ public class ConversationEntity {
 
     @OneToMany(mappedBy = "conversation")
     private List<ConversationMemberEntity> members;
-
+    
     private String lastMessage;
 
     @Column(nullable = false, updatable = false)
@@ -59,14 +70,14 @@ public class ConversationEntity {
     @PrePersist
     public void prePersist() {
         Instant now = Instant.now();
-        if (createTime == null) {
+        if(createTime == null){
             this.createTime = now;
             this.updateTime = now;
         }
     }
 
     @PreUpdate
-    public void preUpdate() {
+    public void preUpdate(){
         this.updateTime = Instant.now();
     }
 

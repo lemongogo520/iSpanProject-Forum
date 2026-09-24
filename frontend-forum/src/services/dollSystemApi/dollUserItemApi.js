@@ -53,73 +53,27 @@ export function listUserItems() {
   };
 }
 
-/**
- * 商城 Api — listShopItems()
- *
- * ─── 使用方式 ───────────────────────────────────────────────
- * 在 Vue 元件的 setup() 中解構取出需要的變數和方法：
- *
- *   const { loadCategories, unOwnedItemsByCategory,
- *           pageContent, currentPageNum, totalPages,
- *           categories, activeCategoryId, baseUrl } = listShopItems();
- *
- *   // 1. 頁面掛載時呼叫，自動抓取圖層列表，並預設載入第一個圖層的商品
- *   onMounted(() => loadCategories());
- *
- *   // 2. 使用者點選其他圖層 Tab 時，手動切換圖層
- *   function onTabChange(categoryId) {
- *     activeCategoryId.value = categoryId;
- *     unOwnedItemsByCategory(categoryId);
- *   }
- *
- *   // 3. 切換分頁時 (如果後端需要 pageNumber 請自行加入參數)
- *   //    目前 API 預設從第 1 頁開始；換頁功能由接手的開發者實作
- *
- * ─── 可以確認的內容 ───────────────────────────────────────────
- * returns {Object} 解構後可使用以下屬性：
- *
- *   baseUrl            {string}  圖片基底網址，拼接後才是完整圖片路徑
- *                                範例：baseUrl + item.filePath
- *
- *   categories         {Ref<Array>} 所有裝備圖層列表（用來渲染 Tab 按鈕）
- *                                每筆格式：{ id, code, typeName, zIndex, isRequired }
- *
- *   activeCategoryId   {Ref<number>} 目前選中的圖層 id（用來高亮 Tab）
- *
- *   pageContent        {Ref<Array>} 目前頁的商品列表（綁定到畫面上渲染商品卡）
- *                                每筆格式：{ id, name, filePath, price, isActive, isOwned, category }
- *                                ⚠️ isOwned: true 表示使用者已擁有，false 表示尚未擁有
- *
- *   currentPageNum     {Ref<number>} 目前頁碼（從 1 開始）
- *
- *   totalPages         {Ref<number>} 總頁數（用來控制分頁按鈕是否還有下一頁）
- *
- *   loadCategories     {Function} 初始化函式，需在 onMounted 呼叫
- *
- *   unOwnedItemsByCategory  {Function(categoryId)} 切換圖層時呼叫，重新抓取該圖層的商品
- */
+//商城Api
 export function listShopItems() {
   //圖層Api解構
   const { categories, fetchCategories } = listAllCategories();
   //響應變數
+  const shopItems = ref([]);
   const activeCategoryId = ref(null);
-  const pageContent = ref([]);
-  const currentPageNum = ref(1);
-  const totalPages = ref(1);
 
   //呼叫後端Api(商城)
   function unOwnedItemsByCategory(categoryId) {
     httpClient({
       method: "get",
 
-      url: `/api/dollitems/dollshop/${categoryId}`,
+      url: `/api/dollitem/userowned/${categoryId}`,
     })
       .then((response) => {
-        // 後端回傳 Page 物件，實際裝備資料放在 content 內
-        pageContent.value = response.data.content;
-        currentPageNum.value = response.data.number + 1; // Spring 從 0 算，+1 換算成人類頁碼
-        totalPages.value = response.data.totalPages;
-        console.log("商城裝備資料載入成功", pageContent.value);
+        //篩選出 isOwned 為 false 的資料，因為後端會回傳所有資料
+        shopItems.value = response.data.filter(
+          (item) => item.isOwned === false,
+        );
+        console.log("商城裝備資料載入成功", shopItems.value);
       })
 
       .catch((error) => console.log(error));
@@ -143,9 +97,7 @@ export function listShopItems() {
   return {
     baseUrl,
     unOwnedItemsByCategory,
-    pageContent,
-    currentPageNum,
-    totalPages,
+    shopItems,
     categories,
     activeCategoryId,
     loadCategories,

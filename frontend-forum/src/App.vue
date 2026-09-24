@@ -15,7 +15,6 @@ import { useConfigStore } from '@/stores/config'
 
 const route = useRoute();
 const authStore = useAuthStore();
-const userStore = useUserStore();
 const chatStore = useChatStore();
 const friendStore = useFriendStore();
 const messageStore = useMessageStore();
@@ -72,16 +71,7 @@ watch(
       friendStore.getFriendList();
       await chatStore.getConversations();
       chatStore.restoreWindow();
-      connectSocket({
-        onMessage: handleIncoming,
-        onReconnect: resync,
-        onGiveUp: () => {
-          showMessage("連線中斷,請重新整理", "error");
-          // authStore.isLogin = false;
-        },
-      });
     } else {
-      disconnectSocket();
       console.log("reset");
       friendStore.reset();
       chatStore.reset();
@@ -110,8 +100,8 @@ watch(
     </v-snackbar>
 
     <!-- 好友側邊欄 -->
-    <FriendSidebar v-if="showHeader && authStore.checked && authStore.isLogin" />
-    <ChatDock v-if="showHeader && authStore.checked && authStore.isLogin" />
+    <FriendSidebar v-if="showHeader && authStore.checked && authStore.isLogin"/>
+    <ChatDock v-if="showHeader && authStore.checked && authStore.isLogin"/>
   </v-app>
 </template>
 

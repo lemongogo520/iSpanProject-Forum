@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.RestController;
 import forum.board.chat.dto.MessagePageDTO;
 import forum.board.chat.dto.MessageRequestDTO;
 import forum.board.chat.dto.MessageResponseDTO;
-import forum.board.chat.ws.ChatBroadcaster;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +20,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat/conversations/{conversationId}/messages")
 public class MessagesController {
     private final MessagesService mService;
-    private final ChatBroadcaster broadcaster;
 
     /*
      * /api/chat/conversations/{conversationId}/messages
@@ -54,8 +53,12 @@ public class MessagesController {
             HttpSession session) {
         UUID loginUserId = (UUID) session.getAttribute("loginUserId");
         MessageResponseDTO message = mService.sendMessage(conversationId, loginUserId, request);
-        broadcaster.messageCreated(message); // 訊息已送入資料庫後
+
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
+
+    /*
+     * /api/message
+     */
 
 }

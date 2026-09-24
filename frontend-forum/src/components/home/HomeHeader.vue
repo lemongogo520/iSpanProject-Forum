@@ -309,17 +309,7 @@ onBeforeUnmount(() => {
             <span class="user-summary">
               <span class="user-name">
                 {{ user.name || user.account }}
-              </span>
-
-              <span class="user-points">
-                <v-icon
-                  icon="mdi-star-circle"
-                  color="amber"
-                  size="14"
-                />
-                —
-                點
-              </span>
+              </span>              
             </span>
 
             <v-icon
@@ -361,24 +351,7 @@ onBeforeUnmount(() => {
                 歡迎回來，開啟你的社群日常
               </div>
             </div>
-          </div>
-
-          <div class="point-summary">
-            <div>
-              <div class="point-label">
-                <v-icon
-                  icon="mdi-star-circle"
-                  size="18"
-                />
-                目前點數
-              </div>
-
-              <div class="point-value">
-                —
-                <span>點</span>
-              </div>
-            </div>
-          </div>
+          </div>         
 
           <v-list
             class="member-actions"

@@ -34,11 +34,34 @@ body {
 
   --color-border: #dcecf8;
 
-  --forum-page-bg: #ECF5FF;
+  /* 論壇背景 */
+  --forum-page-bg: linear-gradient(
+    135deg,
+    #dcecff 0%,
+    #e7f4ef 100%
+  );
+
+  /* 表面 */
   --forum-card-bg: #ffffff;
-  --forum-soft-bg: #f4f8fe;
-  --forum-hover-bg: #eff6ff;
-  --forum-border: #e3e8ef;
+  --forum-soft-bg: #f4f8fc;
+  --forum-hover-bg: #f0f8f5;
+  --forum-border: #dbe5ee;
+
+  /* 文字與主色 */
+  --forum-primary: #4267d5;
+  --forum-title: #203653;
+  --forum-text: #425466;
+  --forum-text-muted: #718096;
+
+  /* 形狀與陰影 */
+  --forum-radius: 14px;
+  --forum-shadow: 0 6px 18px rgba(48, 83, 130, 0.08);
+  --forum-shadow-hover: 0 10px 24px rgba(48, 83, 130, 0.12);
+
+  /* 間距 */
+  --forum-space-sm: 12px;
+  --forum-space-md: 20px;
+  --forum-space-lg: 24px;
 }
 
 

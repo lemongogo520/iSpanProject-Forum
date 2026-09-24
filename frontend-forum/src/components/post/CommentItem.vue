@@ -335,8 +335,8 @@ const formatCommentDate = (date) => {
 
 <style scoped>
 .comment-card {
-  border-top: 1px solid #e5e5e5;
-  padding: 20px 0 18px;
+  padding: 20px 4px;
+  border-top: 1px solid var(--forum-border);
 }
 .comment-layout,
 .child-comment {
@@ -353,12 +353,12 @@ const formatCommentDate = (date) => {
 }
 .comment-author {
   margin-bottom: 5px;
-  color: #202124;
+  color: var(--forum-title);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 700;
 }
 .comment-content {
-  color: #202124;
+  color: var(--forum-text);
   font-size: 16px;
   line-height: 1.75;
   overflow-wrap: anywhere;
@@ -374,10 +374,11 @@ const formatCommentDate = (date) => {
 .comment-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 2px;
   min-height: 32px;
-  margin-top: 3px;
-  color: #757575;
+  margin-top: 5px;
+  color: var(--forum-text-muted);
   font-size: 13px;
 }
 .comment-actions :deep(.v-btn) {

@@ -104,27 +104,30 @@ defineProps({
 <style scoped>
 
 .category-section {
-  margin-bottom: 36px;
+  margin-bottom: var(--forum-space-lg);
   overflow: hidden;
   border: 1px solid var(--forum-border);
-  border-radius: 16px;
+  border-radius: var(--forum-radius);
   background: var(--forum-card-bg);
-  box-shadow: 0 4px 18px rgba(30, 50, 80, 0.03);
-
-  /* 捲動到分類時避開導覽列 */
+  box-shadow: var(--forum-shadow);
   scroll-margin-top: 88px;
 }
-
 .category-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 0;
+  min-height: 88px;
   padding: 16px 20px;
-  background-color: #c1ffe4;
-  border-left: 4px solid var(--category-accent);
-  border-bottom: 1px solid var(--forum-border);
+
+  background: linear-gradient(
+    90deg,
+    #dbeaff 0%,
+    #edf5ff 55%,
+    #f8fbff 100%
+  );
+
+  border-left: 4px solid var(--forum-primary);
 }
 .category-title {
   display: flex;
@@ -148,10 +151,10 @@ defineProps({
 
 .board-list {
   overflow: hidden;
-  border: 1px solid var(--forum-border);
-  border-radius: 16px;
+  border: 0;
+  border-radius: 0;
   background: var(--forum-card-bg);
-  box-shadow: 0 4px 18px rgba(30, 50, 80, 0.03);
+  box-shadow: none;
 }
 
 .board-row {
@@ -165,7 +168,7 @@ defineProps({
 }
 
 .board-row + .board-row {
-  border-top: 1px solid #edf0f5;
+  border-top: 1px solid var(--forum-border);
 }
 
 .board-row:hover {

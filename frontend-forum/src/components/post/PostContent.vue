@@ -5,15 +5,22 @@
       <!-- 作者卡片 -->
       <v-col cols="12" md="2" class="author-column">
         <v-card elevation="1" class="author-area rounded-lg">
-          <v-avatar size="90" class="mb-4">
+          <div v-if="post.userId" class="author-doll-frame">
+            <DollAvatar
+              v-if="post.userId"
+              :user-id="post.userId"
+              :scale="2.2"
+              is-full-body
+              class="author-doll"
+            />
+          </div>
+          <v-avatar v-else size="90" class="mb-4">
             <v-icon icon="mdi-account" size="55" />
           </v-avatar>
 
           <div class="text-subtitle-1 font-weight-bold">
-            {{ post.userName || "使用者" }}
+            {{ post.userName || " " }}
           </div>
-
-          <div class="text-caption text-medium-emphasis mt-1">使用者</div>
         </v-card>
       </v-col>
 
@@ -106,6 +113,7 @@
 </template>
 
 <script setup>
+import DollAvatar from "@/components/doll/DollAvatar.vue";
 defineProps({
   post: {
     type: Object,
@@ -212,13 +220,14 @@ const formatDate = (date) => {
 }
 
 .author-area {
-  min-height: 320px;
-  padding: 30px 15px;
   display: flex;
+  min-height: 260px;
+  padding: 16px 10px;
   flex-direction: column;
   align-items: center;
+  border: 1px solid var(--forum-border);
+  border-radius: var(--forum-radius);
   background: var(--forum-soft-bg);
-  border-right: 1px solid #e0e0e0;
 }
 
 .post-content {
@@ -277,6 +286,40 @@ const formatDate = (date) => {
 
 :deep(.post-content .ql-align-justify) {
   text-align: justify;
+}
+.author-doll-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 125px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border: none;
+  border-radius: 12px;
+  background: radial-gradient(
+    circle at 50% 55%,
+    rgba(66, 103, 213, 0.1) 0%,
+    rgba(219, 234, 255, 0.4) 38%,
+    transparent 72%
+  );
+  box-shadow: none;
+}
+.author-doll-frame::after {
+  position: absolute;
+  bottom: 13px;
+  left: 50%;
+  width: 72px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(48, 83, 130, 0.1);
+  transform: translateX(-50%);
+  content: "";
+}
+.author-doll-frame :deep(.v-sheet) {
+  position: relative;
+  z-index: 1;
 }
 @media (max-width: 600px) {
   :deep(.post-content iframe.ql-video) {

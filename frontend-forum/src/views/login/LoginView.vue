@@ -8,16 +8,16 @@
           class="brand-section d-flex align-center justify-center"
         >
           <div class="brand-content text-center">
-            <v-avatar size="90" class="brand-logo mb-6">
-              <img v-if="configStore.settings.login_logo?.length"
-                :src="`/api/file/files/${configStore.settings.login_logo[0]}`"
-                width="50"
-                height="50"
-                style="object-fit: contain;"
-              >
+            <img
+              v-if="loginLogoId"
+              :src="`/api/file/files/${loginLogoId}`"
+              width="360"
+              height="360"
+              style="object-fit: contain;"
+            >
+            <v-avatar v-else size="90" class="brand-logo mb-6">
               <v-icon
-                v-else
-                size="50"
+                size="200"
               >
                 mdi-cpu
               </v-icon>
@@ -27,13 +27,9 @@
 
             <div class="feature-list">
               <div class="feature-item">
-                <v-icon>mdi-shield-check</v-icon>
-                <span>最佳討論平台</span>
-              </div>
-
-              <div class="feature-item">
-                <v-icon>mdi-database-check</v-icon>
-                <span>最棒使用者體驗</span>
+                <span class="description">
+                  {{ configStore.settings.web_site_description }}
+                </span>
               </div>
             </div>
           </div>
@@ -131,7 +127,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import httpClient from "@/services/httpClient";
 import { useAuthStore } from "@/stores/auth";
@@ -147,7 +143,21 @@ const configStore = useConfigStore()
 //先等待configStore loading完成
 onMounted(async () => {
   await configStore.loadSettings()
-  console.log(configStore.settings.login_logo);
+})
+
+const loginLogoId = computed(() => {
+  const value = configStore.settings.login_logo
+
+  if (!value) {
+    return null
+  }
+
+  try {
+    const fileIds = JSON.parse(value)
+    return fileIds[0] || null
+  } catch {
+    return null
+  }
 })
 
 // ========================

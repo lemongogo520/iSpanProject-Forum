@@ -53,8 +53,10 @@
             </div>
 
             <div class="setting-item">
-              <label>登入頁 Logo</label>
-
+              <label>登入頁 Logo
+                <br/>
+                <span style="color: blue">(建議上傳360x360圖片)</span>
+              </label>
               <FileUpload
                 v-model:files="dialogData"
                 :allowed-extensions="['jpg', 'jpeg']"
@@ -250,14 +252,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-
 import Sidebar from '@/components/config/ConfigSidebar.vue'
-import { configService } from '@/services/configService'
 import FileUpload from '@/components/file/FileUpload.vue'
 import fileService, { fileModule } from '@/services/uploadFileService'
+import { useConfigStore } from '@/stores/config'
 
 const currentTab = ref('basic')
 const saving = ref(false)
+const configStore = useConfigStore();
 
 // FileUpload 使用的檔案資料
 const dialogData = ref([])
@@ -398,7 +400,7 @@ const bindSettings = (settings) => {
 // 取得設定資料
 const loadSettings = async () => {
   try {
-    const settings = await configService.getSettings()
+    const settings = await configStore.loadSettings()
     bindSettings(settings)
     await loadLoginLogo()
 
@@ -549,10 +551,10 @@ const saveSettings = async () => {
 
     const saveData = getSaveSettings()
 
-    const settings = await configService.saveSettings(saveData)
+    await configStore.saveSettings(saveData)
 
     // 重新 bind API 回傳資料
-    bindSettings(settings)
+    bindSettings(await configStore.loadSettings())
     await loadLoginLogo()
 
     const currentSettings = getCurrentSettings()

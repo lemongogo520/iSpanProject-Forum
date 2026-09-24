@@ -119,3 +119,9 @@
     border-radius: 20px !important;
   }
 }
+
+.description {
+  white-space: pre-line;
+  text-align: left;
+  display: block;
+}

@@ -138,6 +138,26 @@ public class PostService {
 
 	}
 
+	// 查詢全站最新文章
+	@Transactional(readOnly = true)
+	public List<LatestPostDTO> findLatestPosts(int limit) {
+		int safeLimit = Math.max(1, Math.min(limit, 20));
+		Pageable pageable = PageRequest.of(0, safeLimit);
+
+		return postRepo
+				.findByIsDeletedFalseOrderByCreateTimeDescIdDesc(pageable)
+				.stream()
+				.map(post -> new LatestPostDTO(
+						post.getId(),
+						post.getTitle(),
+						post.getPostType(),
+						post.getBoard().getId(),
+						post.getBoard().getName(),
+						post.getUsers().getAccount(),
+						post.getCreateTime()))
+				.toList();
+	}
+
 	// 新增貼文
 	public Posts create(Posts newPost, UUID userId) {
 
@@ -493,7 +513,7 @@ public class PostService {
 			// 只允許 uploads/img 中指定格式的檔案
 			boolean validPath = path != null
 					&& path.matches(
-							"/uploads/img/[0-9a-fA-F-]+\\.(jpg|jpeg|png|gif|webp)");
+							"/uploads/img/[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|gif|webp)");
 
 			if (!validScheme
 					|| !validHost

@@ -21,6 +21,26 @@ export const useFriendStore = defineStore("friend", () => {
     selectedFriendId.value = userId;
   };
 
+  // 查使用者目前關係
+  const friendIds = computed(() => new Set(friendList.value.map((f) => f.userId)));
+  const sentByUser = computed(
+    () => new Map(sendRequestList.value.map((r) => [r.friend?.userId, r]))
+  );
+  const receivedByUser = computed(
+    () => new Map(requestList.value.map((r) => [r.friend?.userId, r]))
+  );
+  const relationOf = (userId, myId) => {
+    if (!userId) return { status: "unknown" };
+    if (userId === myId) return { status: "self" };
+    if (friendIds.value.has(userId)) return { status: "friend" };
+    const sent = sentByUser.value.get(userId);
+    if (sent) return { status: "sent", friendshipId: sent.id };
+    const received = receivedByUser.value.get(userId);
+    if (received) return { status: "received", friendshipId: received.id };
+    console.log("relationOf");
+    return { status: "none" };
+  }
+  // ============================列表===============================
   // 取得好友列表
   const getFriendList = async () => {
     loading.value = true;
@@ -57,7 +77,7 @@ export const useFriendStore = defineStore("friend", () => {
     }
 
   };
-
+  // =========================對好友邀請==================================
   // 接受好友邀請
   const acceptFriendRequest = async (friendshipId) => {
     processing.value[friendshipId] = true;
@@ -85,7 +105,7 @@ export const useFriendStore = defineStore("friend", () => {
     }
   };
 
-
+  // =========================對使用者==================================
 
   // 寄出好友邀請
   const sendFriendRequest = async (targetUserId) => {
@@ -99,6 +119,7 @@ export const useFriendStore = defineStore("friend", () => {
     }
   };
 
+  // 取消寄送好友邀請
   const cancelFriendRequest = async (friendshipId) => {
     processing.value[friendshipId] = true;
     try {
@@ -111,25 +132,26 @@ export const useFriendStore = defineStore("friend", () => {
       delete processing.value[friendshipId];
     }
   }
-
+  // ===========================================================
   // 重新刷新好友列表
   const refreshFriendData = () =>
     Promise.all([getFriendList(), getRequestList(), getSendRequestList()]);
 
   const reset = () => {
-  friendList.value = [];
-  requestList.value = [];
-  sendRequestList.value = [];
-  selectedFriendId.value = null;
-  processing.value = {};
-  error.value = null;
-};
+    friendList.value = [];
+    requestList.value = [];
+    sendRequestList.value = [];
+    selectedFriendId.value = null;
+    processing.value = {};
+    error.value = null;
+  };
 
   return {
     friendList, requestList, sendRequestList,
     selectedFriendId, selectedFriend,
     loading, processing, error,
 
+    relationOf,
     selectFriend,
     getFriendList, getRequestList, getSendRequestList,
     acceptFriendRequest, rejectFriendRequest,

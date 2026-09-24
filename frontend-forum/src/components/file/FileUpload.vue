@@ -2,6 +2,8 @@
   <div>
     <v-btn
       prepend-icon="mdi-upload"
+      class="upload-btn"
+      :disabled="fileList.length >= props.maxFiles"
       @click="openFileSelector"
     >
       上傳檔案
@@ -18,10 +20,22 @@
 
     <div
       v-for="(item, index) in fileList"
-      :key="index"
+      :key="item.fileId || item.previewUrl || index"
       class="mt-3"
     >
+      <!-- 上傳中 -->
       <div v-if="item.uploading">
+        <div class="d-flex justify-space-between align-center">
+          <span>{{ item.name }}</span>
+
+          <v-btn
+            icon="mdi-close"
+            size="small"
+            variant="text"
+            @click="removeFile(index)"
+          />
+        </div>
+
         <div class="d-flex justify-space-between">
           <span>{{ item.name }}</span>
           <span>{{ item.progress }}%</span>
@@ -33,19 +47,33 @@
         />
       </div>
 
-      <div v-else-if="item.uploaded"
-        class="d-flex align-center">
+      <!-- 已完成 -->
+      <div
+        v-else-if="item.uploaded"
+        class="d-flex align-center"
+      >
         <img
-        v-if="['jpg', 'jpeg', 'png'].includes(item.extension)"
-        :src="item.url"
-        style="max-width: 50px; cursor: pointer;"
-        @click="openFile(item)"
-        />
+          v-if="['jpg', 'jpeg', 'png'].includes(item.extension)"
+          :src="item.url || item.previewUrl"
+          style="max-width: 50px; max-height: 50px; cursor: pointer; object-fit: contain;"
+          @click="openFile(item)"
+        >
 
-        <a href="#"
-          @click.prevent="openFile(item)">
+        <a
+          href="#"
+          class="ml-2"
+          @click.prevent="openFile(item)"
+        >
           {{ item.name }}
         </a>
+
+        <v-btn
+          icon="mdi-close"
+          size="small"
+          variant="text"
+          class="ml-2"
+          @click="removeFile(index)"
+        />
       </div>
     </div>
   </div>
@@ -66,16 +94,25 @@ const props = defineProps({
   multiple: {
     type: Boolean,
     default: true
+  },
+  maxFiles: {
+    type: Number,
+    default: 1
   }
 })
 
-const emit = defineEmits(['upload-complete'])
+const emit = defineEmits([
+  'update:files',
+  'upload-complete',
+  'remove'
+])
 
 const fileInput = ref(null)
 const fileList = ref([])
 
 const openFileSelector = () => {
-  fileInput.value.click()
+  if (fileList.value.length >= props.maxFiles) return
+  fileInput.value?.click()
 }
 
 const getExtension = (fileName) => {
@@ -84,7 +121,17 @@ const getExtension = (fileName) => {
 }
 
 const selectFiles = (event) => {
-  const selectedFiles = Array.from(event.target.files)
+  let selectedFiles = Array.from(event.target.files)
+
+  const remainingCount = props.maxFiles - fileList.value.length
+
+  if (remainingCount <= 0) {
+    event.target.value = ''
+    return
+  }
+
+  // 超過剩餘數量時，只取可以容納的數量
+  selectedFiles = selectedFiles.slice(0, remainingCount)
 
   selectedFiles.forEach(file => {
     const extension = getExtension(file.name)
@@ -94,21 +141,25 @@ const selectFiles = (event) => {
     }
 
     const fileItem = {
-        fileId: null,
-        file,
-        name: file.name,
-        extension,
-        progress: 0,
-        uploading: true,
-        uploaded: false,
-        previewUrl: URL.createObjectURL(file)
+      fileId: null,
+      file,
+      name: file.name,
+      extension,
+      progress: 0,
+      uploading: true,
+      uploaded: false,
+      previewUrl: URL.createObjectURL(file),
+      url: null
     }
 
     fileList.value.push(fileItem)
 
     const reactiveFile = fileList.value[fileList.value.length - 1]
+
     simulateUpload(reactiveFile)
   })
+
+  emitFiles()
 
   event.target.value = ''
 }
@@ -131,29 +182,77 @@ const simulateUpload = (fileItem) => {
         extension: fileItem.extension,
         previewUrl: fileItem.previewUrl
       })
+
+      emitFiles()
     }
   }, 100)
 }
 
-const openFile = (fileItem) => {
-  if (!fileItem.previewUrl) return
+const removeFile = (index) => {
+  const fileItem = fileList.value[index]
 
-  window.open(fileItem.previewUrl, '_blank')
+  if (!fileItem) return
+
+  // 如果是新上傳檔案，釋放 Blob URL
+  if (fileItem.previewUrl?.startsWith('blob:')) {
+    URL.revokeObjectURL(fileItem.previewUrl)
+  }
+
+  fileList.value.splice(index, 1)
+
+  // 通知父元件檔案被刪除
+  emit('remove', fileItem)
+
+  // 同步目前檔案清單
+  emitFiles()
+}
+
+const emitFiles = () => {
+  emit(
+    'update:files',
+    fileList.value.map(file => ({
+      fileId: file.fileId,
+      file: file.file,
+      name: file.name,
+      extension: file.extension,
+      previewUrl: file.previewUrl,
+      url: file.url
+    }))
+  )
+}
+
+const openFile = (fileItem) => {
+  const url = fileItem.url || fileItem.previewUrl
+
+  if (!url) return
+
+  window.open(url, '_blank')
 }
 
 const loadExistingFiles = () => {
   fileList.value = props.files.map(file => ({
-    ...file,
+    fileId: file.fileId ?? null,
+    file: file.file ?? null,
+    name: file.name,
+    extension: file.extension ?? getExtension(file.name),
+    progress: 100,
     uploading: false,
     uploaded: true,
-    progress: 100
+    previewUrl: file.previewUrl ?? null,
+    url: file.url ?? (
+      file.fileId
+        ? `/api/file/files/${file.fileId}`
+        : null
+    )
   }))
 }
 
 watch(
   () => props.files,
   loadExistingFiles,
-  { immediate: true }
+  {
+    immediate: true
+  }
 )
 
 onBeforeUnmount(() => {
@@ -165,3 +264,14 @@ onBeforeUnmount(() => {
 })
 </script>
 
+<style scoped>
+.upload-btn {
+  background-color: #2e7d32 !important;
+  color: white !important;
+}
+
+.upload-btn:not(.v-btn--disabled) {
+  background-color: #2e7d32 !important;
+  color: white !important;
+}
+</style>

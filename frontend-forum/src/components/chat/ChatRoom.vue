@@ -2,10 +2,11 @@
     <div class="chat-window"
         :class="{ minimized: chatStore.isMinimized, fullscreen: smAndDown && !chatStore.isMinimized }">
         <header class="cw-header" @click="chatStore.toggleMinimize()">
+            <v-btn icon="mdi-arrow-expand" size="x-small" variant="text" title="展開為全頁" @click.stop="expand" />
             <span class="cw-title">{{ conversation?.title ?? "對話" }}</span>
 
             <v-badge v-if="chatStore.isMinimized && conversation?.unreadCount" :content="conversation.unreadCount"
-                color="error" inline />
+                color="#e8806f" inline />
 
             <v-btn :icon="chatStore.isMinimized ? 'mdi-chevron-up' : 'mdi-minus'" size="x-small" variant="text"
                 @click.stop="chatStore.toggleMinimize()" />
@@ -26,6 +27,14 @@ import { useChatStore } from "@/stores/conversation";
 import { useMessageStore } from "@/stores/message";
 import MessageList from "@/components/chat/MessageList.vue";
 import MessageInput from "@/components/chat/MessageInput.vue";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
+const expand = () => {
+    sessionStorage.setItem("chatReturnTo", route.fullPath);
+    router.push(`/chat/${props.conversationId}`);
+};
+
 
 const props = defineProps({
     conversationId: { type: Number, required: true },
@@ -58,12 +67,14 @@ watch(
 .chat-window {
     width: 340px;
     height: 500px;
+    max-height: calc(100dvh - 64px - 16px);
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    background: rgb(var(--v-theme-surface));
-    border: 1px solid rgb(var(--v-border-color), var(--v-border-opacity));
-    border-radius: 8px 8px 0 0;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 12px 32px var(--color-shadow);
     overflow: hidden;
 }
 
@@ -73,9 +84,12 @@ watch(
 
 .chat-window.fullscreen {
     position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    top: var(--v-layout-top, 64px);
+    bottom: 0;
+    left: 0;
+    right: 70px;
+    width: auto;
+    height: auto;
     border-radius: 0;
 }
 
@@ -87,8 +101,8 @@ watch(
     flex-shrink: 0;
     padding: 0 4px 0 12px;
     cursor: pointer;
-    background: rgb(var(--v-theme-primary));
-    color: rgb(var(--v-theme-on-primary));
+    background: var(--color-primary-deep);
+    color: #ffffff;
 }
 
 .cw-title {

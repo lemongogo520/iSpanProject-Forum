@@ -3,8 +3,12 @@
     <div v-if="chatStore.loadingOlder" class="loading-older">
       <v-progress-circular size="20" width="2" indeterminate class="mt-1" />
     </div>
-
-    <MessageItem v-for="message in messages" :key="message.clientMsgId ?? m.id" :message="message" :conversationId = "conversationId"/>
+    <template v-for="(m, i) in messages" :key="m.clientMsgId ?? m.id">
+      <div v-if="!isSameDay(messages[i - 1]?.createTime, m.createTime)" class="date-divider">
+        <span>{{ dateLabel(m.createTime) }}</span>
+      </div>
+      <MessageItem :message="m" :conversationId="conversationId" />
+    </template>
 
     <div v-if="!messages.length && !messageStore.loading" class="empty">
       開始對話吧
@@ -16,6 +20,7 @@ import { computed, nextTick, ref, watch, onMounted } from "vue";
 import { useMessageStore } from "@/stores/message";
 import { useChatStore } from "@/stores/conversation.js";
 import MessageItem from "@/components/chat/MessageItem.vue";
+import { isSameDay, dateLabel } from "@/utils/time"
 
 const props = defineProps({
   conversationId: {
@@ -82,6 +87,7 @@ const onScroll = async () => {
   flex-direction: column;
   gap: 6px;
   position: relative;
+  background: var(--color-background-light);
 }
 
 .loading-older {
@@ -98,5 +104,19 @@ const onScroll = async () => {
   margin: auto;
   color: rgb(var(--v-theme-on-surface-variant));
   font-size: 0.85rem;
+}
+
+.date-divider {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.date-divider span {
+  font-size: 0.7rem;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  color: rgba(var(--v-theme-on-surface), 0.6);
 }
 </style>

@@ -16,6 +16,12 @@ export default defineConfig({
     warmup: {
       clientFiles: ["./src/views/**/*.vue", "./src/components/**/*.vue"],
     },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
   },
   resolve: {
     alias: {

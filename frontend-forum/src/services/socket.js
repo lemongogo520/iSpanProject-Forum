@@ -14,7 +14,7 @@ export function connectSocket({ onMessage, onReconnect, onGiveUp } = {}) {
         heartbeatIncoming: 10000,
         heartbeatOutgoing: 10000,
         // debug: (msg) => { },
-        debug: (msg) => console.log("[STOMP]", msg),
+        // debug: (msg) => console.log("[STOMP]", msg),
         onConnect: () => {
             failures = 0;
             client.subscribe("/user/queue/messages", (frame) => {

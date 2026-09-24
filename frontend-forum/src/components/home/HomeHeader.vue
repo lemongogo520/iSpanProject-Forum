@@ -8,6 +8,8 @@ import { userService } from "@/services/userService";
 import { useAuthStore } from "@/stores/auth";
 import { useDisplay } from "vuetify";
 import MessageMenu from "../chat/MessageMenu.vue";
+import { useConfigStore } from '@/stores/config'
+
 
 const router = useRouter();
 const route = useRoute();
@@ -17,6 +19,7 @@ const forumCategories = ref([]);
 const userDetailDialog = ref(false);
 const userStore = useUserStore();
 const authStore = useAuthStore();
+const configStore = useConfigStore();
 
 const isNavbarCompact = ref(false);
 let lastScrollY = 0;
@@ -180,6 +183,8 @@ onMounted(async () => {
     checkUserDetail(),
     fetchForumMenu(),
   ]);
+
+  await configStore.loadSettings()
 });
 
 onBeforeUnmount(() => {
@@ -208,7 +213,7 @@ onBeforeUnmount(() => {
         class="brand"
         @click="goTo('/home')"
       >
-        xx論壇
+        {{ configStore.settings.web_site_name }}
       </span>
 
       <!-- 桌面版主導覽 -->

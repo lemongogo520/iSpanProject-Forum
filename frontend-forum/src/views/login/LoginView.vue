@@ -125,13 +125,18 @@ import { useRouter } from "vue-router";
 import httpClient from "@/services/httpClient";
 import { useAuthStore } from "@/stores/auth";
 import { useUserStore } from "@/stores/user";
-import { useConfigStore } from '@/stores/config'
+import { useConfigStore } from '@/stores/config';
 
 
 const authStore = useAuthStore();
 const router = useRouter();
 const userStore = useUserStore();
 const configStore = useConfigStore()
+
+//先等待configStore loading完成
+onMounted(async () => {
+  await configStore.loadSettings()
+})
 
 // ========================
 // 表單資料

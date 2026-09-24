@@ -21,7 +21,10 @@ export const useConfigStore = defineStore('config', () => {
   const refreshSettings = async () => {
     const data = await configService.getSettings()
 
-    settings.value = data
+    settings.value = Object.fromEntries(
+      data.map(item => [item.item, item.value])
+    )
+
     loaded.value = true
   }
 

@@ -1,4 +1,5 @@
 <template>
+  <div class="forum-page">
   <v-container fluid class="board-container py-8">
     <!-- 返回 -->
     <v-btn
@@ -177,6 +178,7 @@
       </div>
     </template>
   </v-container>
+  </div>
 </template>
 
 <script setup>
@@ -411,6 +413,10 @@ onMounted(() => {
 });
 </script>
 <style scoped>
+.forum-page {
+  min-height: 100vh;
+  background: var(--forum-page-bg);
+}
 .board-container {
   width: 100%;
   max-width: 1680px;
@@ -466,70 +472,27 @@ onMounted(() => {
     position: static;
   }
 }
-.post-card {
-  cursor: pointer;
-  background-color: #ffffff;
-  border: 1px solid #e4e7ec;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.post-card:hover {
-  transform: translateY(-2px);
-  border-color: #90caf9;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 10%);
-}
-.post-meta {
-  color: #757575;
-  font-size: 13px;
-}
-
-.post-open-icon {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  color: #1976d2;
-  background-color: #e3f2fd;
-  border-radius: 50%;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.post-card:hover .post-open-icon {
-  color: #ffffff;
-  background-color: #1976d2;
-  transform: translateX(3px);
-}
-
 @media (max-width: 600px) {
   .post-title {
     font-size: 15px;
   }
-
-  .post-meta {
-    flex-wrap: wrap;
-    gap: 8px !important;
-  }
 }
 .forum-post {
   cursor: pointer;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+  background-color: var(--forum-card-bg);
+  border: 1px solid var(--forum-border);
   transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
     background-color 0.2s ease,
     border-color 0.2s ease;
 }
 
 .forum-post:hover {
-  background-color: #f8fbff;
+  transform: translateY(-2px);
+  background-color: var(--forum-hover-bg);
   border-color: #90caf9;
+  box-shadow: 0 8px 20px rgba(25, 118, 210, 0.1);
 }
 
 .post-row {

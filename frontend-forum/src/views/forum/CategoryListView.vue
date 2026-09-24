@@ -1,6 +1,6 @@
 <template>
   <div class="category-page">
-    <v-container class="py-8">
+    <v-container class="forum-container py-6">
       <!-- 頁面標題 -->
       <header class="page-heading">
         <h1 class="text-h4 font-weight-bold mb-3">探索論壇</h1>
@@ -10,19 +10,7 @@
       </header>
 
       <div class="forum-layout">
-        <!-- 左側搜尋與分類導覽 -->
-        <ForumSidebar
-          v-model:keyword="searchKeyword"
-          :categories="categories"
-          :loading="loading"
-          :search-loading="searchLoading"
-          :get-category-icon="getCategoryIcon"
-          @search="handleSearch"
-          @clear="clearSearch"
-          @select-category="scrollToCategory"
-        />
-
-        <!-- 右側分類、看板與搜尋結果 -->
+        <!-- 左側分類、看板與搜尋結果 -->
         <div class="forum-content">
           <!-- 文章搜尋結果 -->
           <PostSearchResults
@@ -70,6 +58,17 @@
             </p>
           </div>
         </div>
+        <!-- 右側搜尋與分類導覽 -->
+        <ForumSidebar
+          v-model:keyword="searchKeyword"
+          :categories="categories"
+          :loading="loading"
+          :search-loading="searchLoading"
+          :get-category-icon="getCategoryIcon"
+          @search="handleSearch"
+          @clear="clearSearch"
+          @select-category="scrollToCategory"
+        />
       </div>
     </v-container>
   </div>
@@ -300,26 +299,30 @@ onMounted(fetchData);
 
 <style scoped>
 .category-page {
-  min-height: 100%;
-  background: #f5f7fa;
+  min-height: 100vh;
+  background: var(--forum-page-bg);
 }
 
 .page-heading {
-  margin-bottom: 36px;
+  margin-bottom: 24px;
 }
 
 /* 左側固定 200px，右側使用剩餘空間 */
 .forum-layout {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 300px;
   align-items: start;
-  gap: 24px;
+  gap: 16px;
 }
 
 .forum-content {
+  width: 100%;
   min-width: 0;
 }
-
+.forum-container {
+  width: 100%;
+  max-width: 1440px;
+}
 /* 平板與手機將分類導覽移到上方 */
 @media (max-width: 959px) {
   .forum-layout {

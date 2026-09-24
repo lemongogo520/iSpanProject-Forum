@@ -153,7 +153,7 @@ const generateTestData = async () => {
     const postsCreated = response.data.postsCreated ?? 0;
     const commentsCreated = response.data.commentsCreated ?? 0;
     if (postsCreated === 0) {
-      showMessage("假資料已存在，沒有新增重複文章", "info");
+      showMessage("沒有找到可建立假資料的目標討論版", "info");
       return;
     }
     showMessage(

@@ -33,6 +33,12 @@ body {
   --color-icon: #79a9cf;
 
   --color-border: #dcecf8;
+
+  --forum-page-bg: #ECF5FF;
+  --forum-card-bg: #ffffff;
+  --forum-soft-bg: #f4f8fe;
+  --forum-hover-bg: #eff6ff;
+  --forum-border: #e3e8ef;
 }
 
 

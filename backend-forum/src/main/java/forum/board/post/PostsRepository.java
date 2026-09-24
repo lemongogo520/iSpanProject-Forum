@@ -84,5 +84,8 @@ public interface PostsRepository extends JpaRepository<Posts, Integer> {
 
 	boolean existsByBoard_IdAndTitle(Integer boardId, String title);
 
+	List<Posts> findByIsDeletedFalseOrderByCreateTimeDescIdDesc(
+        Pageable pageable);
+
 
 }

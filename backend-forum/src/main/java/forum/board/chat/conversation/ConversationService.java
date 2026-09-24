@@ -153,19 +153,11 @@ public class ConversationService {
     }
 
     // 更新閱讀時間
+    @Transactional
     public void markAsRead(Long conversationId, UUID userId) {
-        // 找使用者
-        Users user = uRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
-        // 找對話
-        ConversationEntity c = cRepo.findById(conversationId)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到該對話"));
-        // 找到對應的member
-        ConversationMemberEntity member = cmRepo.findByConversationIdAndUserId(c.getId(), user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("不是此對話的成員"));
-        // 更新最後閱讀時間
-        member.setLastReadTime(Instant.now());
-        cmRepo.save(member);
+        // 找到對應的member 更新最後閱讀時間
+        cmRepo.findByConversationIdAndUserId(conversationId, userId)
+                .ifPresent(m -> m.setLastReadTime(Instant.now()));
 
     }
 
@@ -189,7 +181,7 @@ public class ConversationService {
 
     // 取消訂閱看板
     @Transactional
-    public ConversationResponseDTO unsubscribeBoard(Integer boardId, UUID userId) {  
+    public ConversationResponseDTO unsubscribeBoard(Integer boardId, UUID userId) {
         Board b = bRepo.findById(boardId).orElseThrow(() -> new ResourceNotFoundException("找不到看板"));
         // 找到看板聊天室 若不存在就建立
         ConversationEntity c = cRepo.findByBoard(b).orElseGet(() -> createBoardConversation(b));

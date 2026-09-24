@@ -1,57 +1,39 @@
 <template>
-  <div
-    class="chat-window"
-    :class="{
-      minimized: chatStore.isMinimized,
-      fullscreen: smAndDown && !chatStore.isMinimized,
-    }"
-  >
+  <div class="chat-window" :class="{
+    minimized: chatStore.isMinimized,
+    fullscreen: smAndDown && !chatStore.isMinimized,
+  }">
     <header class="cw-header" @click="chatStore.toggleMinimize()">
-      <v-btn
-        icon="mdi-arrow-expand"
-        size="x-small"
-        variant="text"
-        title="展開為全頁"
-        @click.stop="expand"
-      />
+      <v-btn v-if="!isBoard" icon="mdi-arrow-expand" size="x-small" variant="text" title="展開為全頁" @click.stop="expand" />
       <span class="cw-title">{{ conversation?.title ?? "對話" }}</span>
 
-      <v-badge
-        v-if="chatStore.isMinimized && conversation?.unreadCount"
-        :content="conversation.unreadCount"
-        color="#e8806f"
-        inline
-      />
+      <v-badge v-if="chatStore.isMinimized && conversation?.unreadCount" :content="conversation.unreadCount"
+        color="#e8806f" inline />
 
-      <v-btn
-        :icon="chatStore.isMinimized ? 'mdi-chevron-up' : 'mdi-minus'"
-        size="x-small"
-        variant="text"
-        @click.stop="chatStore.toggleMinimize()"
-      />
-      <v-btn
-        icon="mdi-close"
-        size="x-small"
-        variant="text"
-        @click.stop="chatStore.closeChat()"
-      />
+      <BoardSubscribeButton v-if="isBoard" :board-id="conversation.boardId" :icon-only="true" />
+
+      <v-btn :icon="chatStore.isMinimized ? 'mdi-chevron-up' : 'mdi-minus'" size="x-small" variant="text"
+        @click.stop="chatStore.toggleMinimize()" />
+      <v-btn icon="mdi-close" size="x-small" variant="text" @click.stop="chatStore.closeChat()" />
     </header>
 
     <template v-if="!chatStore.isMinimized">
-      <MessageList :conversationId="conversationId" />
+      <MessageList :conversationId="conversationId" :show-sender="isBoard" />
       <MessageInput :conversationId="conversationId" />
     </template>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from "vue";
+import { computed, onMounted, watch, ref, onUnmounted } from "vue";
 import { useDisplay } from "vuetify";
 import { useChatStore } from "@/stores/conversation";
 import { useMessageStore } from "@/stores/message";
 import MessageList from "@/components/chat/MessageList.vue";
 import MessageInput from "@/components/chat/MessageInput.vue";
 import { useRoute, useRouter } from "vue-router";
+import { subscribeConversation, unsubscribeConversation } from "@/services/socket";
+import BoardSubscribeButton from "@/components/chat/BoardSubscribeButton.vue";
 const router = useRouter();
 const route = useRoute();
 const props = defineProps({
@@ -61,30 +43,36 @@ const chatStore = useChatStore();
 const messageStore = useMessageStore();
 const { smAndDown } = useDisplay();
 
-const conversation = computed(
-  () =>
-    chatStore.conversationList.find((c) => c.id === props.conversationId) ??
-    null,
-);
-
+const conversation = computed(() => chatStore.findConversation(props.conversationId));
 const isBoard = computed(() => conversation.value?.type === "BOARD");
 const subBusy = ref(false);
 
+
+// 展開成整頁聊天視窗
 const expand = () => {
   sessionStorage.setItem("chatReturnTo", route.fullPath);
   router.push(`/chat/${props.conversationId}`);
 };
 
-
-
 onMounted(async () => {
+  if (isBoard.value) subscribeConversation(props.conversationId);   // STOMP訂閱
   await messageStore.getMessages(props.conversationId);
   if (!chatStore.isMinimized) {
     await messageStore.markAsRead(props.conversationId);
   }
 });
 
-// 從最小化展開時才標已讀
+onUnmounted(() => {
+  if (isBoard.value) unsubscribeConversation(props.conversationId); // 離開對話就不會再收到此對話通知
+
+  // 最小化狀態下使用者其實沒看到訊息，不標已讀
+  if (!chatStore.isMinimized) {
+    messageStore.markAsRead(props.conversationId);
+  }
+});
+
+
+// 不是最小化才標已讀
 watch(
   () => chatStore.isMinimized,
   (min) => {

@@ -12,7 +12,12 @@
         <v-card class="chat-main auth-card" rounded="lg" elevation="6">
             <template v-if="cid">
                 <div class="chat-main-head">
-                    <DollAvatar :userId="conversation?.targetUserId" :scale="1.5" :size="60"></DollAvatar>
+                    <DollAvatar v-if="conversation?.type === 'DIRECT'" :userId="conversation?.targetUserId" :scale="1.5"
+                        :size="60">
+                    </DollAvatar>
+                    <v-avatar v-else size="48" color="primary" variant="tonal">
+                        <v-icon>mdi-forum</v-icon>
+                    </v-avatar>
                     <span class="font-weight-bold text-truncate">{{ conversation?.title ?? "對話" }}</span>
                     <v-spacer />
                     <v-btn icon="mdi-arrow-collapse" size="small" variant="text" title="回到小視窗" @click="collapse" />
@@ -35,8 +40,10 @@ import MessageList from '@/components/chat/MessageList.vue';
 import DollAvatar from '@/components/doll/DollAvatar.vue';
 import { useChatStore } from '@/stores/conversation';
 import { useMessageStore } from '@/stores/message';
-import { computed, watch } from 'vue';
+import { computed, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { subscribeConversation, unsubscribeConversation } from "@/services/socket";
+
 
 const props = defineProps({
     conversationId: { type: String, default: "" },
@@ -51,24 +58,28 @@ const cid = computed(() => (props.conversationId ? Number(props.conversationId) 
 const conversation = computed(
     () => chatStore.conversationList.find((c) => c.id === cid.value) ?? null
 );
+const isBoard = computed(() => conversation.value?.type === "BOARD");
 
 watch(
-    cid,
-    (id) => {
-        console.log(id);
-        if (!id) return;
-        chatStore.openChat(id);
-        messageStore.getMessages(id);
-        messageStore.markAsRead(id);
-    },
-    { immediate: true }
+    () => [cid.value, isBoard.value],
+    ([id, board], [oldId]) => {
+        if (oldId) unsubscribeConversation(oldId);
+        if (id && board) subscribeConversation(id);
+    }
 );
 
 const collapse = () => {
-  const back = sessionStorage.getItem("chatReturnTo");
-  sessionStorage.removeItem("chatReturnTo");
-  router.push(back ?? "/");
+    const back = sessionStorage.getItem("chatReturnTo");
+    sessionStorage.removeItem("chatReturnTo");
+    router.push(back ?? "/");
 };
+
+onUnmounted(() => {
+    if (cid.value) {
+        unsubscribeConversation(cid.value);
+        messageStore.markAsRead(cid.value);
+    }
+});
 </script>
 <style scoped>
 .chat-page {

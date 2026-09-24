@@ -12,7 +12,7 @@ export const useChatStore = defineStore("chat", () => {
   const loading = ref(false);
   const error = ref(null);
 
-  // 單一資料來源：從 list 取出
+  // 
   const currentConversation = computed(() => {
     // 先從私訊列表及有訂閱看板找
     const inList = conversationList.value.find(
@@ -20,10 +20,17 @@ export const useChatStore = defineStore("chat", () => {
     );
     if (inList) return inList;
     //未訂閱的看板
-    return boardConversation.value?.id === currentConversationId.value
-      ? boardConversation.value
-      : null;
+    return boardConversation.value?.id === currentConversationId.value ?
+      boardConversation.value : null;
   });
+
+  const findConversation = (id) => {
+    const n = Number(id);
+    return (
+      conversationList.value.find((c) => c.id === n) ??
+      (boardConversation.value?.id === n ? boardConversation.value : null)
+    );
+  };
 
   // 取得此使用者所有conversation(私訊、有訂閱的看板)
   const getConversations = async () => {
@@ -84,7 +91,11 @@ export const useChatStore = defineStore("chat", () => {
       console.error("openChat 需要對話 id，收到：", conversationId);
       return;
     }
-    boardConversation.value = dto;
+    if (dto) {
+      boardConversation.value = dto;
+    } else if (boardConversation.value?.id !== id) {
+      boardConversation.value = null;
+    }
     currentConversationId.value = id;
     isMinimized.value = false;
     persistWindow();
@@ -129,7 +140,7 @@ export const useChatStore = defineStore("chat", () => {
     } catch (e) {
       error.value = "建立私訊失敗";
       console.error("建立私訊失敗", e);
-      throw error;
+      throw e;
     }
   };
 
@@ -143,37 +154,57 @@ export const useChatStore = defineStore("chat", () => {
     } catch (e) {
       error.value = "取得對話失敗";
       console.error("取得對話失敗", e);
-      throw error;
+      throw e;
+    }
+  };
+  // 看板聊天室展開成view的時候要重抓
+  const ensureConversation = async (conversationId) => {
+    const id = Number(conversationId);
+    const known = findConversation(id);
+    if (known) return known;
+
+    try {
+      const { data } = await httpClient.get(`/api/chat/conversations/${id}`);
+      if (data.subscribed || data.type === "DIRECT") applyConversation(data);
+      else boardConversation.value = data;
+      return data;
+    } catch (e) {
+      console.error("取得對話失敗", e);
+      return null;
     }
   };
 
   const subscribeBoard = async (boardId) => {
     try {
       const { data } = await httpClient.post(
-        `/api/chat/boards/${boardId}}/subscribe`,
+        `/api/chat/boards/${boardId}/subscribe`,
       );
       applyConversation(data);
       return data;
-    } catch (error) {
+    } catch (e) {
       error.value = "訂閱失敗";
       console.error("訂閱失敗", e);
-      throw error;
+      throw e;
     }
   };
 
   const unsubscribeBoard = async (boardId) => {
     try {
       const { data } = await httpClient.delete(
-        `/api/chat/boards/${boardId}}/unsubscribe`,
+        `/api/chat/boards/${boardId}/unsubscribe`,
       );
       applyConversation(data);
       return data;
-    } catch (error) {
+    } catch (e) {
       error.value = "取消訂閱失敗";
       console.error("取消訂閱失敗", e);
-      throw error;
+      throw e;
     }
   };
+
+  const subscribedBoardIds = computed(
+    () => new Set(conversationList.value.filter((c) => c.boardId).map((c) => c.boardId))
+  );
 
   // 把後端回傳的 DTO 寫回列表或暫存
   // 更新訂閱狀態 或是 有新訊息
@@ -243,7 +274,9 @@ export const useChatStore = defineStore("chat", () => {
     loading,
     error,
     totalUnread,
+    subscribedBoardIds,
 
+    findConversation, // 取得目前對話
     getConversations, // 取得此使用者所有conversation(私訊、有訂閱的看板)
     directConversation, // 建立或取得私訊對話
     getboardConversation, // 取得看板聊天室

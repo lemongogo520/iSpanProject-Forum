@@ -1,8 +1,6 @@
 <template>
   <div>
-    <div class="text-subtitle-1 text-medium-emphasis mb-2">
-      文章內容
-    </div>
+    <div class="text-subtitle-1 text-medium-emphasis mb-2">文章內容</div>
 
     <v-sheet border class="rounded-lg mb-6">
       <QuillEditor
@@ -41,18 +39,11 @@ function convertTwitchClipUrl(value) {
     let clipMatch = null;
 
     if (url.hostname === "clips.twitch.tv") {
-      clipMatch = url.pathname.match(
-        /^\/([A-Za-z0-9_-]+)\/?$/,
-      );
+      clipMatch = url.pathname.match(/^\/([A-Za-z0-9_-]+)\/?$/);
     }
 
-    if (
-      url.hostname === "twitch.tv" ||
-      url.hostname === "www.twitch.tv"
-    ) {
-      clipMatch = url.pathname.match(
-        /^\/[^/]+\/clip\/([A-Za-z0-9_-]+)\/?$/,
-      );
+    if (url.hostname === "twitch.tv" || url.hostname === "www.twitch.tv") {
+      clipMatch = url.pathname.match(/^\/[^/]+\/clip\/([A-Za-z0-9_-]+)\/?$/);
     }
 
     if (!clipMatch) {
@@ -93,10 +84,7 @@ function imageHandler() {
   const input = document.createElement("input");
 
   input.setAttribute("type", "file");
-  input.setAttribute(
-    "accept",
-    "image/jpeg,image/png,image/gif,image/webp",
-  );
+  input.setAttribute("accept", "image/jpeg,image/png,image/gif,image/webp");
 
   input.onchange = async () => {
     const file = input.files?.[0];
@@ -122,20 +110,14 @@ function imageHandler() {
       }
 
       if (imageUrl.startsWith("/")) {
-        const backendUrl =
-          import.meta.env.VITE_AXIOS_HTTP_BASEURL;
+        const backendUrl = import.meta.env.VITE_AXIOS_HTTP_BASEURL;
 
         imageUrl = `${backendUrl}${imageUrl}`;
       }
 
       const range = quill.getSelection(true);
 
-      quill.insertEmbed(
-        range.index,
-        "image",
-        imageUrl,
-        "user",
-      );
+      quill.insertEmbed(range.index, "image", imageUrl, "user");
 
       quill.setSelection(range.index + 1);
 
@@ -143,10 +125,7 @@ function imageHandler() {
     } catch (error) {
       console.error("圖片上傳失敗：", error);
 
-      showMessage(
-        error.response?.data ?? "圖片上傳失敗",
-        "error",
-      );
+      showMessage(error.response?.data ?? "圖片上傳失敗", "error");
     }
   };
 
@@ -165,13 +144,7 @@ const editorOptions = {
         [{ list: "ordered" }, { list: "bullet" }],
         [{ color: [] }, { background: [] }],
         [{ align: [] }],
-        [
-          "blockquote",
-          "code-block",
-          "link",
-          "video",
-          "image",
-        ],
+        ["blockquote", "code-block", "link", "video", "image"],
         ["clean"],
       ],
       handlers: {
@@ -197,6 +170,10 @@ const editorOptions = {
 
 :deep(.ql-container.ql-snow) {
   border: none !important;
+}
+/* 中文輸入法組字時，聚焦後先隱藏 placeholder */
+:deep(.ql-editor.ql-blank:focus::before) {
+  display: none;
 }
 
 :deep(.ql-editor iframe.ql-video) {

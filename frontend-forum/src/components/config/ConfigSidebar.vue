@@ -8,11 +8,6 @@
 
     <ul class="menu">
       <li>
-      <RouterLink to="/config/forum-template">
-        論壇初始化
-      </RouterLink>
-      </li>
-      <li>
         <RouterLink to="/config/setting">
           全站設定
         </RouterLink>

@@ -9,22 +9,34 @@
     </div>
 
     <!-- 管理功能分頁 -->
-    <v-tabs v-model="activeTab" color="primary" class="mb-5">
-      <v-tab value="categories">
-        <v-icon icon="mdi-shape-outline" class="me-2" />
-        類別管理
-      </v-tab>
-
-      <v-tab value="boards">
-        <v-icon icon="mdi-forum-outline" class="me-2" />
-        討論版管理
-      </v-tab>
-
-      <v-tab value="moderators">
-        <v-icon icon="mdi-account-tie" class="me-2" />
-        版主管理
-      </v-tab>
-    </v-tabs>
+    <div class="d-flex align-center mb-5">
+      <v-tabs v-model="activeTab" color="primary" class="flex-grow-1">
+        <v-tab value="categories">
+          <v-icon icon="mdi-shape-outline" class="me-2" />
+          類別管理
+        </v-tab>
+        <v-tab value="boards">
+          <v-icon icon="mdi-forum-outline" class="me-2" />
+          討論版管理
+        </v-tab>
+        <v-tab value="moderators">
+          <v-icon icon="mdi-account-tie" class="me-2" />
+          版主管理
+        </v-tab>
+      </v-tabs>
+      <v-btn
+        v-if="isSystemAdmin"
+        color="secondary"
+        variant="elevated"
+        prepend-icon="mdi-database-plus-outline"
+        class="ms-4 flex-shrink-0"
+        :loading="generating"
+        :disabled="generating"
+        @click="generateTestData"
+      >
+        產生假資料
+      </v-btn>
+    </div>
 
     <!-- 管理功能內容 -->
     <v-window v-model="activeTab">
@@ -54,12 +66,20 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import BoardManagement from "@/components/admin/BoardManagement.vue";
 import BoardModeratorManagement from "@/components/admin/BoardModeratorManagement.vue";
 import CategoryManagement from "@/components/admin/CategoryManagement.vue";
 import httpClient from "@/services/httpClient";
+import { useUserStore } from "@/stores/user";
+import { useNotification } from "@/composables/useNotification";
 
+const userStore = useUserStore();
+const { showMessage } = useNotification();
+const generating = ref(false);
+const isSystemAdmin = computed(() => {
+  return Number(userStore.permission) === 1;
+});
 // ======================
 // 管理頁籤狀態
 // ======================
@@ -126,7 +146,26 @@ const handleBoardsUpdated = (updatedBoards) => {
 const handleCategoriesUpdated = (updatedCategories) => {
   categories.value = updatedCategories;
 };
-
+const generateTestData = async () => {
+  generating.value = true;
+  try {
+    const response = await httpClient.post("/api/dev/seed/school-forum");
+    const postsCreated = response.data.postsCreated ?? 0;
+    const commentsCreated = response.data.commentsCreated ?? 0;
+    if (postsCreated === 0) {
+      showMessage("假資料已存在，沒有新增重複文章", "info");
+      return;
+    }
+    showMessage(
+      `建立完成：${postsCreated} 篇文章、${commentsCreated} 則留言`,
+      "success",
+    );
+  } catch (error) {
+    showMessage(error.response?.data?.message || "產生假資料失敗", "error");
+  } finally {
+    generating.value = false;
+  }
+};
 onMounted(() => {
   fetchBoards();
 });

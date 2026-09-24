@@ -1,52 +1,30 @@
 <template>
   <article class="comment-card">
     <div class="comment-layout">
-      <DollAvatar
-        v-if="comment.users?.id"
-        :user-id="comment.users.id"
-        :size="56"
-        :scale="1.8"
-        class="comment-avatar"
-      />
-      <v-avatar
-        v-else
-        size="56"
-        color="light-blue-lighten-4"
-        class="comment-avatar"
-      >
-        <v-icon icon="mdi-account" color="light-blue-darken-2" size="32" />
-      </v-avatar>
-
+      <UserFriendMenu :userId="comment.users?.id">
+        <template #default="{ props }">
+          <DollAvatar v-if="comment.users?.id" :user-id="comment.users.id" :size="56" :scale="1.8"
+            class="comment-avatar" v-bind="props" @click.stop.prevent/>
+          <v-avatar v-else size="56" color="light-blue-lighten-4" class="comment-avatar" v-bind="menuProps"
+            @click.stop.prevent>
+            <v-icon icon="mdi-account" color="light-blue-darken-2" size="32" />
+          </v-avatar>
+        </template>
+      </UserFriendMenu>
       <div class="comment-main">
         <div class="comment-author">{{ getUserName(comment) }}</div>
 
         <!-- 父留言編輯模式 -->
         <template v-if="editingCommentId === comment.id">
-          <v-textarea
-            :model-value="editingContent"
-            label="編輯留言"
-            variant="outlined"
-            rows="3"
-            auto-grow
-            @update:model-value="emit('update:editing-content', $event)"
-          />
+          <v-textarea :model-value="editingContent" label="編輯留言" variant="outlined" rows="3" auto-grow
+            @update:model-value="emit('update:editing-content', $event)" />
 
           <div class="d-flex justify-end ga-2">
-            <v-btn
-              size="small"
-              variant="text"
-              :disabled="commentUpdating"
-              @click="emit('cancel-edit')"
-            >
+            <v-btn size="small" variant="text" :disabled="commentUpdating" @click="emit('cancel-edit')">
               取消
             </v-btn>
-            <v-btn
-              size="small"
-              color="primary"
-              variant="flat"
-              :loading="commentUpdating"
-              @click="emit('update-comment', comment.id, null)"
-            >
+            <v-btn size="small" color="primary" variant="flat" :loading="commentUpdating"
+              @click="emit('update-comment', comment.id, null)">
               儲存
             </v-btn>
           </div>
@@ -54,10 +32,7 @@
 
         <!-- 父留言一般顯示模式 -->
         <template v-else>
-          <div
-            class="comment-content"
-            :class="{ 'deleted-comment': comment.isDeleted }"
-          >
+          <div class="comment-content" :class="{ 'deleted-comment': comment.isDeleted }">
             {{ comment.content }}
           </div>
 
@@ -65,87 +40,42 @@
             <span>{{ formatCommentDate(comment.createTime) }}</span>
 
             <!-- 只有留言作者可以編輯 -->
-            <v-btn
-              v-if="isCommentOwner(comment)"
-              size="small"
-              variant="text"
-              @click.stop="emit('start-edit', comment)"
-            >
+            <v-btn v-if="isCommentOwner(comment)" size="small" variant="text" @click.stop="emit('start-edit', comment)">
               編輯
             </v-btn>
 
             <!-- 留言作者或該版版主可以刪除 -->
-            <v-btn
-              v-if="isCommentOwner(comment) || canModerate"
-              size="small"
-              variant="text"
-              :disabled="deletingCommentId === comment.id"
-              :loading="deletingCommentId === comment.id"
-              @click.stop="
+            <v-btn v-if="isCommentOwner(comment) || canModerate" size="small" variant="text"
+              :disabled="deletingCommentId === comment.id" :loading="deletingCommentId === comment.id" @click.stop="
                 emit('delete-comment', comment.id, null, comment.users?.id)
-              "
-            >
+                ">
               刪除
             </v-btn>
 
-            <v-btn
-              v-if="comment.modifyTime"
-              size="small"
-              variant="text"
-              prepend-icon="mdi-history"
-              @click.stop="emit('show-comment-history', comment.id)"
-            >
+            <v-btn v-if="comment.modifyTime" size="small" variant="text" prepend-icon="mdi-history"
+              @click.stop="emit('show-comment-history', comment.id)">
               編輯紀錄
             </v-btn>
-            <v-btn
-              size="small"
-              variant="text"
-              @click.stop="emit('start-reply', comment.id)"
-            >
+            <v-btn size="small" variant="text" @click.stop="emit('start-reply', comment.id)">
               回覆
             </v-btn>
 
-            <v-btn
-              class="reply-toggle"
-              size="small"
-              variant="text"
-              @click.stop="emit('toggle-replies', comment.id)"
-            >
+            <v-btn class="reply-toggle" size="small" variant="text" @click.stop="emit('toggle-replies', comment.id)">
               {{ expanded ? "收合回覆" : "查看回覆" }}
             </v-btn>
           </div>
 
           <!-- 回覆輸入框 -->
-          <div
-            v-if="!comment.isDeleted && replyingCommentId === comment.id"
-            class="mt-4 ml-6"
-          >
-            <v-textarea
-              :model-value="replyContent"
-              label="回覆這則留言"
-              placeholder="輸入回覆內容..."
-              variant="outlined"
-              rows="2"
-              auto-grow
-              @update:model-value="emit('update:reply-content', $event)"
-            />
+          <div v-if="!comment.isDeleted && replyingCommentId === comment.id" class="mt-4 ml-6">
+            <v-textarea :model-value="replyContent" label="回覆這則留言" placeholder="輸入回覆內容..." variant="outlined" rows="2"
+              auto-grow @update:model-value="emit('update:reply-content', $event)" />
 
             <div class="d-flex justify-end ga-2">
-              <v-btn
-                size="small"
-                variant="text"
-                :disabled="replySubmitting"
-                @click="emit('cancel-reply')"
-              >
+              <v-btn size="small" variant="text" :disabled="replySubmitting" @click="emit('cancel-reply')">
                 取消
               </v-btn>
-              <v-btn
-                size="small"
-                color="primary"
-                variant="flat"
-                :loading="replySubmitting"
-                @click="emit('submit-reply', comment.id)"
-              >
+              <v-btn size="small" color="primary" variant="flat" :loading="replySubmitting"
+                @click="emit('submit-reply', comment.id)">
                 送出回覆
               </v-btn>
             </div>
@@ -155,22 +85,12 @@
           <div v-if="expanded" class="mt-4 ml-6">
             <v-divider class="mb-3" />
 
-            <div
-              v-if="childComments.length === 0"
-              class="text-caption text-grey"
-            >
+            <div v-if="childComments.length === 0" class="text-caption text-grey">
               目前沒有回覆
             </div>
 
-            <div
-              v-for="child in childComments"
-              :key="child.id"
-              class="child-comment">
-              <DollAvatar
-                v-if="child.users?.id"
-                :user-id="child.users.id"
-                :size="44"
-                :scale="1.25"/>
+            <div v-for="child in childComments" :key="child.id" class="child-comment">
+              <DollAvatar v-if="child.users?.id" :user-id="child.users.id" :size="44" :scale="1.25" />
               <v-avatar v-else size="44" color="grey-lighten-3">
                 <v-icon icon="mdi-account" color="grey-darken-1" size="27" />
               </v-avatar>
@@ -179,84 +99,50 @@
                 <div class="comment-author">{{ getUserName(child) }}</div>
 
                 <template v-if="editingCommentId === child.id">
-                  <v-textarea
-                    :model-value="editingContent"
-                    variant="outlined"
-                    rows="2"
-                    auto-grow
-                    hide-details
-                    @update:model-value="emit('update:editing-content', $event)"
-                  />
+                  <v-textarea :model-value="editingContent" variant="outlined" rows="2" auto-grow hide-details
+                    @update:model-value="emit('update:editing-content', $event)" />
                   <div class="d-flex justify-end ga-2 mt-2">
-                    <v-btn
-                      size="small"
-                      variant="text"
-                      :disabled="commentUpdating"
-                      @click="emit('cancel-edit')"
-                    >
+                    <v-btn size="small" variant="text" :disabled="commentUpdating" @click="emit('cancel-edit')">
                       取消
                     </v-btn>
-                    <v-btn
-                      size="small"
-                      color="primary"
-                      variant="flat"
-                      :loading="commentUpdating"
-                      @click="emit('update-comment', child.id, comment.id)"
-                    >
+                    <v-btn size="small" color="primary" variant="flat" :loading="commentUpdating"
+                      @click="emit('update-comment', child.id, comment.id)">
                       儲存
                     </v-btn>
                   </div>
                 </template>
 
                 <template v-else>
-                  <div
-                    class="comment-content child-content"
-                    :class="{ 'deleted-comment': child.isDeleted }"
-                  >
+                  <div class="comment-content child-content" :class="{ 'deleted-comment': child.isDeleted }">
                     {{ child.content }}
                   </div>
                   <div class="comment-actions">
                     <span>{{ formatCommentDate(child.createTime) }}</span>
                     <!-- 只有子留言作者可以編輯 -->
-                    <v-btn
-                      v-if="!child.isDeleted && isCommentOwner(child)"
-                      size="small"
-                      variant="text"
-                      @click.stop="emit('start-edit', child)"
-                    >
+                    <v-btn v-if="!child.isDeleted && isCommentOwner(child)" size="small" variant="text"
+                      @click.stop="emit('start-edit', child)">
                       編輯
                     </v-btn>
 
                     <!-- 子留言作者或該版版主可以刪除 -->
-                    <v-btn
-                      v-if="
-                        !child.isDeleted &&
-                        (isCommentOwner(child) || canModerate)
-                      "
-                      size="small"
-                      variant="text"
-                      :disabled="deletingCommentId === child.id"
-                      :loading="deletingCommentId === child.id"
-                      @click.stop="
+                    <v-btn v-if="
+                      !child.isDeleted &&
+                      (isCommentOwner(child) || canModerate)
+                    " size="small" variant="text" :disabled="deletingCommentId === child.id"
+                      :loading="deletingCommentId === child.id" @click.stop="
                         emit(
                           'delete-comment',
                           child.id,
                           comment.id,
                           child.users?.id,
                         )
-                      "
-                    >
+                        ">
                       刪除
                     </v-btn>
                   </div>
                 </template>
-                <v-btn
-                  v-if="child.modifyTime && !child.isDeleted"
-                  size="small"
-                  variant="text"
-                  prepend-icon="mdi-history"
-                  @click.stop="emit('show-comment-history', child.id)"
-                >
+                <v-btn v-if="child.modifyTime && !child.isDeleted" size="small" variant="text"
+                  prepend-icon="mdi-history" @click.stop="emit('show-comment-history', child.id)">
                   編輯紀錄
                 </v-btn>
               </div>
@@ -270,6 +156,7 @@
 
 <script setup>
 import DollAvatar from "@/components/doll/DollAvatar.vue";
+import UserFriendMenu from "@/components/common/UserFriendMenu.vue";
 
 const props = defineProps({
   comment: { type: Object, required: true },
@@ -335,75 +222,89 @@ const formatCommentDate = (date) => {
 
 <style scoped>
 .comment-card {
-  padding: 20px 4px;
-  border-top: 1px solid var(--forum-border);
+  border-top: 1px solid #e5e5e5;
+  padding: 20px 0 18px;
 }
+
 .comment-layout,
 .child-comment {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
+
 .comment-avatar {
   flex: 0 0 auto;
 }
+
 .comment-main {
   min-width: 0;
   flex: 1;
 }
+
 .comment-author {
   margin-bottom: 5px;
-  color: var(--forum-title);
+  color: #202124;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 500;
 }
+
 .comment-content {
-  color: var(--forum-text);
+  color: #202124;
   font-size: 16px;
   line-height: 1.75;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
+
 .child-content {
   font-size: 15px;
 }
+
 .deleted-comment {
   color: #9e9e9e;
   font-style: italic;
 }
+
 .comment-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 2px;
   min-height: 32px;
-  margin-top: 5px;
-  color: var(--forum-text-muted);
+  margin-top: 3px;
+  color: #757575;
   font-size: 13px;
 }
+
 .comment-actions :deep(.v-btn) {
   min-width: auto;
   padding: 0 7px;
   color: #757575;
   font-size: 13px;
 }
+
 .reply-toggle {
   color: #757575;
   font-size: 13px;
 }
+
 .child-comment {
   padding: 12px 0;
 }
-.child-comment + .child-comment {
+
+.child-comment+.child-comment {
   border-top: 1px solid #eeeeee;
 }
+
 @media (max-width: 600px) {
   .comment-card {
     padding: 16px 0;
   }
+
   .comment-layout {
     gap: 10px;
   }
+
   .comment-content {
     font-size: 15px;
   }

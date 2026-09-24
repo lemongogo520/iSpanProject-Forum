@@ -8,118 +8,113 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+// import org.springframework.web.bind.annotation.RestController;
 
-
-@RestController
+// @RestController
 @RequestMapping("/api/shop")
 public class ShopController {
 
-    private final ShopService shopService;
+        private final ShopService shopService;
 
-    public ShopController(
-            ShopService shopService) {
+        public ShopController(
+                        ShopService shopService) {
 
-        this.shopService = shopService;
-    }
-
-    // =========================================
-    // 商品查詢
-    // =========================================
-
-    /**
-     * 查詢所有已上架商品
-     *
-     * GET /api/shop/products
-     *
-     * 分類查詢：
-     * GET /api/shop/products?type=CLOTHES
-     */
-    @GetMapping("/products")
-    public List<ShopProductResponse> getProducts(
-            @RequestParam(required = false)
-            ProductType type) {
-
-        if (type != null) {
-
-            return shopService
-                    .getProductsByType(type);
+                this.shopService = shopService;
         }
 
-        return shopService
-                .getActiveProducts();
-    }
+        // =========================================
+        // 商品查詢
+        // =========================================
 
-    /**
-     * 查詢單一商品
-     *
-     * GET /api/shop/products/{productId}
-     */
-    @GetMapping("/products/{productId}")
-    public ShopProductResponse getProduct(
-            @PathVariable UUID productId) {
+        /**
+         * 查詢所有已上架商品
+         *
+         * GET /api/shop/products
+         *
+         * 分類查詢：
+         * GET /api/shop/products?type=CLOTHES
+         */
+        @GetMapping("/products")
+        public List<ShopProductResponse> getProducts(
+                        @RequestParam(required = false) ProductType type) {
 
-        return shopService
-                .getProduct(productId);
-    }
+                if (type != null) {
 
-    // =========================================
-    // 商品購買
-    // =========================================
+                        return shopService
+                                        .getProductsByType(type);
+                }
 
-    /**
-     * 購買商品
-     *
-     * POST
-     * /api/shop/products/{productId}/purchase
-     * ?userId={userId}
-     */
-    @PostMapping(
-            "/products/{productId}/purchase")
-    public PurchaseResponse purchase(
-            @PathVariable UUID productId,
-            @RequestParam UUID userId) {
+                return shopService
+                                .getActiveProducts();
+        }
 
-        return shopService.purchase(
-                userId,
-                productId);
-    }
+        /**
+         * 查詢單一商品
+         *
+         * GET /api/shop/products/{productId}
+         */
+        @GetMapping("/products/{productId}")
+        public ShopProductResponse getProduct(
+                        @PathVariable UUID productId) {
 
-    // =========================================
-    // 訂單查詢
-    // =========================================
+                return shopService
+                                .getProduct(productId);
+        }
 
-    /**
-     * 查詢會員的商城訂單
-     *
-     * GET
-     * /api/shop/orders?userId={userId}
-     */
-    @GetMapping("/orders")
-    public List<ShopOrderResponse> getMyOrders(
-            @RequestParam UUID userId) {
+        // =========================================
+        // 商品購買
+        // =========================================
 
-        return shopService
-                .getMyOrders(userId);
-    }
-    
-    /**
-     * 商城訂單退款
-     *
-     * POST
-     * /api/shop/orders/{orderId}/refund
-     * ?userId={userId}
-     */
-    @PostMapping("/orders/{orderId}/refund")
-    public RefundResponse refund(
-            @PathVariable UUID orderId,
-            @RequestParam UUID userId) {
+        /**
+         * 購買商品
+         *
+         * POST
+         * /api/shop/products/{productId}/purchase
+         * ?userId={userId}
+         */
+        @PostMapping("/products/{productId}/purchase")
+        public PurchaseResponse purchase(
+                        @PathVariable UUID productId,
+                        @RequestParam UUID userId) {
 
-        return shopService.refund(
-                userId,
-                orderId
-        );
-    }
-    
-    
+                return shopService.purchase(
+                                userId,
+                                productId);
+        }
+
+        // =========================================
+        // 訂單查詢
+        // =========================================
+
+        /**
+         * 查詢會員的商城訂單
+         *
+         * GET
+         * /api/shop/orders?userId={userId}
+         */
+        @GetMapping("/orders")
+        public List<ShopOrderResponse> getMyOrders(
+                        @RequestParam UUID userId) {
+
+                return shopService
+                                .getMyOrders(userId);
+        }
+
+        /**
+         * 商城訂單退款
+         *
+         * POST
+         * /api/shop/orders/{orderId}/refund
+         * ?userId={userId}
+         */
+        @PostMapping("/orders/{orderId}/refund")
+        public RefundResponse refund(
+                        @PathVariable UUID orderId,
+                        @RequestParam UUID userId) {
+
+                return shopService.refund(
+                                userId,
+                                orderId);
+        }
+
 }

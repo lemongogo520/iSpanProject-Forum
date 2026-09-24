@@ -5,15 +5,40 @@
       <v-icon icon="mdi-account" size="80" color="grey-darken-2"></v-icon>
       <div class="text-grey-darken-1 mt-2">尚未穿備任何物品</div>
     </div>
-    
-    <!-- 原生 PixiJS 畫布掛載點 -->
-    <div v-show="sortedLayers.length > 0" ref="pixiContainer" class="pixi-wrapper"></div>
+
+    <!-- 不再使用 Pixi 掛載點，直接使用一般 <img> 顯示渲染結果 -->
+    <img
+      v-else-if="renderedImage"
+      :src="renderedImage"
+      class="rendered-doll-img"
+      :style="{ width: `${64 * scale}px`, height: `${64 * scale}px` }"
+    />
   </div>
 </template>
 
+<script>
+// 使用一般 <script> 宣告全域變數，確保所有 DollConvas 共用
+import * as PIXI from "pixi.js";
+
+// 全域共用的唯一 WebGL 引擎 (離屏渲染用)
+let sharedApp = null;
+// 全域共用的 Texture 快取，換分頁也不用重新下載圖片
+const textureCache = {};
+
+function initSharedApp() {
+  if (!sharedApp) {
+    sharedApp = new PIXI.Application({
+      width: 256, // 引擎底層畫布大小不重要，我們只用 renderer 來截圖
+      height: 256,
+      backgroundAlpha: 0,
+    });
+    // 重點：不再呼叫 appendChild，讓它永遠在背景默默工作
+  }
+}
+</script>
+
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
-import * as PIXI from "pixi.js"; // 直接使用原生 PIXI
+import { ref, computed, watch, onMounted } from "vue";
 
 const props = defineProps({
   equippedItems: { type: Object, default: () => ({}) },
@@ -28,116 +53,95 @@ const sortedLayers = computed(() => {
     .sort((a, b) => a.category.zIndex - b.category.zIndex);
 });
 
-// DOM 節點參考
-const pixiContainer = ref(null);
-let app = null;
-let mainContainer = null;
-
-// 記錄已經載入過的 Texture 快取 (避免重複發送網路請求)
-const textureCache = {};
+// 存放最後產出的 Base64 圖片
+const renderedImage = ref(null);
 
 onMounted(() => {
-  // 1. 初始化原生 PixiJS 應用
-  app = new PIXI.Application({
-    width: 64 * props.scale,
-    height: 64 * props.scale,
-    backgroundAlpha: 0,
-  });
-  
-  // 2. 將 Canvas 塞入 HTML 畫面中
-  pixiContainer.value.appendChild(app.view);
-
-  // 3. 建立主要群組 (處理縮放與位移)
-  mainContainer = new PIXI.Container();
-  mainContainer.scale.set(props.scale);
-  if (props.avatarMode) {
-    mainContainer.y = 64 * props.scale * 0.15;
-  }
-  // 開啟自動排序，確保 zIndex 永遠正確
-  mainContainer.sortableChildren = true;
-  app.stage.addChild(mainContainer);
-
-  // 初次繪製
-  renderSprites();
+  initSharedApp(); // 確保全域引擎已經啟動
+  renderSprites(); // 進行首次「拍照」
 });
 
-// 當玩家離開這個頁面時，務必銷毀 WebGL 釋放記憶體
-onBeforeUnmount(() => {
-  if (app) {
-    app.destroy(true, { children: true, texture: false, baseTexture: false });
-  }
-});
-
-// 監聽裝備或顏色變化，觸發重新繪製
-// 使用 deep: true 確保當 equippedItems 裡面的某個裝備的 color 改變時，也能被偵測到
-watch(() => props.equippedItems, () => {
-  if (app && mainContainer) {
+// 監聽裝備或顏色變化，重新「拍照」
+watch(
+  () => props.equippedItems,
+  () => {
     renderSprites();
-  }
-}, { deep: true });
+  },
+  { deep: true },
+);
 
-// 記錄目前畫布上的 Sprites (Key: layer.id, Value: PIXI.Sprite)
-const spriteCache = {};
-
-// 核心繪製邏輯
+// 核心繪製邏輯改為「虛擬佈置 -> 拍照 -> 銷毀」
 async function renderSprites() {
-  // 1. 找出目前應該要顯示的所有裝備 ID
-  const currentIds = new Set(sortedLayers.value.map(l => l.id));
-
-  // 2. 【解決殘影】移除已經被脫下的裝備
-  for (const id in spriteCache) {
-    if (!currentIds.has(Number(id))) {
-      mainContainer.removeChild(spriteCache[id]);
-      spriteCache[id].destroy(); // 釋放顯示卡記憶體
-      delete spriteCache[id];
-    }
+  if (sortedLayers.value.length === 0) {
+    renderedImage.value = null;
+    return;
   }
 
-  // 3. 更新或新增現有裝備
+  // 1. 下載並裁切這一次需要的所有圖片到快取中
   for (const layer of sortedLayers.value) {
     if (!layer.filePath) continue;
-
-    // 如果快取裡沒有這張圖，就去下載並裁切 (非同步)
     if (!textureCache[layer.id]) {
       try {
-        const baseTex = await PIXI.Texture.fromURL(`${props.baseUrl}${layer.filePath}`);
-        baseTex.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+        const baseTex = await PIXI.Texture.fromURL(
+          `${props.baseUrl}${layer.filePath}`,
+        );
+        baseTex.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST; // 保持像素風格
         const frame = new PIXI.Rectangle(0, 128, 64, 64);
         textureCache[layer.id] = new PIXI.Texture(baseTex.baseTexture, frame);
       } catch (error) {
         console.error("圖片載入失敗", layer.filePath, error);
-        continue;
-      }
-    }
-
-    // 確定圖片有載入成功後
-    if (textureCache[layer.id]) {
-      let sprite = spriteCache[layer.id];
-      
-      // 如果是第一次穿上，建立新 Sprite 並加進畫布
-      if (!sprite) {
-        sprite = new PIXI.Sprite(textureCache[layer.id]);
-        spriteCache[layer.id] = sprite;
-        mainContainer.addChild(sprite);
-      }
-
-      // 每次重繪都強制更新圖層高度，確保衣服不會互相覆蓋
-      sprite.zIndex = layer.category.zIndex;
-      
-      // 【色相偏移 (Hue Shift)】：利用 PixiJS 內建的濾鏡來旋轉現有顏色的色相
-      if (layer.color !== undefined && layer.color !== null) {
-        // 如果這個 Sprite 還沒有掛載濾鏡，就幫它建立一個 ColorMatrixFilter
-        if (!sprite.filters || sprite.filters.length === 0) {
-          sprite.filters = [new PIXI.ColorMatrixFilter()];
-        }
-        // 套用 0~360 度的旋轉 (第二個參數 false 代表不要與舊矩陣相乘，直接覆蓋)
-        sprite.filters[0].hue(Number(layer.color), false);
-      } else {
-        // 如果沒有顏色，就拔掉所有濾鏡，恢復素材最原始的狀態
-        sprite.filters = [];
       }
     }
   }
+
+  // 2. 建立紙娃娃主體容器
+  const avatarContainer = new PIXI.Container();
+  avatarContainer.scale.set(props.scale);
+  avatarContainer.sortableChildren = true;
+  if (props.avatarMode) {
+    avatarContainer.y = 64 * props.scale * 0.15;
+  }
+
+  // 3. 佈置 Sprites 到臨時容器上
+  for (const layer of sortedLayers.value) {
+    if (textureCache[layer.id]) {
+      const sprite = new PIXI.Sprite(textureCache[layer.id]);
+      sprite.zIndex = layer.category.zIndex;
+
+      // 處理顏色 Tint
+      if (layer.color !== undefined && layer.color !== null) {
+        const filter = new PIXI.ColorMatrixFilter();
+        filter.desaturate();
+        filter.brightness(1.2, true);
+        filter.tint(Number(layer.color), true);
+        sprite.filters = [filter];
+      }
+
+      avatarContainer.addChild(sprite);
+    }
+  }
+
+  try {
+    // 4. 建立指定大小的虛擬畫布，完美還原舊版 Canvas 的裁切效果
+    const rt = PIXI.RenderTexture.create({
+      width: 64 * props.scale,
+      height: 64 * props.scale,
+    });
+
+    // 5. 將佈置好的 avatarContainer 畫到這個虛擬畫布上
+    sharedApp.renderer.render(avatarContainer, { renderTexture: rt });
+
+    // 6. 針對這個畫布拍照 (PixiJS v7 會回傳 Promise)
+    renderedImage.value = await sharedApp.renderer.extract.base64(rt);
+
+    // 用完馬上銷毀虛擬畫布
+    rt.destroy(true);
+  } catch (err) {
+    console.error("截圖發生錯誤:", err);
+  }
+
+  // 7. 立即銷毀紙娃娃容器與裡面的 Sprite，完全不留負擔在記憶體中
+  avatarContainer.destroy({ children: true });
 }
 </script>
 
@@ -152,10 +156,10 @@ async function renderSprites() {
   overflow: hidden;
 }
 
-.pixi-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.rendered-doll-img {
+  display: block;
+  /* 加上平滑漸變，讓圖片在置換時看起來更順暢 */
+  transition: opacity 0.2s ease;
 }
 
 .empty-state {

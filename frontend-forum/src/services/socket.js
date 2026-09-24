@@ -1,8 +1,11 @@
 import { Client } from "@stomp/stompjs";
 
 let client = null;
+let messageHandler = null;
+
 
 export function connectSocket({ onMessage, onReconnect, onGiveUp } = {}) {
+    messageHandler = onMessage;
     if (client?.active) return;
 
     let firstConnect = true;
@@ -13,13 +16,18 @@ export function connectSocket({ onMessage, onReconnect, onGiveUp } = {}) {
         reconnectDelay: 5000,
         heartbeatIncoming: 10000,
         heartbeatOutgoing: 10000,
-        // debug: (msg) => { },
+        debug: (msg) => { },
         // debug: (msg) => console.log("[STOMP]", msg),
         onConnect: () => {
             failures = 0;
             client.subscribe("/user/queue/messages", (frame) => {
                 onMessage?.(JSON.parse(frame.body));
             });
+
+            // 重建看板訂閱
+            const ids = [...topicSubs.keys()];
+            topicSubs.clear();
+            ids.forEach((id) => subscribeConversation(id, boardHandler));
             if (!firstConnect) onReconnect?.();
             firstConnect = false;
         },
@@ -43,4 +51,20 @@ export function connectSocket({ onMessage, onReconnect, onGiveUp } = {}) {
 export function disconnectSocket() {
     client?.deactivate();
     client = null;
+    topicSubs.clear();
+}
+
+const topicSubs = new Map();   // conversationId → subscription
+
+export function subscribeConversation(conversationId) {
+  if (!client?.connected || topicSubs.has(conversationId)) return;
+  const sub = client.subscribe(`/topic/conversation.${conversationId}`, (frame) => {
+    messageHandler?.(JSON.parse(frame.body));
+  });
+  topicSubs.set(conversationId, sub);
+}
+
+export function unsubscribeConversation(conversationId) {
+  topicSubs.get(conversationId)?.unsubscribe();
+  topicSubs.delete(conversationId);
 }

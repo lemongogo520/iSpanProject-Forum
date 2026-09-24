@@ -3,12 +3,14 @@ package forum.board.dollsystemuserowneditem;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import forum.board.dollsystemitem.DollItemResponseDTO;
@@ -37,6 +39,25 @@ public class DollUserOwnedApi {
         List<DollItemResponseDTO> items = ownedService.getAllItemsWithOwnedStatus(userId, categoryId);
 
         return ResponseEntity.ok(items);
+    }
+
+    // 商城檢視 (分頁版)
+    @GetMapping("/api/dollitems/dollshop/{categoryId}")
+    public ResponseEntity<?> getShopItemsByPage(
+            @RequestParam(defaultValue = "1") Integer pageNumber,
+            @PathVariable Integer categoryId,
+            HttpSession session) {
+
+        Object sessionUserId = session.getAttribute("loginUserId");
+        if (sessionUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("使用者尚未登入");
+        }
+
+        UUID userId = (UUID) sessionUserId;
+
+        Page<DollItemResponseDTO> page = ownedService.getShopItemsByPage(userId, categoryId, pageNumber);
+
+        return ResponseEntity.ok(page);
     }
 
     // 玩家獲得裝備 (點擊購買時呼叫)

@@ -1,5 +1,6 @@
 package forum.board.dollsystemuserequip;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -7,9 +8,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import forum.board.dollsystemcategories.DollCategory;
+import forum.board.dollsystemcategories.DollCategoryRepository;
 import forum.board.dollsystemitem.DollItem;
 import forum.board.dollsystemitem.DollItemRepository;
 import forum.board.dollsystemitem.DollItemResponseDTO;
+import forum.board.dollsystemuserowneditem.DollUserOwnedRepository;
 import forum.board.users.Users;
 import forum.board.users.UsersRepository;
 import jakarta.transaction.Transactional;
@@ -22,7 +25,8 @@ public class DollUserEquipService {
     private final UsersRepository usersRepo;
     private final DollItemRepository dollItemRepo;
     private final DollUserEquipRepository dollUserEquipRepo;
-    private final forum.board.dollsystemcategories.DollCategoryRepository dollCategoryRepo;
+    private final DollCategoryRepository dollCategoryRepo;
+    private final DollUserOwnedRepository dollUserOwnedRepo;
 
     @Transactional
     public void updateEquipItems(UUID userId, List<Integer> itemIds) {
@@ -63,17 +67,19 @@ public class DollUserEquipService {
                     .collect(Collectors.toList());
         }
 
-        // 如果沒有儲存紀錄，找出所有設定為 isRequired=true 的圖層，回傳該圖層的第一個可用裝備作為預設
-        List<DollCategory> requiredCategories = dollCategoryRepo.findByIsRequiredTrue();
-        List<DollItemResponseDTO> defaultEquip = new java.util.ArrayList<>();
+        // 如果沒有儲存紀錄，找出所有圖層裝備，回傳該圖層使用者擁有的第一個裝備作為預設
+        List<DollCategory> requiredCategories = dollCategoryRepo.findAll();
+        List<DollItemResponseDTO> defaultEquip = new ArrayList<>();
 
         for (DollCategory cat : requiredCategories) {
-            DollItem defaultItem = dollItemRepo.findFirstByCategoryIdAndIsActiveTrueOrderByIdAsc(cat.getId());
-            if (defaultItem != null) {
+            List<DollItem> ownItems = dollUserOwnedRepo.findItemsByUserIdAndCategoryId(userId, cat.getId());
+
+            if (ownItems != null && !ownItems.isEmpty()) {
+                DollItem defaultItem = ownItems.get(0);
                 defaultEquip.add(DollItemResponseDTO.fromEntity(defaultItem));
             }
-        }
 
+        }
         return defaultEquip;
     }
 

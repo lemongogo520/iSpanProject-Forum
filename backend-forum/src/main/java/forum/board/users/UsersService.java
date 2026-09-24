@@ -12,7 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import forum.board.coin.CoinService;
+import forum.board.dollsystemcategories.DollCategory;
+import forum.board.dollsystemcategories.DollCategoryRepository;
 import forum.board.common.util.IpUtil;
+import forum.board.dollsystemitem.DollItem;
 import forum.board.dollsystemitem.DollItemRepository;
 import forum.board.dollsystemuserowneditem.DollUserOwned;
 import forum.board.dollsystemuserowneditem.DollUserOwnedRepository;
@@ -42,6 +45,7 @@ public class UsersService {
 
 	private final DollItemRepository dollItemRepository;
 	private final DollUserOwnedRepository dollUserOwnedRepository;
+	private final DollCategoryRepository dollCategoryRepository;
 
 	/**
 	 * 註冊會員
@@ -81,15 +85,16 @@ public class UsersService {
 		userDetailRepository.save(userDetail);
 		userPermissionRepository.save(userPer);
 
-		// 註冊會員成功後，贈送預設服裝
-		List<Integer> defaultItems = Arrays.asList(1, 2);
-		for (Integer itemId : defaultItems) {
-			dollItemRepository.findById(itemId).ifPresent(defaultItem -> {
+		// 註冊會員成功後，贈送每個圖層分類下的第一件上架服裝
+		List<DollCategory> allCategories = dollCategoryRepository.findAll();
+		for (DollCategory category : allCategories) {
+			DollItem firstItem = dollItemRepository.findFirstByCategoryIdAndIsActiveTrueOrderByIdAsc(category.getId());
+			if (firstItem != null) {
 				DollUserOwned dollUserOwned = new DollUserOwned();
 				dollUserOwned.setUser(user);
-				dollUserOwned.setItem(defaultItem); // 放入找到的 DollItem 實體
-				dollUserOwnedRepository.save(dollUserOwned); // 儲存到正確的 Repository
-			});
+				dollUserOwned.setItem(firstItem);
+				dollUserOwnedRepository.save(dollUserOwned);
+			}
 		}
 	}
 

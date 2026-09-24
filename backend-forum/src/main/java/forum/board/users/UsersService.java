@@ -251,4 +251,59 @@ public class UsersService {
 
 		return null;
 	}
+
+    // 取得全部使用者
+    public List<AdminUserResponseDTO> getAllUsers() {
+
+        return usersRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    // 取得單一使用者
+    public AdminUserResponseDTO getUser(UUID uid) {
+
+        Users users = usersRepository.findById(uid)
+                .orElseThrow(() ->
+                        new RuntimeException("找不到使用者"));
+
+        return toDTO(users);
+    }
+
+    // 搜尋使用者
+    public List<AdminUserResponseDTO> searchUsers(String keyword) {
+
+        if (keyword == null || keyword.isBlank()) {
+            return getAllUsers();
+        }
+
+        return usersRepository.searchUsers(keyword)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    private AdminUserResponseDTO toDTO(Users users) {
+
+    	UserDetailDTO dto = getUserInfoByAccount(users.getAccount());
+    	if(dto != null) {
+            return new AdminUserResponseDTO(
+                    users.getId(),
+                    users.getAccount(),
+                    dto.getName(),
+                    dto.getEmail(),
+                    dto.getPermission()
+            );
+    	}
+    	else {
+            return new AdminUserResponseDTO(
+                    users.getId(),
+                    users.getAccount(),
+                    "",
+                    "",
+                    2
+            );
+    	}
+    }
 }

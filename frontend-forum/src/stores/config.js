@@ -22,7 +22,12 @@ export const useConfigStore = defineStore('config', () => {
     const data = await configService.getSettings()
 
     settings.value = Object.fromEntries(
-      data.map(item => [item.item, item.value])
+      data.map(item => [
+        item.item,
+        item.item === 'login_logo'
+          ? JSON.parse(item.value)
+          : item.value
+      ])
     )
 
     loaded.value = true

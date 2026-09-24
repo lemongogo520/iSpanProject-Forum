@@ -1,4 +1,12 @@
 <template>
+  <v-snackbar
+    v-model="isSnackbarVisible"
+    :timeout="1000"
+    color="error"
+    location="top"
+  >
+    {{ snackbarMessage }}
+  </v-snackbar>
   <v-container
     fluid
     class="fill-height pa-6"
@@ -141,6 +149,8 @@ import httpClient from "@/services/httpClient";
 const baseUrl = "http://localhost:8080/sprites/";
 
 const equippedItems = ref({});
+const isSnackbarVisible = ref(false);
+const snackbarMessage = ref(null);
 
 function loadEquippedItems() {
   httpClient({
@@ -176,7 +186,8 @@ const equipItem = (item) => {
       // 防呆：如果是必須穿戴的部位 (身體、頭)，禁止脫下成空白
       if (item.category.isRequired) {
         console.warn(`部位 [${item.category.typeName}] 為必須裝備，無法脫下！`);
-        // 這裡未來可以加個 v-snackbar 提示使用者
+        snackbarMessage.value = `部位 [${item.category.typeName}] 為必須裝備，無法脫下！`;
+        isSnackbarVisible.value = true;
         return;
       }
 
@@ -194,15 +205,12 @@ const isSaving = ref(false);
 
 function saveEquippedItems() {
   isSaving.value = true;
-  const payload = Object.values(equippedItems.value).map((item) => ({
-    itemId: item.id,
-    color: item.color || null,
-  }));
+  const payload = Object.values(equippedItems.value).map((item) => item.id);
 
   httpClient({
     method: "put",
     url: "/api/dollitem/newequip",
-    data: payload, // 👈 傳送符合後端 DTO 的物件陣列
+    data: payload, // 👈 暫時改回傳送純 ID 陣列 (List<Integer>) 以配合後端
   })
     .then((response) => {
       if (response.status === 200) {

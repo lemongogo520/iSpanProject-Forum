@@ -41,11 +41,12 @@
           查看編輯紀錄
         </v-btn>
       </div>
+      <section class="comments-section">
       <!-- ====================== -->
       <!-- 留言標題 -->
       <!-- ====================== -->
       <div class="comment-title">
-        <v-icon icon="mdi-chevron-down" size="20" />
+        <v-icon icon="mdi-comment-outline" size="21" />
         <span> 留言（{{ totalCommentElements }}） </span>
       </div>
       <!-- ====================== -->
@@ -108,6 +109,7 @@
         :submitting="commentSubmitting"
         @submit="submitComment"
       />
+      </section>
     </template>
     <!-- 文章編輯紀錄 -->
     <PostHistoryDialog
@@ -158,6 +160,7 @@ import PostHistoryDialog from "@/components/post/PostHistoryDialog.vue";
 import CommentHistoryDialog from "@/components/post/CommentHistoryDialog.vue";
 import CommentForm from "@/components/post/CommentForm.vue";
 import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog.vue";
+import DollAvatar from "@/components/doll/DollAvatar.vue";
 
 // JS匯入
 import { useNotification } from "@/composables/useNotification";
@@ -520,5 +523,24 @@ onMounted(async () => {
   align-items: center;
   padding: 18px 0;
   font-weight: 600;
+}
+.comments-section {
+  margin-top: var(--forum-space-lg);
+  padding: var(--forum-space-lg);
+  border: 1px solid var(--forum-border);
+  border-radius: var(--forum-radius);
+  background: var(--forum-card-bg);
+  box-shadow: var(--forum-shadow);
+}
+
+.comment-title {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 0 16px;
+  color: var(--forum-title);
+  font-size: 18px;
+  font-weight: 700;
 }
 </style>

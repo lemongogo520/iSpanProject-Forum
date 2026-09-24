@@ -330,15 +330,15 @@ const latestPosts = computed(() =>
     position: static;
   }
 
-  .category-nav {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    max-height: none;
-    overflow-x: auto;
-    padding: 12px;
-  }
+.category-nav {
+  max-height: calc(100vh - 112px);
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--forum-border);
+  border-radius: var(--forum-radius);
+  background: var(--forum-card-bg);
+  box-shadow: var(--forum-shadow);
+}
 
   .sidebar-search {
     flex: 0 0 100%;

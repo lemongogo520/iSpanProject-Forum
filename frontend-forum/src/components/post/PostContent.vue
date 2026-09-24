@@ -5,22 +5,22 @@
       <!-- 作者卡片 -->
       <v-col cols="12" md="2" class="author-column">
         <v-card elevation="1" class="author-area rounded-lg">
-          <UserFriendMenu :userId="post.userId" :name="post.userName">
-            <template #default="{ props }">
-              <v-avatar size="90" class="mb-4" v-bind="props" @click.stop.prevent>
-                <v-icon icon="mdi-account" size="55" />
-              </v-avatar>
-            </template>
-          </UserFriendMenu>
-
-
-
+          <div v-if="post.userId" class="author-doll-frame">
+            <DollAvatar
+              v-if="post.userId"
+              :user-id="post.userId"
+              :scale="2.2"
+              is-full-body
+              class="author-doll"
+            />
+          </div>
+          <v-avatar v-else size="90" class="mb-4">
+            <v-icon icon="mdi-account" size="55" />
+          </v-avatar>
 
           <div class="text-subtitle-1 font-weight-bold">
-            {{ post.userName || "使用者" }}
+            {{ post.userName || " " }}
           </div>
-
-          <div class="text-caption text-medium-emphasis mt-1">使用者</div>
         </v-card>
       </v-col>
 
@@ -57,11 +57,21 @@
           <!-- 按讚與文章操作 -->
           <div class="reaction-area">
             <!-- 按讚按鈕 -->
-            <v-btn class="like-button" :class="{
-              'like-button-active': likedByCurrentUser,
-            }" variant="tonal" rounded="pill" :color="likedByCurrentUser ? 'deep-orange' : 'grey-darken-1'"
-              :prepend-icon="likedByCurrentUser ? 'mdi-thumb-up' : 'mdi-thumb-up-outline'
-                " :loading="likeUpdating" :disabled="likeUpdating" @click="emit('toggle-like')">
+            <v-btn
+              class="like-button"
+              :class="{
+                'like-button-active': likedByCurrentUser,
+              }"
+              variant="tonal"
+              rounded="pill"
+              :color="likedByCurrentUser ? 'deep-orange' : 'grey-darken-1'"
+              :prepend-icon="
+                likedByCurrentUser ? 'mdi-thumb-up' : 'mdi-thumb-up-outline'
+              "
+              :loading="likeUpdating"
+              :disabled="likeUpdating"
+              @click="emit('toggle-like')"
+            >
               <span class="font-weight-bold">
                 {{ likeCount }}
               </span>
@@ -71,15 +81,28 @@
             <!-- 文章作者和各版管理員顯示 -->
             <v-menu v-if="isPostOwner || canModerate">
               <template #activator="{ props: menuProps }">
-                <v-btn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" />
+                <v-btn
+                  v-bind="menuProps"
+                  icon="mdi-dots-vertical"
+                  variant="text"
+                />
               </template>
 
               <v-list>
-                <v-list-item v-if="isPostOwner" title="編輯文章" prepend-icon="mdi-pencil-outline"
-                  @click="emit('edit-post')" />
+                <v-list-item
+                  v-if="isPostOwner"
+                  title="編輯文章"
+                  prepend-icon="mdi-pencil-outline"
+                  @click="emit('edit-post')"
+                />
 
-                <v-list-item title="刪除文章" prepend-icon="mdi-delete-outline" base-color="error" :disabled="postDeleting"
-                  @click="emit('delete-post')" />
+                <v-list-item
+                  title="刪除文章"
+                  prepend-icon="mdi-delete-outline"
+                  base-color="error"
+                  :disabled="postDeleting"
+                  @click="emit('delete-post')"
+                />
               </v-list>
             </v-menu>
           </div>
@@ -90,8 +113,7 @@
 </template>
 
 <script setup>
-import UserFriendMenu from '@/components/common/UserFriendMenu.vue';
-
+import DollAvatar from "@/components/doll/DollAvatar.vue";
 defineProps({
   post: {
     type: Object,
@@ -187,26 +209,25 @@ const formatDate = (date) => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .like-button,
   .like-button-active {
     transition: none;
     animation: none;
   }
 }
-
 .post-card {
   overflow: hidden;
 }
 
 .author-area {
-  min-height: 320px;
-  padding: 30px 15px;
   display: flex;
+  min-height: 260px;
+  padding: 16px 10px;
   flex-direction: column;
   align-items: center;
+  border: 1px solid var(--forum-border);
+  border-radius: var(--forum-radius);
   background: var(--forum-soft-bg);
-  border-right: 1px solid #e0e0e0;
 }
 
 .post-content {
@@ -237,7 +258,6 @@ const formatDate = (date) => {
   background-color: #000;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
 }
-
 :deep(.post-content img) {
   display: inline-block;
   width: auto;
@@ -256,7 +276,6 @@ const formatDate = (date) => {
   margin-left: auto;
   margin-right: 0;
 }
-
 :deep(.post-content .ql-align-center) {
   text-align: center;
 }
@@ -268,7 +287,40 @@ const formatDate = (date) => {
 :deep(.post-content .ql-align-justify) {
   text-align: justify;
 }
-
+.author-doll-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 125px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border: none;
+  border-radius: 12px;
+  background: radial-gradient(
+    circle at 50% 55%,
+    rgba(66, 103, 213, 0.1) 0%,
+    rgba(219, 234, 255, 0.4) 38%,
+    transparent 72%
+  );
+  box-shadow: none;
+}
+.author-doll-frame::after {
+  position: absolute;
+  bottom: 13px;
+  left: 50%;
+  width: 72px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(48, 83, 130, 0.1);
+  transform: translateX(-50%);
+  content: "";
+}
+.author-doll-frame :deep(.v-sheet) {
+  position: relative;
+  z-index: 1;
+}
 @media (max-width: 600px) {
   :deep(.post-content iframe.ql-video) {
     width: 100%;
@@ -278,7 +330,6 @@ const formatDate = (date) => {
     border-radius: 8px;
   }
 }
-
 /* 電腦版：作者卡片跟隨畫面捲動 */
 @media (min-width: 960px) {
   .author-column {

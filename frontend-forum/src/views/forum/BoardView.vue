@@ -16,50 +16,76 @@
         {{ errorMessage }}
       </v-alert>
 
-      <!-- 看板 -->
-      <template v-else>
-        <!-- 看板標題 -->
-        <v-card class="mb-6 rounded-xl" variant="tonal">
-          <v-card-item>
-            <v-card-title class="text-h4">
-              {{ board.name }}
-            </v-card-title>
+    <!-- 看板 -->
+    <template v-else>
+      <!-- 看板標題 -->
+      <v-card class="board-header mb-6" variant="flat">
+        <v-card-item>
+          <v-card-title class="text-h4">
+            {{ board.name }}
+          </v-card-title>
 
-            <v-card-subtitle v-if="board.description" class="mt-2">
-              {{ board.description }}
-            </v-card-subtitle>
-          </v-card-item>
-        </v-card>
-        <!-- 左側文章、右側聊天室 -->
-        <div class="board-layout">
-          <main class="board-main">
-            <!-- 看板內搜尋 -->
-            <v-form class="mb-4" @submit.prevent="handleSearch">
-              <div class="d-flex align-center ga-2">
-                <v-text-field v-model="searchKeyword" label="搜尋此看板的文章標題" prepend-inner-icon="mdi-magnify"
-                  variant="outlined" hide-details clearable :disabled="loading" @click:clear="clearSearch" />
+          <v-card-subtitle v-if="board.description" class="mt-2">
+            {{ board.description }}
+          </v-card-subtitle>
+        </v-card-item>
+      </v-card>
+      <!-- 左側文章、右側聊天室 -->
+      <div class="board-layout">
+        <main class="board-main">
+          <!-- 搜尋、排序與發表文章 -->
+          <div class="board-actions mb-5">
+            <v-form class="search-group" @submit.prevent="handleSearch">
+              <v-text-field
+                v-model="searchKeyword"
+                class="search-field"
+                label="搜尋此看板的文章標題"
+                prepend-inner-icon="mdi-magnify"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                clearable
+                :disabled="loading"
+                @click:clear="clearSearch"
+              />
 
-                <v-select v-model="sortBy" :items="sortOptions" item-title="title" item-value="value" label="文章排序"
-                  variant="outlined" hide-details :disabled="loading" style="max-width: 180px"
-                  @update:model-value="handleSortChange" />
+              <v-select
+                v-model="sortBy"
+                class="sort-select"
+                :items="sortOptions"
+                item-title="title"
+                item-value="value"
+                label="文章排序"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                :disabled="loading"
+                @update:model-value="handleSortChange"
+              />
 
-                <v-btn type="submit" color="primary" :disabled="loading">
-                  搜尋
-                </v-btn>
-              </div>
+              <v-btn
+                class="search-button"
+                type="submit"
+                color="primary"
+                variant="tonal"
+                prepend-icon="mdi-magnify"
+                height="48"
+                :disabled="loading"
+              >
+                搜尋
+              </v-btn>
             </v-form>
 
-            <!-- 發表文章 -->
-            <div class="d-flex justify-end mb-4 ga-2">
-
-              <v-btn prepend-icon="mdi-forum" @click="chatStore.getboardConversation(Number(boardId))">
-                聊天室
-              </v-btn>
-              <BoardSubscribeButton :boardId="Number(boardId)" />
-              <v-btn color="primary" prepend-icon="mdi-pencil" @click="createPost">
-                發表文章
-              </v-btn>
-            </div>
+            <v-btn
+              class="create-post-button"
+              color="primary"
+              prepend-icon="mdi-pencil"
+              height="48"
+              @click="createPost"
+            >
+              發表文章
+            </v-btn>
+          </div>
 
             <!-- 文章列表 -->
             <v-card v-for="post in posts" :key="post.id" class="forum-post mb-2" variant="flat"
@@ -421,6 +447,60 @@ onMounted(() => {
   top: 72px;
   min-width: 0;
 }
+.board-header {
+  overflow: hidden;
+  padding: 4px 0;
+  border: none;
+  border-left: 4px solid var(--forum-primary);
+  border-radius: 16px;
+  background: linear-gradient(
+  90deg,
+  #dbeaff 0%,
+  #edf7f4 58%,
+  #f8fbff 100%
+);
+  box-shadow: 0 6px 20px rgba(48, 83, 130, 0.08);
+}
+.board-header :deep(.v-card-title) {
+  color: var(--forum-title);
+  font-weight: 700;
+}
+
+.board-header :deep(.v-card-subtitle) {
+  color: var(--forum-text-muted);
+  opacity: 1;
+}
+
+.board-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(243, 250, 247, 0.88);
+}
+
+.search-group {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.search-field {
+  flex: 1;
+  min-width: 220px;
+}
+
+.sort-select {
+  flex: 0 0 180px;
+}
+
+.create-post-button {
+  flex-shrink: 0;
+}
+
 
 /* 中型螢幕：取消左側 200px 保留空間 */
 @media (max-width: 1399px) {
@@ -451,9 +531,34 @@ onMounted(() => {
   .board-chat-column {
     position: static;
   }
+
+  .board-actions,
+  .search-group {
+    flex-wrap: wrap;
+  }
+
+  .search-field {
+    flex: 1 1 100%;
+  }
+
+  .sort-select {
+    flex: 1 1 180px;
+  }
 }
 
 @media (max-width: 600px) {
+  .board-actions,
+  .search-group {
+    align-items: stretch;
+  }
+
+  .sort-select,
+  .search-button,
+  .create-post-button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
   .post-title {
     font-size: 15px;
   }
@@ -461,20 +566,22 @@ onMounted(() => {
 
 .forum-post {
   cursor: pointer;
-  background-color: var(--forum-card-bg);
+  background: var(--forum-card-bg);
   border: 1px solid var(--forum-border);
+  border-radius: 10px;
+  box-shadow: none;
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+    background-color 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .forum-post:hover {
   transform: translateY(-2px);
-  background-color: var(--forum-hover-bg);
-  border-color: #90caf9;
-  box-shadow: 0 8px 20px rgba(25, 118, 210, 0.1);
+  background: var(--forum-hover-bg);
+  border-color: #b8d8ca;
+  box-shadow: 0 6px 16px rgba(48, 83, 130, 0.08);
 }
 
 .post-row {

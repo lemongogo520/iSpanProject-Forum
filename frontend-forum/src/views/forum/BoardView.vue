@@ -169,18 +169,19 @@
             @update:model-value="fetchPosts"
           />
         </main>
-
+        <pre>{{ chatStore.conversationList }}</pre>
+        <v-btn @click="openBoardChat"></v-btn>
         <!-- 右側聊天室 -->
-        <aside class="board-chat-column">
+        <!-- <aside class="board-chat-column">
           <BoardChatRoom :board-id="boardId" :board-name="board.name" />
-        </aside>
+        </aside> -->
       </div>
     </template>
   </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import httpClient from "@/services/httpClient";
@@ -194,7 +195,11 @@ import { useNotification } from "@/composables/useNotification";
 import BoardChatRoom from "@/components/forum/BoardChatRoom.vue";
 
 import defaultPostImage from "@/assets/images/default-post.png";
+import { useChatStore } from "@/stores/conversation";
 const { showMessage } = useNotification();
+
+const chatStore = useChatStore();
+
 // Router
 const route = useRoute();
 const router = useRouter();
@@ -234,7 +239,6 @@ const sortOptions = [
 ];
 // 分頁
 const page = ref(1);
-
 
 const totalPages = ref(0);
 
@@ -278,11 +282,7 @@ const fetchPosts = () => {
     );
   } else {
     // 沒有關鍵字，顯示原本的看板文章
-    request = getPostsByBoard(
-      boardId,
-      page.value - 1,
-      sortBy.value,
-    );
+    request = getPostsByBoard(boardId, page.value - 1, sortBy.value);
   }
 
   return request
@@ -400,6 +400,20 @@ const goBack = () => {
   router.push("/categories");
 };
 
+const openBoardChat = async () => {
+  const { data } = await httpClient.post(
+    `/api/chat/conversations/board/${boardId}`,
+  );
+
+  const idx = chatStore.conversationList.findIndex((c) => c.id === data.id);
+  if (idx >= 0) {
+    chatStore.conversationList[idx] = data;
+  } else {
+    chatStore.conversationList.unshift(data);
+  }
+  console.log(data);
+};
+
 // ======================
 // 頁面載入
 // ======================
@@ -408,6 +422,11 @@ onMounted(() => {
   fetchBoard();
 
   fetchPosts();
+});
+
+
+onUnmounted(() => {
+  unsubscribeConversation(data.id);
 });
 </script>
 <style scoped>

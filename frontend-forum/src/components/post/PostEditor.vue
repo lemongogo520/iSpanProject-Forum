@@ -165,7 +165,7 @@ const editorOptions = {
   border-top: none !important;
   border-left: none !important;
   border-right: none !important;
-  background-color: #f5f5f5;
+  background-color: var(--forum-soft-bg);
 }
 
 :deep(.ql-container.ql-snow) {

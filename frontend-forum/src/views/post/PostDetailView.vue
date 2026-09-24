@@ -1,4 +1,5 @@
 <template>
+  <div class="forum-page">
   <v-container class="py-8" max-width="1200">
     <!-- 返回看板 -->
     <v-btn
@@ -133,6 +134,7 @@
       @confirm="confirmDelete"
     />
   </v-container>
+  </div>
 </template>
 
 <script setup>
@@ -507,6 +509,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.forum-page {
+  min-height: 100vh;
+  background: var(--forum-page-bg);
+} 
 /* 留言標題 */
 .comment-title {
   display: flex;

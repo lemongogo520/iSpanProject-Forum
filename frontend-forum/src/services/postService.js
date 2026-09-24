@@ -85,3 +85,10 @@ export const getHotPosts = (limit = 9) => {
     params: { limit },
   });
 };
+
+// 取得最新文章
+export const getLatestPosts = (limit = 12) => {
+  return httpClient.get("/api/posts/latest", {
+    params: { limit },
+  });
+};

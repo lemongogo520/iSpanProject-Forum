@@ -34,6 +34,10 @@ body {
 
   --color-border: #dcecf8;
 
+  --color-primary-deep: #477a9f;   /* 深底白字用 */
+  --color-primary-soft: rgba(139, 188, 224, 0.18);   /* hover / 選取底色 */
+  --color-shadow: rgba(80, 130, 180, 0.18);
+
   /* 論壇背景 */
   --forum-page-bg: linear-gradient(
     135deg,

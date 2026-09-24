@@ -253,8 +253,8 @@ onBeforeUnmount(() => {
             </span>
 
             <v-icon :icon="memberMenu
-                ? 'mdi-chevron-up'
-                : 'mdi-chevron-down'
+              ? 'mdi-chevron-up'
+              : 'mdi-chevron-down'
               " size="18" class="menu-chevron" />
           </v-btn>
         </template>
@@ -263,7 +263,7 @@ onBeforeUnmount(() => {
         <v-card class="profile-menu" rounded="xl" elevation="8">
           <div class="profile-heading">
             <DollAvatar v-if="userStore.uid" :user-id="userStore.uid" :size="56" :scale="1.8" class="comment-avatar"
-              v-bind="props" @click.stop.prevent />
+              @click.stop.prevent />
             <v-avatar v-else color="#e8eff9" size="48">
               <v-icon icon="mdi-account" size="28" color="#3266a9" />
             </v-avatar>

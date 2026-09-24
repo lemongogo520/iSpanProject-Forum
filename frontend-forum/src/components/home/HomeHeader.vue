@@ -8,6 +8,8 @@ import { userService } from "@/services/userService";
 import { useAuthStore } from "@/stores/auth";
 import { useDisplay } from "vuetify";
 import MessageMenu from "../chat/MessageMenu.vue";
+import { useConfigStore } from '@/stores/config'
+
 
 const router = useRouter();
 const route = useRoute();
@@ -17,6 +19,7 @@ const forumCategories = ref([]);
 const userDetailDialog = ref(false);
 const userStore = useUserStore();
 const authStore = useAuthStore();
+const configStore = useConfigStore();
 
 const isNavbarCompact = ref(false);
 let lastScrollY = 0;
@@ -122,8 +125,8 @@ const logout = () => {
       console.log("登出成功:", response.data);
 
       userStore.clearUser();
+      authStore.setLogout();
       router.push("/login");
-      authStore.isLogin = false;
     })
     .catch((error) => {
       console.error("登出失敗:", error);
@@ -180,6 +183,8 @@ onMounted(async () => {
     checkUserDetail(),
     fetchForumMenu(),
   ]);
+
+  await configStore.loadSettings()
 });
 
 onBeforeUnmount(() => {
@@ -208,7 +213,7 @@ onBeforeUnmount(() => {
         class="brand"
         @click="goTo('/home')"
       >
-        xx論壇
+        {{ configStore.settings.web_site_name }}
       </span>
 
       <!-- 桌面版主導覽 -->
@@ -219,7 +224,6 @@ onBeforeUnmount(() => {
       >
         <v-btn
           v-for="item in [
-            { title: '首頁', icon: 'mdi-home-outline', to: '/home' },
             { title: '討論區', icon: 'mdi-forum-outline', to: '/categories' },
             { title: '點數', icon: 'mdi-star-circle-outline', to: '/member/transactions' },
             { title: '我的角色', icon: 'mdi-account-circle-outline', to: '/doll/user' },
@@ -310,17 +314,7 @@ onBeforeUnmount(() => {
             <span class="user-summary">
               <span class="user-name">
                 {{ user.name || user.account }}
-              </span>
-
-              <span class="user-points">
-                <v-icon
-                  icon="mdi-star-circle"
-                  color="amber"
-                  size="14"
-                />
-                —
-                點
-              </span>
+              </span>              
             </span>
 
             <v-icon
@@ -362,24 +356,7 @@ onBeforeUnmount(() => {
                 歡迎回來，開啟你的社群日常
               </div>
             </div>
-          </div>
-
-          <div class="point-summary">
-            <div>
-              <div class="point-label">
-                <v-icon
-                  icon="mdi-star-circle"
-                  size="18"
-                />
-                目前點數
-              </div>
-
-              <div class="point-value">
-                —
-                <span>點</span>
-              </div>
-            </div>
-          </div>
+          </div>         
 
           <v-list
             class="member-actions"

@@ -34,16 +34,22 @@ public class ForumTemplateController {
 
     // 套用範本
     @PostMapping("/api/forumtemplates/{code}/apply")
-    public ResponseEntity<?> applyTemplate(@PathVariable String code,@RequestBody ApplyTemplateRequest request, HttpSession hs) {
+    public ResponseEntity<?> applyTemplate(@PathVariable String code, @RequestBody ApplyTemplateRequest request,
+            HttpSession hs) {
 
         UUID userId = (UUID) hs.getAttribute("loginUserId");
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "請先登入"));
         }
 
-        forumTemplateService.applyTemplate(code,request,userId);
+        forumTemplateService.applyTemplate(code, request, userId);
 
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "論壇範本套用成功"));
+    }
+
+    @GetMapping("/api/forumtemplates/status")
+    public Map<String, Boolean> getInitializationStatus() {
+        return Map.of("initialized", forumTemplateService.isInitialized());
     }
 
 }

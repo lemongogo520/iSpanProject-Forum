@@ -206,7 +206,7 @@ const formatDate = (date) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #f7f7f7;
+  background: var(--forum-soft-bg);
   border-right: 1px solid #e0e0e0;
 }
 

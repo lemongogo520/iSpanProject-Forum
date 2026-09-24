@@ -38,7 +38,18 @@ const uploadFile = async (file, fileModule) => {
     return response.data
 }
 
+const getFileInfo = async (fileId) => {
+  const response = await httpClient({
+    method: 'get',
+    url: `/api/file/info/${fileId}`
+  })
+
+  return response.data
+}
+
+
 export default {
   uploadFile,
+  getFileInfo,
   fileModule
 }

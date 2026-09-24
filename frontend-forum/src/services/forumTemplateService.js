@@ -8,9 +8,11 @@ export const forumTemplateService = {
 
   // 套用指定範本
   applyTemplate(code, selections) {
-    return httpClient.post(`/api/forumtemplates/${code}/apply`, 
-    {
+    return httpClient.post(`/api/forumtemplates/${code}/apply`, {
       categories: selections,
     });
+  },
+  getStatus() {
+    return httpClient.get("/api/forumtemplates/status");
   },
 };

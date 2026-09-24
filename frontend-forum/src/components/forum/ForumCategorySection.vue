@@ -105,7 +105,13 @@ defineProps({
 
 .category-section {
   margin-bottom: 36px;
-/* 捲到分類時，避開上方導覽列 */
+  overflow: hidden;
+  border: 1px solid var(--forum-border);
+  border-radius: 16px;
+  background: var(--forum-card-bg);
+  box-shadow: 0 4px 18px rgba(30, 50, 80, 0.03);
+
+  /* 捲動到分類時避開導覽列 */
   scroll-margin-top: 88px;
 }
 
@@ -114,11 +120,12 @@ defineProps({
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
-  padding-left: 14px;
+  margin-bottom: 0;
+  padding: 16px 20px;
+  background-color: #c1ffe4;
   border-left: 4px solid var(--category-accent);
+  border-bottom: 1px solid var(--forum-border);
 }
-
 .category-title {
   display: flex;
   align-items: center;
@@ -141,9 +148,9 @@ defineProps({
 
 .board-list {
   overflow: hidden;
-  border: 1px solid #e3e8ef;
+  border: 1px solid var(--forum-border);
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--forum-card-bg);
   box-shadow: 0 4px 18px rgba(30, 50, 80, 0.03);
 }
 

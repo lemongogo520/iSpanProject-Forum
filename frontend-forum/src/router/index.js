@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useUserStore } from "@/stores/user";
+import { forumTemplateService } from "@/services/forumTemplateService";
 
 const routes = [
   {
@@ -17,6 +18,16 @@ const routes = [
     path: "/register",
     name: "Register",
     component: () => import("@/views/login/RegisterView.vue"),
+  },
+  // 論壇首次初始化
+  {
+    path: "/setup/forum",
+    name: "ForumSetup",
+    component: () => import("@/views/setup/ForumSetupView.vue"),
+    meta: {
+      requiresSystemAdmin: true,
+      initializationPage: true,
+    },
   },
   {
     path: "/home",
@@ -78,8 +89,6 @@ const routes = [
     props: true,
   },
 
-
-
   //管理者設定
   {
     path: "/config/setting",
@@ -111,15 +120,6 @@ const routes = [
     name: "dollAdminItems",
     component: () => import("@/views/doll/DollAdminItemsView.vue"),
   },
-  {
-    path: "/config/forum-template",
-    name: "ForumTemplate",
-    component: () => import("@/views/config/ForumTemplateView.vue"),
-    meta: {
-      requiresSystemAdmin: true,
-    },
-  },
-
   //商城
   {
     path: "/shop",
@@ -156,6 +156,23 @@ router.beforeEach(async (to) => {
   // 沒登入 → 登入頁
   if (!isLogin) {
     return "/login";
+  }
+  // 初始化判斷
+  const isSystemAdmin = Number(userStore.permission) === 1;
+  if (isSystemAdmin) {
+    try {
+      const response = await forumTemplateService.getStatus();
+      const initialized = response.data.initialized;
+      const allowedDuringInitialization = ["ForumSetup", "ForumAdminView"];
+      if (!initialized && !allowedDuringInitialization.includes(to.name)) {
+        return { name: "ForumSetup" };
+      }
+      if (initialized && to.name === "ForumSetup") {
+        return { name: "Homepage" };
+      }
+    } catch (error) {
+      console.error("檢查論壇初始化狀態失敗：", error);
+    }
   }
   if (
     to.meta.requiresForumManager &&

@@ -5,9 +5,11 @@
     <div class="content">
       <div class="header">
         <h1>全站設定</h1>
+
         <span v-if="hasChanges()" class="unsaved">
           有更新尚未儲存
         </span>
+
         <v-btn
           color="primary"
           :loading="saving"
@@ -29,6 +31,7 @@
           <section class="setting-section">
             <div class="setting-item">
               <label>網站名稱</label>
+
               <v-text-field
                 v-model="basicSettings.webSiteName"
                 variant="outlined"
@@ -39,6 +42,7 @@
 
             <div class="setting-item">
               <label>網站描述</label>
+
               <v-textarea
                 v-model="basicSettings.webSiteDescription"
                 variant="outlined"
@@ -50,15 +54,18 @@
 
             <div class="setting-item">
               <label>登入頁 Logo</label>
-                <FileUpload
-                  :existing-files="dialogData"
-                  :allowed-extensions="['jpg', 'jpeg']"
-                  @upload-complete="handleUploadComplete"
-                />
+
+              <FileUpload
+                v-model:files="dialogData"
+                :allowed-extensions="['jpg', 'jpeg']"
+                :multiple="false"
+                :max-files="1"
+              />
             </div>
 
             <div class="setting-item">
               <label>Token 有效天數</label>
+
               <v-select
                 v-model="basicSettings.tokenActive"
                 :items="[30, 60, 90]"
@@ -77,6 +84,7 @@
           <section class="setting-section">
             <div class="setting-item">
               <label>開放會員註冊</label>
+
               <v-switch
                 v-model="userSettings.allowRegister"
                 color="primary"
@@ -86,6 +94,7 @@
 
             <div class="setting-item">
               <label>帳號最小長度</label>
+
               <v-text-field
                 v-model="userSettings.accountMinLength"
                 type="number"
@@ -98,6 +107,7 @@
 
             <div class="setting-item">
               <label>帳號最大長度</label>
+
               <v-text-field
                 v-model="userSettings.accountMaxLength"
                 type="number"
@@ -110,6 +120,7 @@
 
             <div class="setting-item">
               <label>密碼最小長度</label>
+
               <v-text-field
                 v-model="userSettings.passwordMinLength"
                 type="number"
@@ -122,6 +133,7 @@
 
             <div class="setting-item">
               <label>允許修改密碼</label>
+
               <v-switch
                 v-model="userSettings.allowChangePassword"
                 color="primary"
@@ -136,6 +148,7 @@
           <section class="setting-section">
             <div class="setting-item">
               <label>每頁文章數</label>
+
               <v-text-field
                 v-model="forumSettings.postPaperPage"
                 type="number"
@@ -148,6 +161,7 @@
 
             <div class="setting-item">
               <label>每頁留言數</label>
+
               <v-text-field
                 v-model="forumSettings.commentPaperPage"
                 type="number"
@@ -160,6 +174,7 @@
 
             <div class="setting-item" style="display: none">
               <label>允許編輯文章</label>
+
               <v-switch
                 v-model="forumSettings.allowEditPost"
                 color="primary"
@@ -169,6 +184,7 @@
 
             <div class="setting-item" style="display: none">
               <label>編輯文章日期限制</label>
+
               <v-text-field
                 v-model="forumSettings.editPostDays"
                 type="number"
@@ -182,6 +198,7 @@
 
             <div class="setting-item" style="display: none">
               <label>允許刪除文章</label>
+
               <v-switch
                 v-model="forumSettings.allowDeletePost"
                 color="primary"
@@ -194,7 +211,11 @@
     </div>
 
     <!-- 離開確認 -->
-    <v-dialog v-model="showLeaveDialog" max-width="450" persistent>
+    <v-dialog
+      v-model="showLeaveDialog"
+      max-width="450"
+      persistent
+    >
       <v-card>
         <v-card-title>尚有未儲存的修改</v-card-title>
 
@@ -227,8 +248,9 @@
 </template>
 
 <script setup>
-import { ref , onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
+
 import Sidebar from '@/components/config/ConfigSidebar.vue'
 import { configService } from '@/services/configService'
 import FileUpload from '@/components/file/FileUpload.vue'
@@ -236,6 +258,8 @@ import fileService, { fileModule } from '@/services/uploadFileService'
 
 const currentTab = ref('basic')
 const saving = ref(false)
+
+// FileUpload 使用的檔案資料
 const dialogData = ref([])
 
 const basicSettings = ref({
@@ -266,14 +290,15 @@ const originalSettings = ref(null)
 const showLeaveDialog = ref(false)
 const pendingLeave = ref(null)
 
-//取得介面設定
+// 取得目前畫面設定
 const getCurrentSettings = () => ({
   basic: {
     webSiteName: basicSettings.value.webSiteName,
     webSiteDescription: basicSettings.value.webSiteDescription,
-    loginLogo: basicSettings.value.loginLogo,
+    loginLogo: [...basicSettings.value.loginLogo],
     tokenActive: basicSettings.value.tokenActive
   },
+
   user: {
     allowRegister: userSettings.value.allowRegister,
     accountMinLength: userSettings.value.accountMinLength,
@@ -281,6 +306,7 @@ const getCurrentSettings = () => ({
     passwordMinLength: userSettings.value.passwordMinLength,
     allowChangePassword: userSettings.value.allowChangePassword
   },
+
   forum: {
     postPaperPage: forumSettings.value.postPaperPage,
     commentPaperPage: forumSettings.value.commentPaperPage,
@@ -290,28 +316,38 @@ const getCurrentSettings = () => ({
   }
 })
 
-//渲染資料給model
+// 將 API 設定資料渲染到畫面
 const bindSettings = (settings) => {
   settings.forEach(setting => {
     switch (setting.item) {
       case 'web_site_name':
         basicSettings.value.webSiteName = setting.value
         break
+
       case 'web_site_description':
         basicSettings.value.webSiteDescription = setting.value
         break
-      case 'login_logo':
-          basicSettings.value.loginLogo = setting.value
-          dialogData.value = setting.value
-            ? [{
-                fileId: setting.value,
-                file: null,
-                name: '',
-                extension: '',
-                url: `/api/files/${setting.value}`
-              }]
-            : []
+
+      case 'login_logo': {
+        const fileIds = JSON.parse(setting.value || '[]')
+
+        basicSettings.value.loginLogo = fileIds
+
+        dialogData.value = fileIds.map(fileId => ({
+          fileId,
+          file: null,
+          name: '',
+          extension: '',
+          url: `/api/file/files/${fileId}`,
+          previewUrl: null,
+          uploading: false,
+          uploaded: true,
+          progress: 100
+        }))
+
         break
+      }
+      
       case 'token_active':
         basicSettings.value.tokenActive = Number(setting.value)
         break
@@ -319,15 +355,19 @@ const bindSettings = (settings) => {
       case 'allow_register':
         userSettings.value.allowRegister = setting.value === 'true'
         break
+
       case 'account_min_length':
         userSettings.value.accountMinLength = Number(setting.value)
         break
+
       case 'account_max_length':
         userSettings.value.accountMaxLength = Number(setting.value)
         break
+
       case 'password_min_length':
         userSettings.value.passwordMinLength = Number(setting.value)
         break
+
       case 'allow_change_password':
         userSettings.value.allowChangePassword = setting.value === 'true'
         break
@@ -335,15 +375,19 @@ const bindSettings = (settings) => {
       case 'post_paper_page':
         forumSettings.value.postPaperPage = Number(setting.value)
         break
+
       case 'comment_paper_page':
         forumSettings.value.commentPaperPage = Number(setting.value)
         break
+
       case 'allow_edit_post':
         forumSettings.value.allowEditPost = setting.value === 'true'
         break
+
       case 'edit_post_days':
         forumSettings.value.editPostDays = Number(setting.value)
         break
+
       case 'allow_delete_post':
         forumSettings.value.allowDeletePost = setting.value === 'true'
         break
@@ -351,12 +395,12 @@ const bindSettings = (settings) => {
   })
 }
 
-//取得設定資料
+// 取得設定資料
 const loadSettings = async () => {
   try {
     const settings = await configService.getSettings()
-
     bindSettings(settings)
+    await loadLoginLogo()
 
     originalSettings.value = getCurrentSettings()
   } catch (error) {
@@ -368,14 +412,15 @@ onMounted(() => {
   loadSettings()
 })
 
+// 判斷目前是否有新選擇的檔案
 const hasNewFile = () => {
   return dialogData.value.some(
     fileData => fileData.file instanceof File
   )
 }
 
+// 判斷是否有任何修改
 const hasChanges = () => {
-  
   if (!originalSettings.value) {
     return false
   }
@@ -384,10 +429,21 @@ const hasChanges = () => {
     return true
   }
 
-  return JSON.stringify(getCurrentSettings()) !== JSON.stringify(originalSettings.value)
+  const currentLogoId = dialogData.value.length > 0
+    ? dialogData.value[0].fileId
+    : ''
+
+  const savedLogoId = basicSettings.value.loginLogo?.[0] ?? ''
+
+  if (currentLogoId !== savedLogoId) {
+    return true
+  }
+
+  return JSON.stringify(getCurrentSettings()) !==
+    JSON.stringify(originalSettings.value)
 }
 
-//儲存前準備資料
+// 儲存前準備資料
 const getSaveSettings = () => [
   {
     item: 'web_site_name',
@@ -399,7 +455,7 @@ const getSaveSettings = () => [
   },
   {
     item: 'login_logo',
-    value: basicSettings.value.loginLogo
+    value: JSON.stringify(basicSettings.value.loginLogo)
   },
   {
     item: 'token_active',
@@ -447,7 +503,7 @@ const getSaveSettings = () => [
   }
 ]
 
-//儲存
+// 儲存設定
 const saveSettings = async () => {
   if (saving.value) {
     return
@@ -456,59 +512,108 @@ const saveSettings = async () => {
   saving.value = true
 
   try {
-      
-    const newFile = dialogData.value.filter(
+    /*
+     * 只有真正有 File 的項目才需要上傳。
+     *
+     * 既有檔案：
+     * fileId 有值
+     * file 為 null
+     *
+     * 新檔案：
+     * fileId 為 null
+     * file 為 File
+     */
+    const newFile = dialogData.value.find(
       fileData => fileData.file instanceof File
     )
 
     if (newFile) {
-      for (const fileData of dialogData.value) {
-          await fileService.uploadFile(
-            fileData.file,
-            fileModule.CONFIG
-          )
-      }
+      const fileInfo = await fileService.uploadFile(
+        newFile.file,
+        fileModule.CONFIG
+      )
+
+      newFile.fileId = fileInfo.fileId
+      newFile.name = fileInfo.fileName
+      newFile.extension = fileInfo.extension
+      newFile.url = `/api/file/files/${fileInfo.fileId}`
+
+      basicSettings.value.loginLogo = [fileInfo.fileId]
+    } else if (dialogData.value.length === 0) {
+      basicSettings.value.loginLogo = []
+    } else {
+      basicSettings.value.loginLogo = dialogData.value.map(
+        fileData => fileData.fileId
+      )
     }
 
     const saveData = getSaveSettings()
 
-    console.log(saveData)
-
     const settings = await configService.saveSettings(saveData)
 
-    // 重新 bind v-model
+    // 重新 bind API 回傳資料
     bindSettings(settings)
+    await loadLoginLogo()
 
-    // 更新最後一次儲存的資料
-    originalSettings.value = structuredClone(getCurrentSettings())
+    const currentSettings = getCurrentSettings()
 
-    // 清除暫存檔案
-    dialogData.value = []
+    originalSettings.value = structuredClone(currentSettings)
+    return true
 
   } catch (error) {
+
     console.error('儲存設定失敗：', error)
+    return false
+
   } finally {
+
     saving.value = false
   }
 }
 
-//檔案上傳完成
-const handleUploadComplete = (file) => {
-  dialogData.value.push(file)
-  console.log(dialogData.value)
+const loadLoginLogo = async () => {
+  const fileIds = basicSettings.value.loginLogo
+
+  if (!fileIds || fileIds.length === 0) {
+    dialogData.value = []
+    return
+  }
+
+  dialogData.value = await Promise.all(
+    fileIds.map(async fileId => {
+      const fileInfo = await fileService.getFileInfo(fileId)
+
+      return {
+        fileId: fileInfo.fileId,
+        name: fileInfo.fileName,
+        extension: fileInfo.extension,
+        file: null,
+        previewUrl: null,
+        url: `/api/file/files/${fileInfo.fileId}`
+      }
+    })
+  )
 }
 
+// 儲存並離開
 const saveAndLeave = async () => {
-  await saveSettings()
+  const success = await saveSettings()
+  
+  if (!success || !pendingLeave.value) { 
+    return 
+  }
 
   if (!hasChanges() && pendingLeave.value) {
     const next = pendingLeave.value
+
     pendingLeave.value = null
     showLeaveDialog.value = false
+
     next()
   }
 }
 
+// 放棄修改並離開
 const discardAndLeave = () => {
   if (!pendingLeave.value) {
     return
@@ -522,11 +627,13 @@ const discardAndLeave = () => {
   next()
 }
 
+// 取消離開
 const cancelLeave = () => {
   pendingLeave.value = null
   showLeaveDialog.value = false
 }
 
+// 路由離開確認
 onBeforeRouteLeave((to, from, next) => {
   if (!hasChanges()) {
     next()
@@ -605,5 +712,4 @@ onBeforeRouteLeave((to, from, next) => {
   width: 100px !important;
   max-width: 150px !important;
 }
-
 </style>

@@ -5,14 +5,16 @@ const snackbar = reactive({
   show: false,
   message: "",
   color: "success",
+  timeout:"3000",
 });
 
 const showMessage = (message, color = "success") => {
   snackbar.message = message;
   snackbar.color = color;
   snackbar.show = true;
+  snackbar.timeout = 3000;
 };
 
 export const useNotification = () => {
-  return { snackbar, showMessage };
+  return { snackbar, showMessage};
 };

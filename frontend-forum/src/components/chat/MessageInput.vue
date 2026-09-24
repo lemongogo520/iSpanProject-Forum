@@ -9,6 +9,8 @@
 <script setup>
 import { ref } from "vue";
 import { useMessageStore } from "@/stores/message";
+import { useNotification } from "@/composables/useNotification";
+const { showMessage } = useNotification();
 
 const props = defineProps({
   conversationId: {
@@ -22,11 +24,12 @@ const text = ref("");
 
 const send = async () => {
   const content = text.value.trim();
-  // console.log(props.conversationId, content);
   if (!content) return;
   text.value = "";
   messageStore.sendMessage(props.conversationId, content)
-    .catch(() => { });
+  .catch((e) => { 
+      showMessage(e.response?.data?.message ?? "送出失敗", "error");
+    });
 };
 </script>
 <style scoped>

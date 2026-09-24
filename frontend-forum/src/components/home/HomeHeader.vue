@@ -336,7 +336,9 @@ onBeforeUnmount(() => {
           elevation="8"
         >
           <div class="profile-heading">
-            <v-avatar
+            <DollAvatar v-if="comment.users?.id" :user-id="comment.users.id" :size="56" :scale="1.8"
+            class="comment-avatar" v-bind="props" @click.stop.prevent/>
+            <v-avatar v-else
               color="#e8eff9"
               size="48"
             >

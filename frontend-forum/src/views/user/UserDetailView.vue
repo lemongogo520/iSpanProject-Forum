@@ -7,13 +7,19 @@
   >
     <v-card>
       <!-- 標題 -->
-      <v-card-title class="text-h5 bg-blue-lighten-5">
+      <v-card-title class="text-h5 bg-blue-lighten-5 font-weight-bold">
         個人資訊
       </v-card-title>
 
       <v-divider />
 
       <v-card-text>
+        <div
+          v-if="!nameExistsInDatabase"
+          class="text-error font-weight-bold mb-4"
+        >
+          請先填寫名稱並儲存會員資料，才能關閉此視窗。
+        </div>
         <v-form ref="formRef">
           <!-- 帳號 -->
           <div class="field-row">
@@ -147,7 +153,7 @@
             </div>
           </div>
           <!-- 照片 -->
-          <div class="field-row">
+          <div class="field-row" style="display: none;">
             <div class="field-label">照片</div>
 
             <div class="field-content photo-area">
@@ -169,8 +175,10 @@
       <v-divider />
 
       <!-- 按鈕 -->
-      <v-card-actions class="dialog-actions">
-        <v-btn variant="outlined" @click="save"> 儲存 </v-btn>
+       <v-card-actions class="dialog-actions">
+        <v-btn variant="outlined" @click="save">
+          儲存
+        </v-btn>
 
         <v-btn variant="flat" color="primary" @click="saveAndClose">
           儲存並關閉
@@ -178,7 +186,9 @@
 
         <v-spacer />
 
-        <v-btn variant="text" @click="requestClose"> 關閉 </v-btn>
+        <v-btn variant="text" @click="requestClose">
+          關閉
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -733,9 +743,23 @@ function changePassword() {
   border: 1px solid #ddd;
 }
 
-.dialog-actions {
-  padding: 16px;
+.user-detail-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
 }
+
+.user-detail-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.dialog-actions {
+  flex-shrink: 0;
+  padding: 16px;
+  background: white;
+}
+
 .points-actions {
   flex-wrap: wrap;
   gap: 8px;

@@ -82,12 +82,6 @@ const routes = [
     name: "Friend",
     component: () => import("@/views/friend/FriendView.vue"),
   },
-  {
-    path: "/chat/:conversationId?",
-    name: "chat",
-    component: () => import("@/views/chat/ChatView.vue"),
-    props: true,
-  },
 
   //管理者設定
   {

@@ -32,20 +32,7 @@ export const useMessageStore = defineStore("message", () => {
       const { data } = await httpClient.get(
         `/api/chat/conversations/${conversationId}/messages`,
       );
-
-
-      const fetched = data.items;
-      const known = new Set(fetched.map((m) => m.clientMsgId));
-      const lastId = fetched.at(-1)?.id ?? 0;
-
-      // API 回傳裡沒有的 —— id == null 是本地還沒送成功的,id > lastId 是 WS 剛推進來的。
-      const keep = (messagesMap.value[conversationId] ?? []).filter(
-        (m) => !known.has(m.clientMsgId) && (m.id == null || m.id > lastId)
-      );
-
-      messagesMap.value[conversationId] = [...fetched, ...keep];
-
-
+      messagesMap.value[conversationId] = data.items;
       cursorMap.value[conversationId] = {
         hasMore: data.hasMore,
         nextCursor: data.nextCursor,

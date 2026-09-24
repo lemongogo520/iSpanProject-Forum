@@ -2,8 +2,8 @@
   <div class="msg-input">
     <v-textarea v-model="text" placeholder="輸入訊息…" rows="1" max-rows="4" auto-grow hide-details density="compact"
       variant="solo-filled" flat @keydown.enter.exact.prevent="send" />
-    <v-btn icon="mdi-send" variant="text" color="primary" :disabled="!text.trim()" 
-    @click="send()" />
+    <v-btn icon="mdi-send" variant="text" color="primary" :disabled="!text.trim()"
+      @click="send()" />
   </div>
 </template>
 <script setup>
@@ -36,8 +36,7 @@ const send = async () => {
   gap: 4px;
   padding: 8px;
   flex-shrink: 0;
-  background: var(--color-card);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid rgb(var(--v-border-color), var(--v-border-opacity));
 }
 
 .msg-input :deep(.v-field) {

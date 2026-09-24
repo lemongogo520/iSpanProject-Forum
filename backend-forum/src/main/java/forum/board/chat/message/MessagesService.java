@@ -21,7 +21,6 @@ import forum.board.friends.dto.FriendResponseDTO;
 import forum.board.friends.exception.ResourceNotFoundException;
 import forum.board.users.Users;
 import forum.board.users.UsersRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -95,7 +94,6 @@ public class MessagesService {
     }
 
     /* 發送訊息 */
-    @Transactional 
     public MessageResponseDTO sendMessage(Long conversationId, UUID senderId, MessageRequestDTO request) {     
         // 確認使用者是對話成員
         checkMember(conversationId, senderId);
@@ -118,9 +116,10 @@ public class MessagesService {
         msg.setSender(sender);
         msg.setType(ChatType.TEXT);
         msg.setContent(content);
-        msg.setClientMsgId(request.clientMsgId()); 
+        msg.setClientMsgId(request.clientMsgId());   // null 時由 @PrePersist 補 UUID
         mRepo.save(msg);
 
+        // conversation 為受管理 entity，dirty checking 會自動 flush，不需 cRepo.save()
         conversation.setLastMessage(content);
         conversation.setUpdateTime(Instant.now());
 

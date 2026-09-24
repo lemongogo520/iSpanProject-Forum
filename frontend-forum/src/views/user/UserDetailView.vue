@@ -66,7 +66,51 @@
               <span v-else class="text-medium-emphasis"> — </span>
             </div>
           </div>
-         
+          <!-- 點數功能入口 -->
+<div class="field-row">
+  <div class="field-label">點數功能</div>
+
+  <div class="field-content points-actions">
+    <v-btn
+      type="button"
+      color="primary"
+      variant="tonal"
+      :loading="pointsNavigating"
+      :disabled="pointsNavigating"
+      @click="goToPointsPage('DailyTasks')"
+    >
+      每日任務
+    </v-btn>
+
+    <v-btn
+      type="button"
+      variant="outlined"
+      :disabled="!transactionsRouteReady || pointsNavigating"
+      @click="goToPointsPage('CoinTransactions')"
+    >
+      點數交易紀錄
+    </v-btn>
+
+    <v-btn
+      type="button"
+      variant="text"
+      :loading="pointsLoading"
+      :disabled="pointsLoading || pointsNavigating"
+      @click="loadPoints"
+    >
+      更新點數
+    </v-btn>
+
+    <div
+      v-if="pointsNavigationError"
+      class="text-body-2 text-error w-100"
+      role="alert"
+    >
+      {{ pointsNavigationError }}
+    </div>
+  </div>
+</div>
+
 
           <!-- 名稱 -->
           <div class="field-row">

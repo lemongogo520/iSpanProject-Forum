@@ -1,79 +1,106 @@
-import httpClient from "@/services/httpClient";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  'http://localhost:8085/api'
 
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+  import.meta.env.VITE_BACKEND_URL ||
+  'http://localhost:8085'
 
-// 檢查 API 回傳資料
-function getData(response) {
-  const data = response.data;
 
-  if (data === null || typeof data !== "object") {
-    throw new Error("API 回傳格式不正確，請確認登入狀態與後端設定");
-  }
+async function request(url, options = {}) {
 
-  return data;
-}
-
-// 取得商品分類
-export async function getCategories() {
-  const response = await httpClient.get("/api/dollshop/categories");
-  const data = getData(response);
-
-  if (!Array.isArray(data)) {
-    throw new Error("商品分類資料格式不正確");
-  }
-
-  return data;
-}
-
-// 取得分頁商品，頁碼從 1 開始
-export async function getProducts(categoryId, pageNumber = 1) {
-  const response = await httpClient.get("/api/dollshop/items", {
-    params: {
-      categoryId,
-      pageNumber,
+  const response = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
     },
   });
 
-  const data = getData(response);
+  if (!response.ok) {
 
-  if (!Array.isArray(data.content) || !Number.isInteger(data.totalPages)) {
-    throw new Error("商品分頁資料格式不正確");
+    let message = '系統發生錯誤'
+
+    try {
+      const data = await response.json()
+
+      message =
+        data.message ||
+        data.error ||
+        JSON.stringify(data)
+
+    } catch {
+      const text = await response.text()
+
+      if (text) {
+        message = text
+      }
+    }
+
+    throw new Error(message)
   }
 
-  return data;
+  if (response.status === 204) {
+    return null
+  }
+
+  return response.json()
 }
 
-// 購買商品，會員身分由後端 Session 取得
-export async function purchaseProduct(itemId) {
-  const response = await httpClient.post(
-    `/api/dollshop/items/${encodeURIComponent(itemId)}/purchase`,
-  );
 
-  const data = getData(response);
+/**
+ * 查詢商城商品
+ *
+ * GET /api/shop/products
+ *
+ * 或：
+ * GET /api/shop/products?type=CLOTHES
+ */
+export async function getProducts(type = null) {
 
-  if (data.status !== "COMPLETED" || data.itemId !== itemId) {
-    throw new Error(
-      "無法確認購買結果，請重新整理商品與餘額，勿立即重複購買",
-    );
+  let url = `${API_BASE_URL}/shop/products`
+
+  if (type) {
+
+    const params = new URLSearchParams()
+
+    params.append('type', type)
+
+    url += `?${params.toString()}`
   }
 
-  return data;
+  return request(url)
 }
 
-// 處理商品圖片網址
-export function resolveProductImage(filePath) {
-  if (!filePath) return null;
 
-  if (/^https?:\/\//i.test(filePath)) {
-    return filePath;
+/**
+ * 購買商品：會員身分由後端登入狀態取得
+ */
+export async function purchaseProduct(productId) {
+  const url = `${API_BASE_URL}/shop/products/${productId}/purchase`;
+
+  return request(url, {
+    method: "POST",
+    credentials: "include",
+  });
+}
+
+/**
+ * 處理商品圖片網址
+ */
+export function resolveProductImage(imageUrl) {
+
+  if (!imageUrl) {
+    return null
   }
 
-  const backendUrl = BACKEND_URL.replace(/\/+$/, "");
-  const path = filePath.replace(/^\/+/, "");
-  const imagePath = path.startsWith("sprites/")
-    ? path
-    : `sprites/${path}`;
+  if (
+    imageUrl.startsWith('http://') ||
+    imageUrl.startsWith('https://')
+  ) {
+    return imageUrl
+  }
 
-  return `${backendUrl}/${imagePath}`;
+  return `${BACKEND_URL}${imageUrl}`
 }

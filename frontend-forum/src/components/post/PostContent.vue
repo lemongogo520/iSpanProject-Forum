@@ -5,17 +5,9 @@
       <!-- 作者卡片 -->
       <v-col cols="12" md="2" class="author-column">
         <v-card elevation="1" class="author-area rounded-lg">
-          <UserFriendMenu :userId="post.userId" :name="post.userName">
-            <template #default="{ props }">
-              <!-- <pre style="font-size:10px">{{ Object.keys(userMenuProps) }}</pre> -->
-              <v-avatar size="90" class="mb-4" v-bind="props" @click.stop.prevent>
-                <v-icon icon="mdi-account" size="55" />
-              </v-avatar>
-            </template>
-          </UserFriendMenu>
-
-
-
+          <v-avatar size="90" class="mb-4">
+            <v-icon icon="mdi-account" size="55" />
+          </v-avatar>
 
           <div class="text-subtitle-1 font-weight-bold">
             {{ post.userName || "使用者" }}
@@ -58,11 +50,21 @@
           <!-- 按讚與文章操作 -->
           <div class="reaction-area">
             <!-- 按讚按鈕 -->
-            <v-btn class="like-button" :class="{
-              'like-button-active': likedByCurrentUser,
-            }" variant="tonal" rounded="pill" :color="likedByCurrentUser ? 'deep-orange' : 'grey-darken-1'"
-              :prepend-icon="likedByCurrentUser ? 'mdi-thumb-up' : 'mdi-thumb-up-outline'
-                " :loading="likeUpdating" :disabled="likeUpdating" @click="emit('toggle-like')">
+            <v-btn
+              class="like-button"
+              :class="{
+                'like-button-active': likedByCurrentUser,
+              }"
+              variant="tonal"
+              rounded="pill"
+              :color="likedByCurrentUser ? 'deep-orange' : 'grey-darken-1'"
+              :prepend-icon="
+                likedByCurrentUser ? 'mdi-thumb-up' : 'mdi-thumb-up-outline'
+              "
+              :loading="likeUpdating"
+              :disabled="likeUpdating"
+              @click="emit('toggle-like')"
+            >
               <span class="font-weight-bold">
                 {{ likeCount }}
               </span>
@@ -72,15 +74,28 @@
             <!-- 文章作者和各版管理員顯示 -->
             <v-menu v-if="isPostOwner || canModerate">
               <template #activator="{ props: menuProps }">
-                <v-btn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" />
+                <v-btn
+                  v-bind="menuProps"
+                  icon="mdi-dots-vertical"
+                  variant="text"
+                />
               </template>
 
               <v-list>
-                <v-list-item v-if="isPostOwner" title="編輯文章" prepend-icon="mdi-pencil-outline"
-                  @click="emit('edit-post')" />
+                <v-list-item
+                  v-if="isPostOwner"
+                  title="編輯文章"
+                  prepend-icon="mdi-pencil-outline"
+                  @click="emit('edit-post')"
+                />
 
-                <v-list-item title="刪除文章" prepend-icon="mdi-delete-outline" base-color="error" :disabled="postDeleting"
-                  @click="emit('delete-post')" />
+                <v-list-item
+                  title="刪除文章"
+                  prepend-icon="mdi-delete-outline"
+                  base-color="error"
+                  :disabled="postDeleting"
+                  @click="emit('delete-post')"
+                />
               </v-list>
             </v-menu>
           </div>
@@ -91,8 +106,6 @@
 </template>
 
 <script setup>
-import UserFriendMenu from '@/components/common/UserFriendMenu.vue';
-
 defineProps({
   post: {
     type: Object,
@@ -188,14 +201,12 @@ const formatDate = (date) => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .like-button,
   .like-button-active {
     transition: none;
     animation: none;
   }
 }
-
 .post-card {
   overflow: hidden;
 }
@@ -238,7 +249,6 @@ const formatDate = (date) => {
   background-color: #000;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
 }
-
 :deep(.post-content img) {
   display: inline-block;
   width: auto;
@@ -257,7 +267,6 @@ const formatDate = (date) => {
   margin-left: auto;
   margin-right: 0;
 }
-
 :deep(.post-content .ql-align-center) {
   text-align: center;
 }
@@ -269,7 +278,6 @@ const formatDate = (date) => {
 :deep(.post-content .ql-align-justify) {
   text-align: justify;
 }
-
 @media (max-width: 600px) {
   :deep(.post-content iframe.ql-video) {
     width: 100%;
@@ -279,7 +287,6 @@ const formatDate = (date) => {
     border-radius: 8px;
   }
 }
-
 /* 電腦版：作者卡片跟隨畫面捲動 */
 @media (min-width: 960px) {
   .author-column {

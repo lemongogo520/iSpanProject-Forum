@@ -1,21 +1,14 @@
 <template>
     <div class="chat-dock">
-        <ChatRoom 
-            v-if="chatStore.currentConversationId && !onChatPage" 
-            :key="chatStore.currentConversationId"
+        <ChatRoom v-if="chatStore.currentConversationId" :key="chatStore.currentConversationId"
             :conversationId="chatStore.currentConversationId" />
     </div>
 </template>
 <script setup>
 import { useChatStore } from "@/stores/conversation";
 import ChatRoom from "@/components/chat/ChatRoom.vue";
-import { useRoute } from "vue-router";
-import { computed } from "vue";
 
 const chatStore = useChatStore();
-const route = useRoute();
-
-const onChatPage = computed(() => route.path.startsWith("/chat"));
 </script>
 <style scoped>
 .chat-dock {

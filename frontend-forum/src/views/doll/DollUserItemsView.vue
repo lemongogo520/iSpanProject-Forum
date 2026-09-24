@@ -50,53 +50,19 @@
                 >
               </div>
 
-              <!-- 新增：指定顏色覆蓋 (Tint) -->
-              <div class="d-flex align-center justify-space-between mb-1 mt-2">
-                <span class="text-caption font-weight-bold text-grey-darken-2">
-                  覆蓋顏色 (支援黑灰白)
-                </span>
-              </div>
-              <div class="d-flex align-center gap-2 mb-2">
-                <!-- 黑色按鈕：對應 Integer 的 0 -->
-                <v-btn
-                  size="small"
-                  color="black"
-                  @click="updateColor(item.category.id, 0)"
-                  >黑色</v-btn
-                >
-                <!-- 紅色按鈕：對應 Integer 的 16711680 (0xFF0000) -->
-                <v-btn
-                  size="small"
-                  color="red"
-                  @click="updateColor(item.category.id, 16711680)"
-                  >紅色</v-btn
-                >
-
-                <!-- 完整的色碼選擇器 (Vuetify 版) -->
-                <v-menu :close-on-content-click="false" location="bottom">
-                  <template v-slot:activator="{ props }">
-                    <v-btn
-                      size="small"
-                      icon="mdi-palette"
-                      variant="tonal"
-                      color="primary"
-                      v-bind="props"
-                      title="選擇更多顏色"
-                    ></v-btn>
-                  </template>
-                  <v-card>
-                    <v-color-picker
-                      :model-value="intToHex(item.color)"
-                      @update:model-value="
-                        (val) => updateColor(item.category.id, hexToInt(val))
-                      "
-                      hide-inputs
-                      show-swatches
-                      elevation="0"
-                    ></v-color-picker>
-                  </v-card>
-                </v-menu>
-              </div>
+              <!-- 改用單純的 Slider，並綁定 0~360 度的數值 -->
+              <v-slider
+                :model-value="item.color || 0"
+                @update:model-value="
+                  (val) => updateColor(item.category.id, val)
+                "
+                min="0"
+                max="360"
+                step="1"
+                hide-details
+                thumb-size="16"
+                class="rainbow-slider"
+              ></v-slider>
             </div>
           </div>
           <!-- ========================================================== -->
@@ -194,15 +160,12 @@ const isSaving = ref(false);
 
 function saveEquippedItems() {
   isSaving.value = true;
-  const payload = Object.values(equippedItems.value).map((item) => ({
-    itemId: item.id,
-    color: item.color || null,
-  }));
+  const itemIds = Object.values(equippedItems.value).map((item) => item.id);
 
   httpClient({
     method: "put",
     url: "/api/dollitem/newequip",
-    data: payload, // 👈 傳送符合後端 DTO 的物件陣列
+    data: itemIds, // 👈 PUT 請求的 Body 要放在 data 屬性裡
   })
     .then((response) => {
       if (response.status === 200) {
@@ -219,7 +182,7 @@ function saveEquippedItems() {
 }
 
 // ================= 色相偏移相關邏輯 =================
-const allowedDyeCategories = ["頭髮", "上衣", "下裝"];
+const allowedDyeCategories = ["頭髮", "上衣"];
 
 const dyeableItems = computed(() => {
   return Object.values(equippedItems.value).filter((item) => {
@@ -228,21 +191,11 @@ const dyeableItems = computed(() => {
   });
 });
 
-// 色碼轉換工具：將 10 進位整數轉成 #RRGGBB 供 input type="color" 使用
-function intToHex(intValue) {
-  if (intValue === undefined || intValue === null) return "#ffffff";
-  return "#" + intValue.toString(16).padStart(6, "0");
-}
-
-// 色碼轉換工具：將 #RRGGBB 轉成 10 進位整數供後端與 PixiJS 使用
-function hexToInt(hexString) {
-  if (!hexString) return null;
-  return parseInt(hexString.replace("#", ""), 16);
-}
-
-function updateColor(categoryId, colorInt) {
+function updateColor(categoryId, hueValue) {
   if (equippedItems.value[categoryId]) {
-    equippedItems.value[categoryId].color = colorInt;
+    // 直接把 0~360 的數字存進去
+    equippedItems.value[categoryId].color = hueValue;
+    // 強制觸發深層響應式更新
     equippedItems.value = { ...equippedItems.value };
   }
 }

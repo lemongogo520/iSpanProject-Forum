@@ -1,62 +1,68 @@
 <template>
   <div class="shop-page">
+    <!-- ====================== -->
     <!-- 商城標題 -->
+    <!-- ====================== -->
+
     <section class="shop-header">
       <div>
         <h1>紙娃娃商城</h1>
+
         <p>使用點數購買喜歡的造型商品</p>
       </div>
     </section>
 
+    
+    <!-- ====================== -->
     <!-- 商品分類 -->
+    <!-- ====================== -->
+
     <section class="category-section">
       <button
         v-for="category in categories"
-        :key="category.value"
-        type="button"
+        :key="category.value || 'ALL'"
         class="category-button"
-        :class="{ active: selectedType === category.value }"
-        :disabled="loading || purchasingProductId !== null"
+        :class="{
+          active: selectedType === category.value,
+        }"
         @click="selectCategory(category.value)"
       >
         {{ category.label }}
       </button>
     </section>
 
+    <!-- ====================== -->
     <!-- 成功訊息 -->
-    <div
-      v-if="successMessage"
-      class="message success-message"
-      role="status"
-    >
+    <!-- ====================== -->
+
+    <div v-if="successMessage" class="message success-message">
       {{ successMessage }}
     </div>
 
+    <!-- ====================== -->
     <!-- 錯誤訊息 -->
-    <div
-      v-if="errorMessage"
-      class="message error-message"
-      role="alert"
-    >
+    <!-- ====================== -->
+
+    <div v-if="errorMessage" class="message error-message">
       {{ errorMessage }}
     </div>
 
-    <!-- 商品載入狀態 -->
-    <div v-if="loading" class="status-box">
-      商品載入中...
-    </div>
+    <!-- ====================== -->
+    <!-- Loading -->
+    <!-- ====================== -->
 
-    <!-- 查詢失敗 -->
-    <div v-else-if="errorMessage && products.length === 0" class="status-box">
-      無法載入商品，請確認連線或登入狀態後重新整理。
-    </div>
+    <div v-if="loading" class="status-box">商品載入中...</div>
 
-    <!-- 沒有商品 -->
-    <div v-else-if="products.length === 0" class="status-box">
-      目前沒有商品
-    </div>
+    <!-- ====================== -->
+    <!-- 商品不存在 -->
+    <!-- ====================== -->
 
+    <div v-else-if="products.length === 0" class="status-box">目前沒有商品</div>
+
+    <!-- ====================== -->
     <!-- 商品列表 -->
+    <!-- ====================== -->
+
     <section v-else class="product-grid">
       <ProductCard
         v-for="product in products"
@@ -66,156 +72,150 @@
         @purchase="handlePurchase"
       />
     </section>
-
-    <!-- 商品分頁 -->
-    <div v-if="totalPages > 1" class="pagination">
-      <button
-        type="button"
-        :disabled="
-          loading || purchasingProductId !== null || pageNumber <= 1
-        "
-        @click="changePage(pageNumber - 1)"
-      >
-        上一頁
-      </button>
-
-      <span>第 {{ pageNumber }} / {{ totalPages }} 頁</span>
-
-      <button
-        type="button"
-        :disabled="
-          loading || purchasingProductId !== null || pageNumber >= totalPages
-        "
-        @click="changePage(pageNumber + 1)"
-      >
-        下一頁
-      </button>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from "vue";
+
 import ProductCard from "@/components/shop/ProductCard.vue";
-import {
-  getCategories,
-  getProducts,
-  purchaseProduct,
-} from "@/services/shopApi";
+
+import { getProducts, purchaseProduct } from "@/services/shopApi";
+
+// ==============================
+// 商品
+// ==============================
 
 const products = ref([]);
-const categories = ref([]);
-const selectedType = ref(null);
 
-const pageNumber = ref(1);
-const totalPages = ref(0);
+// ==============================
+// Loading
+// ==============================
 
 const loading = ref(false);
+
 const purchasingProductId = ref(null);
 
+// ==============================
+// 訊息
+// ==============================
+
 const successMessage = ref("");
+
 const errorMessage = ref("");
 
-function getErrorMessage(error, fallback) {
-  const data = error.response?.data;
+// ==============================
+// 商品分類
+// ==============================
 
-  if (typeof data === "string" && !data.trim().startsWith("<")) {
-    return data;
-  }
+const selectedType = ref(null);
 
-  return data?.message || error.message || fallback;
-}
+const categories = [
+  {
+    label: "全部",
+    value: null,
+  },
+
+  {
+    label: "服裝",
+    value: "CLOTHES",
+  },
+
+  {
+    label: "髮型",
+    value: "HAIR",
+  },
+
+  {
+    label: "配件",
+    value: "ACCESSORY",
+  },
+
+  {
+    label: "背景",
+    value: "BACKGROUND",
+  },
+
+  {
+    label: "其他",
+    value: "OTHER",
+  },
+];
+
+// ==============================
+// 查詢商品
+// ==============================
 
 async function loadProducts() {
-  if (selectedType.value === null) return;
-
   loading.value = true;
+
   errorMessage.value = "";
 
   try {
-    const data = await getProducts(selectedType.value, pageNumber.value);
-    products.value = data.content;
-    totalPages.value = data.totalPages;
+    products.value = await getProducts(selectedType.value);
   } catch (error) {
-    products.value = [];
-    totalPages.value = 0;
-    errorMessage.value = getErrorMessage(error, "商品載入失敗");
+    console.error(error);
+
+    errorMessage.value = error.message || "商品載入失敗";
   } finally {
     loading.value = false;
   }
 }
 
-async function selectCategory(categoryId) {
-  if (loading.value || purchasingProductId.value !== null) return;
-  if (selectedType.value === categoryId) return;
+// ==============================
+// 商品分類
+// ==============================
 
-  selectedType.value = categoryId;
-  pageNumber.value = 1;
-  successMessage.value = "";
+async function selectCategory(type) {
+  selectedType.value = type;
 
   await loadProducts();
 }
 
-async function changePage(nextPage) {
-  if (loading.value || purchasingProductId.value !== null) return;
-  if (nextPage < 1 || nextPage > totalPages.value) return;
-
-  pageNumber.value = nextPage;
-  await loadProducts();
-}
+// ==============================
+// 購買商品
+// ==============================
 
 async function handlePurchase(product) {
-  if (loading.value || purchasingProductId.value !== null) return;
-  if (product.isOwned === true) return;
-
   successMessage.value = "";
   errorMessage.value = "";
+  
 
   const confirmed = window.confirm(
     `確定要花 ${product.price} 點購買「${product.name}」嗎？`,
   );
 
-  if (!confirmed) return;
+  if (!confirmed) {
+    return;
+  }
 
   purchasingProductId.value = product.id;
 
   try {
     const result = await purchaseProduct(product.id);
 
-    product.isOwned = true;
-    successMessage.value =
-      `購買成功：${result.itemName}，消耗 ${result.price} 點，` +
-      `剩餘 ${result.balanceAfter} 點`;
+    successMessage.value = `購買成功：${result.productName}，消耗 ${result.price} 點`;
 
+    console.log("購買結果：", result);
+
+    // 商品狀態可能改變，
+    // 購買成功後重新讀取
     await loadProducts();
   } catch (error) {
-    errorMessage.value = getErrorMessage(error, "購買失敗");
+    console.error(error);
+
+    errorMessage.value = error.message || "購買失敗";
   } finally {
     purchasingProductId.value = null;
   }
 }
 
-onMounted(async () => {
-  loading.value = true;
+// ==============================
+// 頁面第一次進入
+// ==============================
 
-  try {
-    const data = await getCategories();
-
-    categories.value = data.map((category) => ({
-      label: category.typeName,
-      value: category.id,
-    }));
-
-    selectedType.value = categories.value[0]?.value ?? null;
-  } catch (error) {
-    errorMessage.value = getErrorMessage(error, "分類載入失敗");
-  } finally {
-    loading.value = false;
-  }
-
-  if (selectedType.value !== null) {
-    await loadProducts();
-  }
+onMounted(() => {
+  loadProducts();
 });
 </script>
 
@@ -363,27 +363,5 @@ onMounted(async () => {
   text-align: center;
 
   color: #888888;
-}
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 28px;
-}
-
-.pagination button {
-  padding: 8px 16px;
-  border: 1px solid #d6dce6;
-  border-radius: 8px;
-  background: white;
-  color: #555555;
-  cursor: pointer;
-}
-
-.pagination button:disabled,
-.category-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>

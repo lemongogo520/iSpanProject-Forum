@@ -9,7 +9,18 @@
         >
           <div class="brand-content text-center">
             <v-avatar size="90" class="brand-logo mb-6">
-              <v-icon size="50">mdi-cpu</v-icon>
+              <img v-if="configStore.settings.login_logo?.length"
+                :src="`/api/file/files/${configStore.settings.login_logo[0]}`"
+                width="50"
+                height="50"
+                style="object-fit: contain;"
+              >
+              <v-icon
+                v-else
+                size="50"
+              >
+                mdi-cpu
+              </v-icon>
             </v-avatar>
 
             <h1>{{ configStore.settings.web_site_name }}</h1>
@@ -136,6 +147,7 @@ const configStore = useConfigStore()
 //先等待configStore loading完成
 onMounted(async () => {
   await configStore.loadSettings()
+  console.log(configStore.settings.login_logo);
 })
 
 // ========================

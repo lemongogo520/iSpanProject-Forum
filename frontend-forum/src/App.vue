@@ -9,13 +9,17 @@ import HomeHeader from "@/components/home/HomeHeader.vue";
 import FriendSidebar from "@/views/friend/FriendSidebar.vue";
 import ChatDock from "@/views/chat/ChatDock.vue";
 import { useMessageStore } from "./stores/message";
+import { connectSocket, disconnectSocket } from "./services/socket";
+import { useUserStore } from "./stores/user";
+import { useConfigStore } from '@/stores/config'
 
 const route = useRoute();
 const authStore = useAuthStore();
 const chatStore = useChatStore();
 const friendStore = useFriendStore();
 const messageStore = useMessageStore();
-const { snackbar } = useNotification();
+const { snackbar, showMessage } = useNotification();
+const configStore = useConfigStore()
 
 const hideHeaderPaths = ["/login", "/register"];
 const showHeader = computed(() => {
@@ -23,6 +27,42 @@ const showHeader = computed(() => {
     !hideHeaderPaths.includes(route.path) && !route.path.startsWith("/config")
   );
 });
+
+// =========== 載入index.html title =================
+onMounted(async () => {
+  await configStore.loadSettings()
+})
+
+watch(
+  () => configStore.settings.web_site_name,
+  name => {
+    if (name) {
+      document.title = name
+    }
+  },
+  { immediate: true }
+)
+
+// =========== websocket =================
+const handleIncoming = (msg) => {
+  msg.mine = msg.sender?.userId === userStore.uid;
+  msg.status = "sent";
+
+  messageStore.addMessage(msg);
+
+  const isOpen = chatStore.currentConversationId === msg.conversationId && !chatStore.isMinimized;
+  chatStore.applyIncoming(msg, { isCurrent: isOpen });
+
+  if (isOpen && !msg.mine) messageStore.markAsRead(msg.conversationId);
+};
+
+const resync = async () => {
+  await chatStore.getConversations();
+  if (chatStore.currentConversationId) {
+    messageStore.getMessages(chatStore.currentConversationId);
+  }
+};
+
 
 watch(
   () => authStore.isLogin,

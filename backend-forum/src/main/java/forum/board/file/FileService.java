@@ -1,14 +1,18 @@
 package forum.board.file;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -68,6 +72,35 @@ public class FileService {
 
         return new FileInfo(
             fileId,
+            fileName,
+            extension
+        );
+    }
+    
+    public Resource getFileResource(UUID fileId) throws IOException {
+
+        FileStore fileStore = fileStoreRepository.findByFileId(fileId)
+                .orElseThrow(() -> new RuntimeException("找不到檔案"));
+
+        Path filePath = Paths.get(fileStore.getFilePath())
+                .resolve(fileStore.getFileId() + "." + getExtension(fileStore.getFileName()));
+
+        if (!Files.exists(filePath)) {
+            throw new FileNotFoundException("檔案不存在");
+        }
+
+        return new UrlResource(filePath.toUri());
+    }
+    
+    public FileInfo getFileInfo(UUID fileId) {
+        FileStore fileStore = fileStoreRepository.findByFileId(fileId)
+                .orElseThrow(() -> new RuntimeException("找不到檔案"));
+
+        String fileName = fileStore.getFileName();
+        String extension = getExtension(fileName);
+
+        return new FileInfo(
+            fileStore.getFileId(),
             fileName,
             extension
         );

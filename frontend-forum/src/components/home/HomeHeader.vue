@@ -7,6 +7,7 @@ import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
 import { useAuthStore } from "@/stores/auth";
 import { useDisplay } from "vuetify";
+import MessageMenu from "../chat/MessageMenu.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -276,7 +277,7 @@ onBeforeUnmount(() => {
       </nav>
 
       <v-spacer />
-
+      <MessageMenu />
       <!-- 會員選單 -->
       <v-menu
         v-model="memberMenu"

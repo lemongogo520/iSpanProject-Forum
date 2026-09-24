@@ -34,7 +34,7 @@
                 <div class="post-excerpt">{{ p.excerpt }}</div>
 
                 <div class="post-meta">
-                  {{ p.boardName }} · {{ formatPostDate(p.createTime) }}
+                  {{ p.boardName }} · {{ timeAgo(p.createTime) }}
                 </div>
               </div>
             </v-card-text>
@@ -68,6 +68,7 @@ import DollAvatar from "@/components/doll/DollAvatar.vue";
 import { useChatStore } from "@/stores/conversation";
 import httpClient from "@/services/httpClient";
 import defaultPostImage from "@/assets/images/default-post.png";
+import { timeAgo } from "@/utils/time";
 
 const friendStore = useFriendStore();
 const chatStore = useChatStore();
@@ -94,15 +95,6 @@ watch(
   },
   { immediate: true }
 );
-const formatPostDate = (date) => {
-  if (!date) return "";
-
-  return new Date(date).toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-};
 
 const startChat = async (friend) => {
   const c = await chatStore.directConversation(friend.userId);

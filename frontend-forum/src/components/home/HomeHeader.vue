@@ -121,8 +121,8 @@ const logout = () => {
       console.log("登出成功:", response.data);
 
       userStore.clearUser();
+      authStore.setLogout();
       router.push("/login");
-      authStore.isLogin = false;
     })
     .catch((error) => {
       console.error("登出失敗:", error);
@@ -218,7 +218,6 @@ onBeforeUnmount(() => {
       >
         <v-btn
           v-for="item in [
-            { title: '首頁', icon: 'mdi-home-outline', to: '/home' },
             { title: '討論區', icon: 'mdi-forum-outline', to: '/categories' },
             { title: '點數', icon: 'mdi-star-circle-outline', to: '/member/transactions' },
             { title: '我的角色', icon: 'mdi-account-circle-outline', to: '/doll/user' },

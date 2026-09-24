@@ -68,6 +68,15 @@ public class DailyTaskService {
                 for (DailyTaskType taskType : taskConfig.getEnabledTaskTypes()) {
 
                         MemberDailyTask task = getOrCreateTask(userId, today, taskType);
+
+                        // 已登入會員查詢任務時，完成今日登入任務。
+                        if (taskType == DailyTaskType.LOGIN
+                                        && !Boolean.TRUE.equals(task.getClaimed())
+                                        && task.getProgressCount() < task.getTargetCount()) {
+                                task.setProgressCount(task.getTargetCount());
+                                taskRepository.save(task);
+                        }
+
                         refreshDatabaseProgress(task);
                 }
 

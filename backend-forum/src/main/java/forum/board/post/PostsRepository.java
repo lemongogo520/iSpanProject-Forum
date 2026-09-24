@@ -82,5 +82,10 @@ public interface PostsRepository extends JpaRepository<Posts, Integer> {
 	// 找熱門文章
 	List<Posts> findByIsDeletedFalseOrderByViewsDescCreateTimeDesc(Pageable pageable);
 
+	boolean existsByBoard_IdAndTitle(Integer boardId, String title);
+
+	List<Posts> findByIsDeletedFalseOrderByCreateTimeDescIdDesc(
+        Pageable pageable);
+
 
 }

@@ -26,7 +26,7 @@
                             :active="f.userId === friendStore.selectedFriendId"
                             @click="friendStore.selectFriend(f.userId)">
                             <template #prepend>
-                                <DollAvatar :userId="f.userId" :scale="1.5" :size="48" />
+                                <FriendAvatar :userId="f.userId" :scale="1.5" :size="48" />
                             </template>
                             <div class="ml-4">
                                 <v-list-item-title>{{ f.displayName }}</v-list-item-title>
@@ -43,7 +43,7 @@
                         <v-list-item v-if="friendStore.requestList.length === 0">尚無好友邀請</v-list-item>
                         <v-list-item v-for="r in friendStore.requestList" :key="r.id">
                             <template #prepend>
-                                <DollAvatar :userId="r.friend.userId" :scale="1.5" :size="48" />
+                                <FriendAvatar :userId="r.friend.userId" :scale="1.5" :size="48" />
                             </template>
                             <v-list-item-title class="ml-4">{{ r.friend.displayName }}</v-list-item-title>
                             <template #append>
@@ -63,7 +63,7 @@
                     <v-list nav>
                         <v-list-item v-for="r in friendStore.sendRequestList" :key="r.id">
                             <template #prepend>
-                                <DollAvatar :userId="r.friend.userId" :scale="1.5" :size="48" />
+                                <FriendAvatar :userId="r.friend.userId" :scale="1.5" :size="48" />
                             </template>
                             <v-list-item-title class="ml-4">{{ r.friend.displayName }}</v-list-item-title>
                             <template #append>
@@ -81,6 +81,7 @@
 import { ref } from 'vue';
 import { useFriendStore } from '@/stores/friend';
 import DollAvatar from "@/components/doll/DollAvatar.vue";
+import FriendAvatar from '@/components/friend/FriendAvatar.vue';
 import AddFriendDialog from './AddFriendDialog.vue';
 const friendStore = useFriendStore();
 const tab = ref("friends");

@@ -48,6 +48,13 @@ public class PostController {
 		return postService.findAll();
 	}
 
+	// 取得全站最新文章
+	@GetMapping("/api/posts/latest")
+	public List<LatestPostDTO> findLatestPosts(@RequestParam(defaultValue = "8") int limit) {
+
+		return postService.findLatestPosts(limit);
+	}
+
 	// 取得單篇文章
 	@GetMapping("/api/posts/{id}")
 	public ResponseEntity<PostDTO> findById(@PathVariable Integer id) {

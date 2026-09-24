@@ -12,7 +12,11 @@ export default defineConfig({
       autoImport: true,
     }),
   ],
-
+  server: {
+    warmup: {
+      clientFiles: ["./src/views/**/*.vue", "./src/components/**/*.vue"],
+    },
+  },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

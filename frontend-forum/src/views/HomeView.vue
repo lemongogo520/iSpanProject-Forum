@@ -92,9 +92,9 @@ const topicExcerpts = {
 const announcements = ["系統維護公告", "點數獎勵活動開跑！", "新版商城上線囉"];
 
 // 示範文章僅展示；取得文章 API 後再接實際文章路由。
-const { smAndUp, lgAndUp } = useDisplay();
+const { lgAndUp, smAndUp, mdAndUp } = useDisplay();
 const topicPage = ref(0);
-const pageSize = computed(() => lgAndUp.value ? 3 : smAndUp.value ? 2 : 1);
+const pageSize = computed(() => mdAndUp.value ? 8 : 4);
 const topicPageCount = computed(() => Math.ceil(topics.length / pageSize.value));
 const visibleTopics = computed(() => topics.slice(topicPage.value * pageSize.value, (topicPage.value + 1) * pageSize.value));
 watch(pageSize, () => { topicPage.value = 0; });
@@ -114,6 +114,7 @@ const dialogContent = computed(() => infoDialog.value === "about"
 <template>
   <div class="home-page">
     <div class="home-content">
+     <div class="home-top-row">
       <section class="hero-carousel" aria-label="首頁功能輪播" aria-roledescription="輪播" @keydown.left.prevent="selectSlide(activeSlide - 1)" @keydown.right.prevent="selectSlide(activeSlide + 1)">
         <div class="carousel-stage" :aria-live="paused ? 'polite' : 'off'">
           <Transition name="banner-fade" mode="out-in">
@@ -130,44 +131,74 @@ const dialogContent = computed(() => infoDialog.value === "about"
           </Transition>
           <button type="button" class="carousel-arrow arrow-prev" aria-label="上一張圖片" @click="selectSlide(activeSlide - 1)"><v-icon icon="mdi-chevron-left" /></button>
           <button type="button" class="carousel-arrow arrow-next" aria-label="下一張圖片" @click="selectSlide(activeSlide + 1)"><v-icon icon="mdi-chevron-right" /></button>
-        </div>
-        <button type="button" class="carousel-play-toggle" :aria-label="paused ? '開始自動輪播' : '暫停自動輪播'" :title="paused ? '開始自動輪播' : '暫停自動輪播'" @click="paused = !paused">
-          <v-icon :icon="paused ? 'mdi-play' : 'mdi-pause'" size="20" />
-        </button>
+        </div>       
       </section>
 
-      <div class="community-area" @mouseenter="lowerHover = true" @mouseleave="lowerHover = false" @focusin="lowerFocus = true" @focusout="handleLowerFocusOut">
-        <section class="announcement-ticker panel" aria-label="系統公告跑馬燈">
-          <h2><v-icon icon="mdi-bullhorn-outline" color="primary" />系統公告</h2>
-          <div class="ticker-window" :aria-live="lowerPaused ? 'polite' : 'off'">
-            <Transition name="ticker" mode="out-in"><p :key="announcementIndex">{{ announcements[announcementIndex] }}</p></Transition>
-          </div>
-          <v-chip size="x-small" variant="tonal">示範資料</v-chip>
-          <button type="button" class="lower-control" :aria-label="lowerPaused ? '播放公告與討論輪播' : '暫停公告與討論輪播'" @click="lowerPaused = !lowerPaused"><v-icon :icon="lowerPaused ? 'mdi-play' : 'mdi-pause'" /></button>
-        </section>
+      <section class="latest-posts-panel" aria-label="最新文章">
+        <div class="latest-posts-heading">
+          <v-icon icon="mdi-text-box-outline" size="22" /><h2>最新文章</h2>
+        </div>
+        <div class="latest-posts-content">
+          <!-- 組員提供的最新文章元件放在這裡，每篇文章呈現一橫列 -->
+          <p class="latest-posts-empty">目前尚未載入最新文章</p>
+        </div>
+      </section>
+    </div>
+
+      <div class="community-area" @mouseenter="lowerHover = true" @mouseleave="lowerHover = false" @focusin="lowerFocus = true" @focusout="handleLowerFocusOut">        
         <div class="community-grid">
           <section class="panel topics-panel" aria-labelledby="topics-title" aria-roledescription="輪播">
-            <div class="panel-heading"><h2 id="topics-title"><v-icon icon="mdi-fire" color="orange" size="23" />熱門討論</h2><v-chip size="x-small" variant="tonal">示範資料</v-chip></div>
-            <div class="topic-carousel">
-              <button type="button" class="topic-prev lower-control" aria-label="上一組熱門討論" @click="changeTopicPage(-1)"><v-icon icon="mdi-chevron-left" /></button>
-              <div class="topic-grid" :style="{ '--columns': pageSize }">
-                <article v-for="topic in visibleTopics" :key="topic.title" class="discussion-card">
-                  <div class="discussion-body">
-                    <v-chip :color="topic.color" size="small" variant="tonal">{{ topic.category }}</v-chip>
-                    <h3>{{ topic.title }}</h3>
-                    <p class="discussion-excerpt">{{ topicExcerpts[topic.title] }}</p>
-                    <p class="discussion-author"><v-icon icon="mdi-account-circle-outline" size="20" />{{ topic.user }}</p>
-                    <p class="discussion-stats"><span><v-icon icon="mdi-eye-outline" size="16" /> {{ topic.views }}</span><span><v-icon icon="mdi-comment-outline" size="16" /> {{ topic.comments }} 則回覆</span></p>
-                  </div>
-                </article>
-              </div>
-              <button type="button" class="topic-next lower-control" aria-label="下一組熱門討論" @click="changeTopicPage(1)"><v-icon icon="mdi-chevron-right" /></button>
-            </div>
-            <div class="topic-dots"><button v-for="page in topicPageCount" :key="page" type="button" :class="{ active: topicPage === page - 1 }" :aria-label="`第 ${page} 組熱門討論`" :aria-current="topicPage === page - 1 ? 'true' : undefined" @click="topicPage = page - 1"><span></span></button></div>
-          </section>
-          <aside class="panel friend-panel" aria-label="好友聊天入口">
-            <div class="friend-invitation"><v-icon icon="mdi-chat-processing-outline" size="36" /><h3>和夥伴聊聊吧</h3><p>讓每個想法，都有分享的對象。</p><v-btn color="primary" rounded="pill" @click="chatOpen = true">開啟聊天視窗</v-btn></div>
-          </aside>
+  <div class="panel-heading">
+    <h2 id="topics-title"><v-icon icon="mdi-fire" color="orange" size="23" />熱門討論</h2>
+    <v-chip size="x-small" variant="tonal">示範資料</v-chip>
+  </div>
+
+  <div class="topic-carousel">
+    <button type="button" class="topic-prev lower-control" aria-label="上一組熱門討論" @click="changeTopicPage(-1)">
+      <v-icon icon="mdi-chevron-left" />
+    </button>
+
+    <div class="topic-grid">
+      <article v-for="topic in visibleTopics" :key="topic.title" class="discussion-card">
+        <div class="discussion-image-wrap">
+          <img v-if="topic.image" :src="topic.image" :alt="topic.title" class="discussion-image" />
+          <div v-else class="discussion-image-placeholder">
+            <v-icon icon="mdi-image-outline" size="40" />
+          </div>
+          <v-chip :color="topic.color" size="small" variant="flat" class="discussion-category">{{ topic.category }}</v-chip>
+        </div>
+
+        <div class="discussion-body">
+          <h3>{{ topic.title }}</h3>
+          <p class="discussion-stats">
+            <span><v-icon icon="mdi-eye-outline" size="16" /> {{ topic.views }}</span>
+            <span><v-icon icon="mdi-comment-outline" size="16" /> {{ topic.comments }}</span>
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <button type="button" class="topic-next lower-control" aria-label="下一組熱門討論" @click="changeTopicPage(1)">
+      <v-icon icon="mdi-chevron-right" />
+    </button>
+  </div>
+
+  <div class="topic-dots">
+    <button v-for="page in topicPageCount" :key="page" type="button" :class="{ active: topicPage === page - 1 }" :aria-label="`第 ${page} 組熱門討論`" :aria-current="topicPage === page - 1 ? 'true' : undefined" @click="topicPage = page - 1">
+      <span></span>
+    </button>
+  </div>
+</section>
+          <aside class="home-promo-panel" aria-label="遊戲與動畫推薦">
+  <a  href="https://www.ispan.com.tw/kaohsiung/"  target="_blank" rel="noopener noreferrer"  class="home-promo-link"  aria-label="前往資展國際高雄訓練中心（另開分頁）">
+  <img src="/images/promo-ispan.png" alt="資展國際高雄訓練中心，探索程式學習" />
+  </a>
+
+  <a  href="https://spring.io/guides/"  target="_blank"  rel="noopener noreferrer"
+  class="home-promo-link"  aria-label="前往 Spring 官方教學（另開分頁）">
+  <img src="/images/promo-spring.png" alt="Java 與 Spring Boot 學習資源" />
+  </a>
+</aside>
         </div>
       </div>
     </div>
@@ -188,7 +219,7 @@ const dialogContent = computed(() => infoDialog.value === "about"
 
 <style scoped>
 .home-page { min-height: 100vh; display: flex; flex-direction: column; color: #233750; background: #f6f8fc; font-family: "Microsoft JhengHei", Arial, sans-serif; }
-.home-content { width: 100%; max-width: 1440px; margin: 0 auto; padding: 18px 36px 56px; flex: 1; }
+.home-content { width: 100%; max-width: 1680px; margin: 0 auto; padding: 18px 48px 56px;  box-sizing: border-box; flex: 1; }
 .home-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
 .home-label { color: #76869b; font-size: 14px; letter-spacing: 2px; }
 .member-trigger { text-transform: none; letter-spacing: 0; }
@@ -245,6 +276,13 @@ const dialogContent = computed(() => infoDialog.value === "about"
 .footer button:hover { color: white; text-decoration: underline; }
 .chat-floating { position: fixed; right: 24px; bottom: 24px; z-index: 50; }
 .dialog-heading { display: flex; justify-content: space-between; align-items: center; }
+.topics-panel .discussion-card {display: flex; flex-direction: column;}
+.topics-panel .discussion-image-wrap {width: 100%;  flex: none;}
+.topics-panel .discussion-body {width: 100%;  box-sizing: border-box;}
+.home-promo-panel {display: flex;  flex-direction: column;  gap: 14px;  min-width: 0;}
+.home-promo-link {display: block; overflow: hidden; border-radius: 14px; background: #eaf0f7;}
+.home-promo-link img { display: block;  width: 100%;  height: auto;}
+.home-promo-link:focus-visible { outline: 3px solid #3478d4;  outline-offset: 3px;}
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 @media (max-width: 1100px) {
   .feature-grid { gap: 12px; }
@@ -417,4 +455,249 @@ const dialogContent = computed(() => infoDialog.value === "about"
 .friend-invitation p { margin: 12px 0 24px; font-size: 13px; }
 .friend-invitation .v-btn { width: 100%; min-height: 44px; }
 @media (max-width: 599px) { .discussion-body h3 { min-height: 0; } .community-area { margin-top: 22px; } }
+.home-top-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+  margin-bottom: 24px;
+}
+
+.home-top-row > .hero-carousel {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.latest-posts-panel {
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+}
+
+.latest-posts-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  color: #213954;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.latest-posts-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.latest-posts-content {
+  padding: 0 20px;
+}
+
+.latest-posts-empty {
+  margin: 24px 0;
+  color: #748397;
+  font-size: 14px;
+}
+
+@media (max-width: 767px) {
+  .home-top-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* 半寬輪播 */
+.home-top-row .hero-carousel {
+  border-radius: 18px;
+}
+
+.home-top-row .slide-link {
+  height: 300px;
+}
+
+.home-top-row .slide-copy {
+  box-sizing: border-box;
+  width: 62%;
+  padding: 24px 38px;
+}
+
+.home-top-row .slide-eyebrow {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.home-top-row .slide-copy h1 {
+  margin: 12px 0 8px;
+  font-size: 28px;
+  line-height: 1.3;
+}
+
+.home-top-row .slide-copy h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.home-top-row .slide-copy p {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* 手機版：圖片在上、文字在下 */
+@media (max-width: 599px) {
+  .home-top-row .slide-link {
+    height: auto;
+  }
+
+  .home-top-row .slide-copy {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 20px 24px;
+  }
+
+  .home-top-row .slide-copy h1 {
+    font-size: 26px;
+  }
+}
+.topics-panel .topic-carousel {
+  position: relative;
+  padding: 16px 20px;
+}
+
+.topics-panel .topic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.topics-panel .discussion-card {
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e0e5ec;
+  border-radius: 12px;
+}
+
+.topics-panel .discussion-image-wrap {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #eaf0f7;
+}
+
+.topics-panel .discussion-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.topics-panel .discussion-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #91a3b9;
+}
+
+.topics-panel .discussion-category {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.topics-panel .discussion-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: auto;
+  min-height: 0;
+  padding: 12px;
+}
+
+.topics-panel .discussion-body h3 {
+  display: -webkit-box;
+  min-height: 44px;
+  margin: 0;
+  overflow: hidden;
+  color: #263c56;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.topics-panel .discussion-stats {
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+  margin: 0;
+  color: #8996a8;
+  font-size: 12px;
+}
+
+.topics-panel .topic-prev,
+.topics-panel .topic-next {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: #14253dcc;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.topics-panel .topic-prev {
+  left: 6px;
+}
+
+.topics-panel .topic-next {
+  right: 6px;
+}
+
+.topics-panel .topic-carousel:hover .lower-control,
+.topics-panel .topic-carousel:focus-within .lower-control {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 959px) {
+  .topics-panel .topic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .topics-panel .topic-carousel {
+    padding: 12px;
+  }
+
+  .topics-panel .topic-grid {
+    gap: 8px;
+  }
+}
+
+@media (hover: none) {
+  .topics-panel .topic-prev,
+  .topics-panel .topic-next {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
 </style>

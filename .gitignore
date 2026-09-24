@@ -28,5 +28,12 @@ Thumbs.db
 !/uploads/img/.gitkeep
 /spritesheets
 
+# test img
+!/uploads/img/campus-administration.png
+!/uploads/img/campus-classroom-study.png
+!/uploads/img/campus-club-fair.png
+
 # Uploaded files
 /backend-forum/uploads/
+
+

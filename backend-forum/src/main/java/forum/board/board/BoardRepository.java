@@ -12,4 +12,6 @@ public interface BoardRepository extends JpaRepository<Board, Integer>{
     Optional<Board> findByName(String name);
 
     List<Board> findByCategoryId(Integer categoryId);
+
+    
 }

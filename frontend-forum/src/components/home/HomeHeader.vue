@@ -7,7 +7,7 @@ import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
 import { useAuthStore } from "@/stores/auth";
 import { useDisplay } from "vuetify";
-import MessageMenu from "../chat/MessageMenu.vue";
+import MessageMenu from "@/components/chat/MessageMenu.vue";
 import { useConfigStore } from '@/stores/config'
 import DollAvatar from "@/components/doll/DollAvatar.vue";
 
@@ -194,43 +194,90 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <v-app-bar color="#0f1f35" :height="isNavbarCompact ? 60 : 72" elevation="2"
-    :class="{ 'navbar-compact': isNavbarCompact }">
+  <v-app-bar
+    color="#0f1f35"
+    :height="isNavbarCompact ? 60 : 72"
+    elevation="2"
+    :class="{ 'navbar-compact': isNavbarCompact }"
+  >
     <div class="header-container">
       <!-- 手機版選單 -->
-      <v-app-bar-nav-icon v-if="!mdAndUp" color="white" aria-label="開啟導覽選單"
-        @click="drawer = !drawer; memberMenu = false" />
+      <v-app-bar-nav-icon
+        v-if="!mdAndUp"
+        color="white"
+        aria-label="開啟導覽選單"
+        @click="drawer = !drawer; memberMenu = false"
+      />
 
       <!-- Logo -->
-      <span class="brand" @click="goTo('/home')">
+      <span
+        class="brand"
+        @click="goTo('/home')"
+      >
         {{ configStore.settings.web_site_name }}
       </span>
 
       <!-- 桌面版主導覽 -->
-      <nav v-if="mdAndUp" class="main-nav" aria-label="主要導覽">
-        <v-btn v-for="item in [
-          { title: '討論區', icon: 'mdi-forum-outline', to: '/categories' },
-          { title: '點數', icon: 'mdi-star-circle-outline', to: '/member/transactions' },
-          { title: '我的角色', icon: 'mdi-account-circle-outline', to: '/doll/user' },
-          { title: '商城', icon: 'mdi-storefront-outline', to: '/shop' },
-          { title: '任務活動', icon: 'mdi-clipboard-check-outline', to: '/member/tasks' },
-        ]" :key="item.to" :to="item.to" :class="{ 'nav-button--active': isActive(item.to) }" class="nav-button"
-          color="#c8d1de" variant="text" rounded="0">
-          <v-icon :icon="item.icon" size="18" class="mr-1" />
+      <nav
+        v-if="mdAndUp"
+        class="main-nav"
+        aria-label="主要導覽"
+      >
+        <v-btn
+          v-for="item in [
+            { title: '討論區', icon: 'mdi-forum-outline', to: '/categories' },
+            { title: '點數', icon: 'mdi-star-circle-outline', to: '/member/transactions' },
+            { title: '我的角色', icon: 'mdi-account-circle-outline', to: '/doll/user' },
+            { title: '商城', icon: 'mdi-storefront-outline', to: '/shop' },
+            { title: '任務活動', icon: 'mdi-clipboard-check-outline', to: '/member/tasks' },
+          ]"
+          :key="item.to"
+          :to="item.to"
+          :class="{ 'nav-button--active': isActive(item.to) }"
+          class="nav-button"
+          color="#c8d1de"
+          variant="text"
+          rounded="0"
+        >
+          <v-icon
+            :icon="item.icon"
+            size="18"
+            class="mr-1"
+          />
           {{ item.title }}
         </v-btn>
 
         <!-- 論壇管理權限 -->
-        <v-btn v-if="canManageForum" class="nav-button" color="#c8d1de" variant="text" rounded="0"
-          @click="goTo('/admin/categories')">
-          <v-icon icon="mdi-shield-account" size="18" class="mr-1" />
+        <v-btn
+          v-if="canManageForum"
+          class="nav-button"
+          color="#c8d1de"
+          variant="text"
+          rounded="0"
+          @click="goTo('/admin/categories')"
+        >
+          <v-icon
+            icon="mdi-shield-account"
+            size="18"
+            class="mr-1"
+          />
           論壇管理
         </v-btn>
 
         <!-- 後台管理權限 -->
-        <v-btn v-if="isAdmin" class="nav-button" color="#c8d1de" variant="text" rounded="0"
-          @click="goTo('/config/setting')">
-          <v-icon icon="mdi-shield-crown" size="18" class="mr-1" />
+        <v-btn
+          v-if="isAdmin"
+          class="nav-button"
+          color="#c8d1de"
+          variant="text"
+          rounded="0"
+          @click="goTo('/config/setting')"
+        >
+          <v-icon
+            icon="mdi-shield-crown"
+            size="18"
+            class="mr-1"
+          />
           後台管理
         </v-btn>
       </nav>
@@ -238,34 +285,69 @@ onBeforeUnmount(() => {
       <v-spacer />
       <MessageMenu />
       <!-- 會員選單 -->
-      <v-menu v-model="memberMenu" location="bottom end" :close-on-content-click="false" :offset="10" max-width="340">
+      <v-menu
+        v-model="memberMenu"
+        location="bottom end"
+        :close-on-content-click="false"
+        :offset="10"
+        max-width="340"
+      >
         <template #activator="{ props: menuProps }">
-          <v-btn v-bind="menuProps" class="user-button" variant="text" color="white" aria-label="開啟會員選單"
-            @click="drawer = false">
-            <v-avatar color="#3266a9" size="36">
-              <v-icon icon="mdi-account" size="23" color="white" />
+          <v-btn
+          v-bind="menuProps"
+          class="user-button"
+          variant="text"
+          color="white"
+          aria-label="開啟會員選單"
+          @click="drawer = false"
+          >
+              <DollAvatar v-if="userStore.uid" :userId="userStore.uid" :size="36" :scale="1.0"/>
+              <v-avatar v-else
+              color="#3266a9"
+              size="36"
+              >
+              <v-icon
+              icon="mdi-account"
+              size="23"
+              color="white"
+              />
             </v-avatar>
 
             <span class="user-summary">
               <span class="user-name">
                 {{ user.name || user.account }}
-              </span>
+              </span>              
             </span>
 
-            <v-icon :icon="memberMenu
-              ? 'mdi-chevron-up'
-              : 'mdi-chevron-down'
-              " size="18" class="menu-chevron" />
+            <v-icon
+              :icon="
+                memberMenu
+                  ? 'mdi-chevron-up'
+                  : 'mdi-chevron-down'
+              "
+              size="18"
+              class="menu-chevron"
+            />
           </v-btn>
         </template>
 
         <!-- 會員卡片版面 -->
-        <v-card class="profile-menu" rounded="xl" elevation="8">
+        <v-card
+          class="profile-menu"
+          rounded="xl"
+          elevation="8"
+        >
           <div class="profile-heading">
-            <DollAvatar v-if="userStore.uid" :user-id="userStore.uid" :size="56" :scale="1.8" class="comment-avatar"
-              @click.stop.prevent />
-            <v-avatar v-else color="#e8eff9" size="48">
-              <v-icon icon="mdi-account" size="28" color="#3266a9" />
+            <DollAvatar v-if="userStore.uid" :user-id="userStore.uid" :size="48" :scale="1.8"/>
+            <v-avatar v-else
+              color="#e8eff9"
+              size="48"
+            >
+              <v-icon
+                icon="mdi-account"
+                size="28"
+                color="#3266a9"
+              />
             </v-avatar>
 
             <div class="profile-identity">
@@ -277,27 +359,52 @@ onBeforeUnmount(() => {
                 歡迎回來，開啟你的社群日常
               </div>
             </div>
-          </div>
+          </div>         
 
-          <v-list class="member-actions" aria-label="會員功能">
+          <v-list
+            class="member-actions"
+            aria-label="會員功能"
+          >
             <!-- 使用openUserDetail -->
-            <v-list-item rounded="lg" prepend-icon="mdi-account-outline" title="會員個人資料" @click="openProfile">
+            <v-list-item
+              rounded="lg"
+              prepend-icon="mdi-account-outline"
+              title="會員個人資料"
+              @click="openProfile"
+            >
               <template #append>
-                <v-icon icon="mdi-chevron-right" size="18" />
+                <v-icon
+                  icon="mdi-chevron-right"
+                  size="18"
+                />
               </template>
             </v-list-item>
 
-            <v-list-item to="/friends" rounded="lg" prepend-icon="mdi-account-group-outline" title="好友"
-              @click="closeMenus">
+            <v-list-item
+              to="/friends"
+              rounded="lg"
+              prepend-icon="mdi-account-group-outline"
+              title="好友"
+              @click="closeMenus"
+            >
               <template #append>
-                <v-icon icon="mdi-chevron-right" size="18" />
+                <v-icon
+                  icon="mdi-chevron-right"
+                  size="18"
+                />
               </template>
             </v-list-item>
 
             <v-divider class="my-2" />
 
             <!-- logout -->
-            <v-list-item rounded="lg" prepend-icon="mdi-logout" title="登出" class="logout-item" @click="logout" />
+            <v-list-item
+              rounded="lg"
+              prepend-icon="mdi-logout"
+              title="登出"
+              class="logout-item"
+              @click="logout"
+            />
           </v-list>
         </v-card>
       </v-menu>
@@ -305,7 +412,12 @@ onBeforeUnmount(() => {
   </v-app-bar>
 
   <!-- 手機版 Drawer -->
-  <v-navigation-drawer v-model="drawer" color="#0f1f35" temporary width="280">
+  <v-navigation-drawer
+    v-model="drawer"
+    color="#0f1f35"
+    temporary
+    width="280"
+  >
     <div class="drawer-title">
       功能導覽
     </div>
@@ -313,39 +425,93 @@ onBeforeUnmount(() => {
     <v-divider />
 
     <v-list nav>
-      <v-list-item to="/home" title="首頁" prepend-icon="mdi-home-outline" rounded="lg" @click="drawer = false" />
+      <v-list-item
+        to="/home"
+        title="首頁"
+        prepend-icon="mdi-home-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
 
-      <v-list-item to="/categories" title="討論區" prepend-icon="mdi-forum-outline" rounded="lg" @click="drawer = false" />
+      <v-list-item
+        to="/categories"
+        title="討論區"
+        prepend-icon="mdi-forum-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
 
-      <v-list-item to="/member/transactions" title="點數" prepend-icon="mdi-star-circle-outline" rounded="lg"
-        @click="drawer = false" />
+      <v-list-item
+        to="/member/transactions"
+        title="點數"
+        prepend-icon="mdi-star-circle-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
 
-      <v-list-item to="/doll/user" title="我的角色" prepend-icon="mdi-account-circle-outline" rounded="lg"
-        @click="drawer = false" />
+      <v-list-item
+        to="/doll/user"
+        title="我的角色"
+        prepend-icon="mdi-account-circle-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
 
-      <v-list-item to="/shop" title="商城" prepend-icon="mdi-storefront-outline" rounded="lg" @click="drawer = false" />
+      <v-list-item
+        to="/shop"
+        title="商城"
+        prepend-icon="mdi-storefront-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
 
-      <v-list-item to="/member/tasks" title="任務活動" prepend-icon="mdi-clipboard-check-outline" rounded="lg"
-        @click="drawer = false" />
+      <v-list-item
+        to="/member/tasks"
+        title="任務活動"
+        prepend-icon="mdi-clipboard-check-outline"
+        rounded="lg"
+        @click="drawer = false"
+      />
 
       <v-divider class="my-2" />
 
-      <v-list-item v-if="canManageForum" title="論壇管理" prepend-icon="mdi-shield-account" rounded="lg"
-        @click="goTo('/admin/categories')" />
+      <v-list-item
+        v-if="canManageForum"
+        title="論壇管理"
+        prepend-icon="mdi-shield-account"
+        rounded="lg"
+        @click="goTo('/admin/categories')"
+      />
 
-      <v-list-item v-if="isAdmin" title="後台管理" prepend-icon="mdi-shield-crown" rounded="lg"
-        @click="goTo('/config/setting')" />
+      <v-list-item
+        v-if="isAdmin"
+        title="後台管理"
+        prepend-icon="mdi-shield-crown"
+        rounded="lg"
+        @click="goTo('/config/setting')"
+      />
     </v-list>
   </v-navigation-drawer>
 
   <!--UserDetailView -->
-  <UserDetailView v-model="userDetailDialog" :account="userStore.account" @saved="reloadPage" />
+  <UserDetailView
+    v-model="userDetailDialog"
+    :account="userStore.account"
+    @saved="reloadPage"
+  />
 
-  <v-snackbar v-model="noticeOpen" :timeout="3000" location="bottom">
+  <v-snackbar
+    v-model="noticeOpen"
+    :timeout="3000"
+    location="bottom"
+  >
     {{ noticeText }}
 
     <template #actions>
-      <v-btn variant="text" @click="noticeOpen = false">
+      <v-btn
+        variant="text"
+        @click="noticeOpen = false"
+      >
         關閉
       </v-btn>
     </template>

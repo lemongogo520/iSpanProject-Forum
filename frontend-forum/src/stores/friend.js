@@ -84,6 +84,7 @@ export const useFriendStore = defineStore("friend", () => {
     try {
       await httpClient.patch(`/api/friendship/request/${friendshipId}/accept`);
       requestList.value = requestList.value.filter((r) => r.id !== friendshipId);
+      await getFriendList();
     } catch (e) {
       error.value = "接受好友邀請失敗";
       console.log("接受好友邀請失敗", e);

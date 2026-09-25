@@ -45,6 +45,7 @@ watch(
 )
 
 // =========== websocket =================
+// 訊息
 const handleIncoming = (msg) => {
   msg.mine = msg.sender?.userId === userStore.uid;
   msg.status = "sent";
@@ -59,9 +60,30 @@ const handleIncoming = (msg) => {
     messageStore.markAsRead(msg.conversationId);
   }
 };
+// 好友邀請
+const handleNotification = (n) => {
+  const who = n.name || "某位使用者";
+
+  switch (n.type) {
+    case "FRIEND_REQUEST":
+      showMessage(`${who} 向你送出好友邀請`);
+      break;
+    case "FRIEND_ACCEPTED":
+      showMessage(`${who} 接受了你的好友邀請`);
+      break;
+    case "FRIEND_REJECTED":
+    case "FRIEND_CANCELED":
+      break;
+    default:
+      return;
+  }
+
+  friendStore.refreshFriendData();
+};
 
 const resync = async () => {
   await chatStore.getConversations();
+  await friendStore.refreshFriendData();
   if (chatStore.currentConversationId) {
     messageStore.getMessages(chatStore.currentConversationId);
   }
@@ -77,6 +99,7 @@ watch(
       chatStore.restoreWindow();
       connectSocket({
         onMessage: handleIncoming,
+        onNotification: handleNotification,
         onReconnect: resync,
         onGiveUp: () => {
           showMessage("連線中斷,請重新整理", "error");

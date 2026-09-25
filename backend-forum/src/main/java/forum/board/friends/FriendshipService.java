@@ -16,79 +16,85 @@ import forum.board.users.Users;
 
 import lombok.RequiredArgsConstructor;
 
-
 @Service
 @RequiredArgsConstructor
 public class FriendshipService {
 	private final FriendshipRepository fRepo;
 	private final FriendshipUserRepository uRepo;
-	
+
 	private UUID[] normalize(UUID a, UUID b) {
-		//-1:目前 UUID 值小於目標值
+		// -1:目前 UUID 值小於目標值
 		// 0:相等
 		// 1:大於
-		return a.compareTo(b)<0?new UUID[] {a,b} : new UUID[] {b,a};
+		return a.compareTo(b) < 0 ? new UUID[] { a, b } : new UUID[] { b, a };
 	}
 
-	private Users findUser(UUID userId){
+	private Users findUser(UUID userId) {
 		return uRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
 	}
 
 	private FriendshipEntity findPendingFriendship(Long friendshipId) {
-		FriendshipEntity friendship = fRepo.findById(friendshipId).orElseThrow(()->new ResourceNotFoundException("找不到好友邀請"));
-		if(friendship.getStatus() != FriendshipStatus.PENDING){
+		FriendshipEntity friendship = fRepo.findById(friendshipId)
+				.orElseThrow(() -> new ResourceNotFoundException("找不到好友邀請"));
+		if (friendship.getStatus() != FriendshipStatus.PENDING) {
 			throw new BusinessException("此好友邀請目前不是待處理狀態");
 		}
 		return friendship;
 	}
 
 	private void validateRequestReceiver(FriendshipEntity friendship, UUID currentUserId) {
-		// requester 不能接受自己的邀請 
-		if (friendship.getRequester().getId().equals(currentUserId)) { 
-			throw new BusinessException( "不能操作自己發送的邀請" ); }
+		// requester 不能接受自己的邀請
+		if (friendship.getRequester().getId().equals(currentUserId)) {
+			throw new BusinessException("不能操作自己發送的邀請");
+		}
 
 		// 確認目前使用者是好友關係中的接收者
 		boolean isMember = friendship.getUser1().getId().equals(currentUserId)
-					 || friendship.getUser2() .getId() .equals(currentUserId);
+				|| friendship.getUser2().getId().equals(currentUserId);
 
-		if (!isMember) { throw new BusinessException( "沒有權限操作此好友邀請" ); }
+		if (!isMember) {
+			throw new BusinessException("沒有權限操作此好友邀請");
+		}
 
 	}
 
 	private void validateRequester(FriendshipEntity friendship, UUID currentUserId) {
-		// 只能取消自己送的好友邀請 
-		if (!friendship.getRequester().getId().equals(currentUserId)) { 
-			throw new BusinessException( "沒有權限操作此好友邀請" ); }
-
+		// 只能取消自己送的好友邀請
+		if (!friendship.getRequester().getId().equals(currentUserId)) {
+			throw new BusinessException("沒有權限操作此好友邀請");
+		}
 
 	}
 
-	
-	/*發送好友邀請*/
-	public void sendFriendRequest(UUID requesterId, UUID addresseeId) {
-		if(requesterId.equals(addresseeId)) {
+	private UUID otherSide(FriendshipEntity f, UUID me) {
+		return f.getUser1().getId().equals(me)
+				? f.getUser2().getId()
+				: f.getUser1().getId();
+	}
+
+	/* 發送好友邀請 */
+	public UUID sendFriendRequest(UUID currentUserId, UUID addresseeId) {
+		if (currentUserId.equals(addresseeId)) {
 			throw new BusinessException("不能加自己好友");
 		}
 
-		UUID[] pair = normalize(requesterId, addresseeId);
-		Users requester = findUser(requesterId);
+		UUID[] pair = normalize(currentUserId, addresseeId);
+		Users requester = findUser(currentUserId);
 		Users user1 = findUser(pair[0]);
 		Users user2 = findUser(pair[1]);
-		
+
 		Optional<FriendshipEntity> friendship = fRepo.findByUser1IdAndUser2Id(pair[0], pair[1]);
-		if(friendship.isPresent()) {
-			//有一邊有寄送過邀請或其他狀態
+		if (friendship.isPresent()) {
+			// 有一邊有寄送過邀請或其他狀態
 			FriendshipEntity f = friendship.get();
-			if(f.getStatus()==FriendshipStatus.ACCEPTED)
-			{
+			if (f.getStatus() == FriendshipStatus.ACCEPTED) {
 				throw new BusinessException("已經是好友了");
 			}
-			if(f.getStatus() == FriendshipStatus.PENDING)
-			{
+			if (f.getStatus() == FriendshipStatus.PENDING) {
 				throw new BusinessException("已有待處理的請求");
 			}
-			return ;
+			return null;
 		}
 		// Empty 雙方之間沒有寄送過邀請或其他狀態
 		FriendshipEntity f = new FriendshipEntity();
@@ -97,98 +103,104 @@ public class FriendshipService {
 		f.setRequester(requester);
 		f.setStatus(FriendshipStatus.PENDING);
 		fRepo.save(f);
+		UUID other = otherSide(f, currentUserId);
+		return other;
 	}
+
 	
+
 	/* 接受好友邀請 */
-	public void acceptFriendRequest(Long friendshipId, UUID currentUserId) {
+	public UUID acceptFriendRequest(Long friendshipId, UUID currentUserId) {
 		FriendshipEntity friendship = findPendingFriendship(friendshipId);
 
 		validateRequestReceiver(friendship, currentUserId);
-		friendship.setStatus( FriendshipStatus.ACCEPTED );
+		friendship.setStatus(FriendshipStatus.ACCEPTED);
 		fRepo.save(friendship);
+
+		return otherSide(friendship, currentUserId);
 	}
-	
+
 	/* 拒絕好友邀請 */
-	public void rejectFriendRequest(Long friendshipId, UUID currentUserId){
+	public UUID rejectFriendRequest(Long friendshipId, UUID currentUserId) {
 		FriendshipEntity friendship = findPendingFriendship(friendshipId);
 
-		// requester 不能接受自己的邀請 
-		if (friendship.getRequester().getId().equals(currentUserId)) { 
-			throw new BusinessException( "不能接受自己的邀請" ); }
+		// requester 不能接受自己的邀請
+		if (friendship.getRequester().getId().equals(currentUserId)) {
+			throw new BusinessException("不能接受自己的邀請");
+		}
 
-		// 確認目前使用者是好友關係中的其中一人 
+		// 確認目前使用者是好友關係中的其中一人
 		boolean isMember = friendship.getUser1().getId().equals(currentUserId)
-					 || friendship.getUser2() .getId() .equals(currentUserId);
+				|| friendship.getUser2().getId().equals(currentUserId);
 
-		if (!isMember) { throw new BusinessException( "拒絕存取" ); }
+		if (!isMember) {
+			throw new BusinessException("拒絕存取");
+		}
+		UUID other = otherSide(friendship, currentUserId);
 		fRepo.delete(friendship);
-
+		return other;
 	}
-	
+
 	/* 取得好友列表 */
-	public List<FriendResponseDTO> getFriendsList(UUID currentUserId){
+	public List<FriendResponseDTO> getFriendsList(UUID currentUserId) {
 		findUser(currentUserId);
 		List<FriendshipEntity> friendsList = fRepo.findFriends(currentUserId, FriendshipStatus.ACCEPTED);
-		
-		return friendsList.stream().map(friendship ->{
+
+		return friendsList.stream().map(friendship -> {
 			Users friend;
-			if(friendship.getUser1().getId().equals(currentUserId)){
+			if (friendship.getUser1().getId().equals(currentUserId)) {
 				friend = friendship.getUser2();
-			}else{
+			} else {
 				friend = friendship.getUser1();
 			}
 
 			return new FriendResponseDTO(friend.getId(), friend.getAccount(), friend.getUsersDetail().getName());
 		}).toList();
 	}
-	
+
 	/* 送出的好友邀請 */
-    public List<FriendshipResponseDTO> getRequestList(UUID currentUserId) {
+	public List<FriendshipResponseDTO> getRequestList(UUID currentUserId) {
 		findUser(currentUserId);
-		List<FriendshipEntity> friendshipList = fRepo.findByRequesterIdAndStatus(currentUserId, FriendshipStatus.PENDING);
-		return friendshipList.stream().map(friendship ->{
+		List<FriendshipEntity> friendshipList = fRepo.findByRequesterIdAndStatus(currentUserId,
+				FriendshipStatus.PENDING);
+		return friendshipList.stream().map(friendship -> {
 			Users friend;
-			if(friendship.getUser1().getId().equals(currentUserId)){
+			if (friendship.getUser1().getId().equals(currentUserId)) {
 				friend = friendship.getUser2();
-			}else{
+			} else {
 				friend = friendship.getUser1();
 			}
 			FriendResponseDTO friendDTO = new FriendResponseDTO(
-				friend.getId(),
-				friend.getAccount(), 
-				friend.getUsersDetail().getName());
-			return new FriendshipResponseDTO(friendship.getId(),friendship.getStatus(),friendDTO);
+					friend.getId(),
+					friend.getAccount(),
+					friend.getUsersDetail().getName());
+			return new FriendshipResponseDTO(friendship.getId(), friendship.getStatus(), friendDTO);
 		}).toList();
- 
-    }
+
+	}
 
 	/* 收到的好友邀請 */
-	public List<FriendshipResponseDTO> getReceivedList(UUID currentUserId){
+	public List<FriendshipResponseDTO> getReceivedList(UUID currentUserId) {
 		findUser(currentUserId);
 		List<FriendshipEntity> friendshipList = fRepo.findPendingRequests(currentUserId);
-		return friendshipList.stream().map(friendship ->{
+		return friendshipList.stream().map(friendship -> {
 			Users friend = friendship.getRequester();
 			FriendResponseDTO friendDTO = new FriendResponseDTO(
-				friend.getId(),
-				friend.getAccount(), 
-				friend.getUsersDetail().getName());
-			return new FriendshipResponseDTO(friendship.getId(),friendship.getStatus(),friendDTO);
+					friend.getId(),
+					friend.getAccount(),
+					friend.getUsersDetail().getName());
+			return new FriendshipResponseDTO(friendship.getId(), friendship.getStatus(), friendDTO);
 		}).toList();
 	}
 
 	/* 取消好友邀請 */
-    public void cancelFriendRequest(Long friendshipId, UUID currentUserId) {
+	public UUID cancelFriendRequest(Long friendshipId, UUID currentUserId) {
 		findUser(currentUserId);
-        FriendshipEntity friendship = findPendingFriendship(friendshipId);
+		FriendshipEntity friendship = findPendingFriendship(friendshipId);
 		validateRequester(friendship, currentUserId);
+		UUID other = otherSide(friendship, currentUserId);
 		fRepo.delete(friendship);
-    }
+		return  other;
+	}
 
-
-	
-	
 }
-	
-	
-	
-

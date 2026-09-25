@@ -7,9 +7,9 @@ import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
 import { useAuthStore } from "@/stores/auth";
 import { useDisplay } from "vuetify";
-import MessageMenu from "@/components/chat/MessageMenu.vue";
 import { useConfigStore } from '@/stores/config'
 import DollAvatar from "@/components/doll/DollAvatar.vue";
+import NotificationCenter from "@/components/common/NotificationCenter.vue";
 
 
 const router = useRouter();
@@ -283,7 +283,7 @@ onBeforeUnmount(() => {
       </nav>
 
       <v-spacer />
-      <MessageMenu />
+      <NotificationCenter/>
       <!-- 會員選單 -->
       <v-menu
         v-model="memberMenu"

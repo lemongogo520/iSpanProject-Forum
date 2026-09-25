@@ -12,6 +12,7 @@ import { useMessageStore } from "./stores/message";
 import { connectSocket, disconnectSocket } from "./services/socket";
 import { useUserStore } from "./stores/user";
 import { useConfigStore } from '@/stores/config'
+import { useNotificationCenter } from "@/composables/useNotificationCenter";
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -20,6 +21,7 @@ const chatStore = useChatStore();
 const friendStore = useFriendStore();
 const messageStore = useMessageStore();
 const { snackbar, showMessage } = useNotification();
+const { push } = useNotificationCenter();
 const configStore = useConfigStore()
 
 const hideHeaderPaths = ["/login", "/register"];
@@ -49,7 +51,7 @@ watch(
 const handleIncoming = (msg) => {
   msg.mine = msg.sender?.userId === userStore.uid;
   msg.status = "sent";
-
+  
   messageStore.addMessage(msg);
 
   const isOpen = chatStore.currentConversationId === msg.conversationId && !chatStore.isMinimized;
@@ -67,9 +69,11 @@ const handleNotification = (n) => {
   switch (n.type) {
     case "FRIEND_REQUEST":
       showMessage(`${who} 向你送出好友邀請`);
+      push({ kind: "friend", icon: "mdi-account-plus", text: `${who} 向你送出好友邀請`, to: "/friends" });
       break;
     case "FRIEND_ACCEPTED":
       showMessage(`${who} 接受了你的好友邀請`);
+      push({ kind: "friend", icon: "mdi-account-check", text: `${who} 接受了你的好友邀請`, to: "/friends" });
       break;
     case "FRIEND_REJECTED":
     case "FRIEND_CANCELED":
@@ -96,6 +100,16 @@ watch(
     if (loggedIn) {
       friendStore.getFriendList();
       await chatStore.getConversations();
+
+      // 取未讀 丟進通知
+      chatStore.conversationList
+      .filter((c) => c.type === "DIRECT" && c.unreadCount > 0)
+      .forEach((c) => push({
+        kind: "message",
+        icon: "mdi-message-text",
+        text: `${c.title}：${c.lastMessage}`,
+        conversationId: c.id,
+      }));
       chatStore.restoreWindow();
       connectSocket({
         onMessage: handleIncoming,

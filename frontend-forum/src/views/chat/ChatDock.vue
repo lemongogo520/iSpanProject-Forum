@@ -20,8 +20,7 @@ const onChatPage = computed(() => route.path.startsWith("/chat"));
 <style scoped>
 .chat-dock {
     position: fixed;
-    right: 256px;
-    /* 避開 240px 的好友側邊欄 */
+    right: 80px;
     bottom: 0;
     z-index: 1000;
     pointer-events: none;

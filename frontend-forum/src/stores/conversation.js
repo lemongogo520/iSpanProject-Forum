@@ -145,7 +145,8 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   // 取得看板聊天室
-  const getboardConversation = async (boardId) => {
+  const getboardConversation = async (id) => {
+    const boardId = Number(id);
     try {
       const { data } = await httpClient.get(`/api/chat/boards/${boardId}`);
       openChat(data.id, data.subscribed ? null : data);
@@ -157,14 +158,15 @@ export const useChatStore = defineStore("chat", () => {
       throw e;
     }
   };
+  
   // 看板聊天室展開成view的時候要重抓
-  const ensureConversation = async (conversationId) => {
-    const id = Number(conversationId);
+  const ensureConversation = async (id) => {
+    const conversationId = Number(id);
     const known = findConversation(id);
     if (known) return known;
 
     try {
-      const { data } = await httpClient.get(`/api/chat/conversations/${id}`);
+      const { data } = await httpClient.get(`/api/chat/conversations/${conversationId}`);
       if (data.subscribed || data.type === "DIRECT") applyConversation(data);
       else boardConversation.value = data;
       return data;
@@ -174,7 +176,8 @@ export const useChatStore = defineStore("chat", () => {
     }
   };
 
-  const subscribeBoard = async (boardId) => {
+  const subscribeBoard = async (id) => {
+    const boardId = Number(id);
     try {
       const { data } = await httpClient.post(
         `/api/chat/boards/${boardId}/subscribe`,
@@ -188,7 +191,8 @@ export const useChatStore = defineStore("chat", () => {
     }
   };
 
-  const unsubscribeBoard = async (boardId) => {
+  const unsubscribeBoard = async (id) => {
+    const boardId = Number(id);
     try {
       const { data } = await httpClient.delete(
         `/api/chat/boards/${boardId}/unsubscribe`,
@@ -286,6 +290,7 @@ export const useChatStore = defineStore("chat", () => {
     applyIncoming, // 收到新訊息時更新側欄：預覽文字、未讀數、排序
     persistWindow, // 儲存現在看的聊天室、狀態
     restoreWindow, // 重整後恢復聊天視窗及狀態
+    ensureConversation, // 看板聊天室展開成view的時候要重抓
     openChat, // 進入cId聊天 看板聊天可帶dto
     closeChat, // 關閉聊天
     toggleMinimize, // 切換視窗狀態

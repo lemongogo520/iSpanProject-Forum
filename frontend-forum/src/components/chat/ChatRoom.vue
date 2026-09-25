@@ -18,7 +18,7 @@
     </header>
 
     <template v-if="!chatStore.isMinimized">
-      <MessageList :conversationId="conversationId" :show-sender="isBoard" />
+      <MessageList :conversationId="conversationId" :showSender="isBoard" />
       <MessageInput :conversationId="conversationId" />
     </template>
   </div>

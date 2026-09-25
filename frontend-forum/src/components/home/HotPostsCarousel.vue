@@ -18,47 +18,103 @@
       {{ errorMessage }}
     </v-alert>
 
-    <v-slide-group v-else show-arrows class="hot-post-slider">
-      <v-slide-group-item v-for="post in hotPosts" :key="post.id">
-        <v-card
-          class="post-card ma-2"
-          width="320"
-          variant="outlined"
-          @click="goToPost(post.id)"
-        >
-          <v-img
-            :src="post.coverImageUrl || defaultPostImage"
-            height="180"
-            cover
-          />
-          <v-card-text>
-            <v-chip color="primary" variant="tonal" size="small">
-              {{ post.boardName }}
-            </v-chip>
+    <div v-else-if="hotPosts.length" class="hot-post-viewport">
+      <div
+        class="hot-post-track"
+        :style="{
+          '--scroll-duration': `${Math.max(hotPosts.length * 5, 20)}s`,
+        }"
+      >
+        <!-- 第一組文章 -->
+        <div class="hot-post-list">
+          <v-card
+            v-for="post in hotPosts"
+            :key="`original-${post.id}`"
+            class="post-card"
+            variant="outlined"
+            @click="goToPost(post.id)"
+          >
+            <v-img
+              :src="post.coverImageUrl || defaultPostImage"
+              height="145"
+              cover
+            />
 
-            <h3 class="post-title">
-              {{ post.title }}
-            </h3>
+            <v-card-text class="pa-3">
+              <v-chip color="primary" variant="tonal" size="small">
+                {{ post.boardName }}
+              </v-chip>
 
-            <div class="author-row">
-              <DollAvatar
-                v-if="post.userId"
-                :user-id="post.userId"
-                :size="36"
-                :scale="1"
-              />
+              <h3 class="post-title">
+                {{ post.title }}
+              </h3>
 
-              <span>{{ post.userName }}</span>
-            </div>
+              <div class="author-row">
+                <DollAvatar
+                  v-if="post.userId"
+                  :user-id="post.userId"
+                  :size="30"
+                  :scale="1"
+                />
 
-            <div class="post-stats">
-              <span>👁 {{ post.views }}</span>
-              <span>💬 {{ post.commentCount }}</span>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-slide-group-item>
-    </v-slide-group>
+                <span>{{ post.userName }}</span>
+              </div>
+
+              <div class="post-stats">
+                <span>👁 {{ post.views }}</span>
+                <span>💬 {{ post.commentCount }}</span>
+              </div>
+            </v-card-text>
+          </v-card>
+        </div>
+
+        <!-- 複製一組，讓動畫能夠無縫循環 -->
+        <div class="hot-post-list" aria-hidden="true">
+          <v-card
+            v-for="post in hotPosts"
+            :key="`copy-${post.id}`"
+            class="post-card"
+            variant="outlined"
+            tabindex="-1"
+            @click="goToPost(post.id)"
+          >
+            <v-img
+              :src="post.coverImageUrl || defaultPostImage"
+              height="145"
+              cover
+            />
+
+            <v-card-text class="pa-3">
+              <v-chip color="primary" variant="tonal" size="small">
+                {{ post.boardName }}
+              </v-chip>
+
+              <h3 class="post-title">
+                {{ post.title }}
+              </h3>
+
+              <div class="author-row">
+                <DollAvatar
+                  v-if="post.userId"
+                  :user-id="post.userId"
+                  :size="30"
+                  :scale="1"
+                />
+
+                <span>{{ post.userName }}</span>
+              </div>
+
+              <div class="post-stats">
+                <span>👁 {{ post.views }}</span>
+                <span>💬 {{ post.commentCount }}</span>
+              </div>
+            </v-card-text>
+          </v-card>
+        </div>
+      </div>
+    </div>
+
+    <v-alert v-else type="info" variant="tonal"> 目前還沒有熱門文章 </v-alert>
   </section>
 </template>
 
@@ -107,7 +163,7 @@ onMounted(loadHotPosts);
 
 <style scoped>
 .hot-posts {
-  padding: 24px;
+  padding: 16px;
 }
 
 .section-header {
@@ -121,13 +177,54 @@ onMounted(loadHotPosts);
   margin: 0;
 }
 
-.hot-post-slider {
-  margin: 0 -8px;
+.hot-post-viewport {
+  width: 100%;
+  overflow: hidden;
+  padding: 8px 0 20px;
+}
+
+.hot-post-track {
+  display: flex;
+  width: max-content;
+  animation: hot-post-scroll var(--scroll-duration) linear infinite;
+  will-change: transform;
+}
+
+.hot-post-list {
+  display: flex;
+  gap: 12px;
+  padding-right: 12px;
+}
+
+.hot-post-viewport:hover .hot-post-track,
+.hot-post-viewport:focus-within .hot-post-track {
+  animation-play-state: paused;
+}
+
+@keyframes hot-post-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hot-post-track {
+    animation: none;
+  }
+
+  .hot-post-viewport {
+    overflow-x: auto;
+  }
 }
 
 .post-card {
-  width: 320px;
-  height: 390px;
+  flex: 0 0 240px;
+  width: 240px;
+  height: 285px;
   overflow: hidden;
   cursor: pointer;
   transition:
@@ -141,21 +238,46 @@ onMounted(loadHotPosts);
 }
 
 .post-title {
-  min-height: 52px;
-  margin: 14px 0;
-  font-size: 18px;
-  line-height: 1.45;
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  overflow: hidden;
+  color: #333;
+  font-size: 15px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.author-row,
+.author-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.author-row span {
+  display: block;
+  color: #555;
+  line-height: 30px;
+}
+
 .post-stats {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-start;
+  gap: 20px;
+  margin-top: 6px;
+  color: #757575;
+  font-size: 12px;
 }
 
-.post-stats {
-  justify-content: flex-end;
-  color: #757575;
+.post-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 </style>

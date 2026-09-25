@@ -12,6 +12,7 @@ import forum.board.friends.dto.FriendResponseDTO;
 import forum.board.friends.dto.FriendshipResponseDTO;
 import forum.board.friends.exception.BusinessException;
 import forum.board.friends.exception.ResourceNotFoundException;
+import forum.board.users.UserDetail;
 import forum.board.users.Users;
 
 import lombok.RequiredArgsConstructor;
@@ -73,6 +74,16 @@ public class FriendshipService {
 				: f.getUser1().getId();
 	}
 
+	private FriendResponseDTO toDTO(Users u) {
+		UserDetail d = u.getUsersDetail();
+		return new FriendResponseDTO(
+				u.getId(),
+				u.getAccount(),
+				d.getName(),
+				Boolean.TRUE.equals(d.getShowEmail()) ? d.getEmail() : null,
+				Boolean.TRUE.equals(d.getShowBirthday()) ? d.getBirthday() : null);
+	}
+
 	/* 發送好友邀請 */
 	public UUID sendFriendRequest(UUID currentUserId, UUID addresseeId) {
 		if (currentUserId.equals(addresseeId)) {
@@ -106,8 +117,6 @@ public class FriendshipService {
 		UUID other = otherSide(f, currentUserId);
 		return other;
 	}
-
-	
 
 	/* 接受好友邀請 */
 	public UUID acceptFriendRequest(Long friendshipId, UUID currentUserId) {
@@ -154,7 +163,7 @@ public class FriendshipService {
 				friend = friendship.getUser1();
 			}
 
-			return new FriendResponseDTO(friend.getId(), friend.getAccount(), friend.getUsersDetail().getName());
+			return toDTO(friend);
 		}).toList();
 	}
 
@@ -170,10 +179,7 @@ public class FriendshipService {
 			} else {
 				friend = friendship.getUser1();
 			}
-			FriendResponseDTO friendDTO = new FriendResponseDTO(
-					friend.getId(),
-					friend.getAccount(),
-					friend.getUsersDetail().getName());
+			FriendResponseDTO friendDTO = toDTO(friend);
 			return new FriendshipResponseDTO(friendship.getId(), friendship.getStatus(), friendDTO);
 		}).toList();
 
@@ -185,10 +191,7 @@ public class FriendshipService {
 		List<FriendshipEntity> friendshipList = fRepo.findPendingRequests(currentUserId);
 		return friendshipList.stream().map(friendship -> {
 			Users friend = friendship.getRequester();
-			FriendResponseDTO friendDTO = new FriendResponseDTO(
-					friend.getId(),
-					friend.getAccount(),
-					friend.getUsersDetail().getName());
+			FriendResponseDTO friendDTO = toDTO(friend);
 			return new FriendshipResponseDTO(friendship.getId(), friendship.getStatus(), friendDTO);
 		}).toList();
 	}
@@ -200,7 +203,7 @@ public class FriendshipService {
 		validateRequester(friendship, currentUserId);
 		UUID other = otherSide(friendship, currentUserId);
 		fRepo.delete(friendship);
-		return  other;
+		return other;
 	}
 
 }

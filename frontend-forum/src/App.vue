@@ -21,7 +21,7 @@ const chatStore = useChatStore();
 const friendStore = useFriendStore();
 const messageStore = useMessageStore();
 const { snackbar, showMessage } = useNotification();
-const { push } = useNotificationCenter();
+const { push, clear } = useNotificationCenter();
 const configStore = useConfigStore()
 
 const hideHeaderPaths = ["/login", "/register"];
@@ -113,16 +113,6 @@ watch(
     if (loggedIn) {
       friendStore.getFriendList();
       await chatStore.getConversations();
-
-      // 取未讀 丟進通知
-      chatStore.conversationList
-        .filter((c) => c.type === "DIRECT" && c.unreadCount > 0)
-        .forEach((c) => push({
-          kind: "message",
-          icon: "mdi-message-text",
-          text: `${c.title}：${c.lastMessage}`,
-          conversationId: c.id,
-        }));
       chatStore.restoreWindow();
       connectSocket({
         onMessage: handleIncoming,
@@ -135,10 +125,10 @@ watch(
       });
     } else {
       disconnectSocket();
-      console.log("reset");
       friendStore.reset();
       chatStore.reset();
       messageStore.reset();
+      clear();
     }
   },
   { immediate: true }

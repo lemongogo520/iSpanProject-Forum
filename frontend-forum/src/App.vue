@@ -68,13 +68,13 @@ const handleNotification = (n) => {
     // 好友邀請
     case "FRIEND_REQUEST":
       showMessage(`${who} 向你送出好友邀請`);
-      push({ kind: "friend", icon: "mdi-account-plus", text: `${who} 向你送出好友邀請`, to: "/friends" });
+      push({ kind: "friend", icon: "mdi-account-plus", text: `${who} 向你送出好友邀請`, to: "/friends" ,color: "#8bbce0",});
       friendStore.refreshFriendData();
       break;
 
     case "FRIEND_ACCEPTED":
       showMessage(`${who} 接受了你的好友邀請`);
-      push({ kind: "friend", icon: "mdi-account-check", text: `${who} 接受了你的好友邀請`, to: "/friends" });
+      push({ kind: "friend", icon: "mdi-account-check", text: `${who} 接受了你的好友邀請`, to: "/friends" ,color: "#8bbce0",});
       friendStore.refreshFriendData();
       break;
 
@@ -82,13 +82,36 @@ const handleNotification = (n) => {
     case "FRIEND_CANCELED":
       friendStore.refreshFriendData();
       break;
-
+    // 發文
     case "BOARD_POST":
       push({
         kind: "board",
         icon: "mdi-note-text",
         text: `${who} 有新文章`,
         to: `/post/${n.postId}`,
+        color: "#7fb89b",
+      });
+      break;
+    // 文章留言
+    case "POST_REPLIED":
+      push({
+        kind: "post",
+        icon: "mdi-comment-text-outline",
+        text: n.title
+          ? `${who} 回覆了你的文章「${n.title}」`
+          : `${who} 回覆了你的文章`,
+        to: `/post/${n.postId}`,
+        color: "#c9a97e",
+      });
+      break;
+    // 留言留言
+    case "COMMENT_REPLIED":
+      push({
+        kind: "post",
+        icon: "mdi-comment-arrow-left-outline",
+        text: `${who} 回覆了你的留言`,
+        to: `/post/${n.postId}`,
+        color: "#c9a97e",
       });
       break;
 

@@ -32,4 +32,21 @@ public class NotificationBroadcaster {
                             "postId", postId));
         }
     }
+
+    public void postReplied(UUID authorId, UUID actorId, String actorName, Integer postId, String postTitle) {
+        if (authorId == null || authorId.equals(actorId)) return;   // 不通知自己
+        messaging.convertAndSendToUser(authorId.toString(), "/queue/notifications",
+                Map.of("type", "POST_REPLIED",
+                    "name", actorName,
+                    "postId", postId,
+                    "title", postTitle == null ? "" : postTitle));
+    }
+
+    public void commentReplied(UUID targetId, UUID actorId, String actorName, Integer postId) {
+        if (targetId == null || targetId.equals(actorId)) return;
+        messaging.convertAndSendToUser(targetId.toString(), "/queue/notifications",
+                Map.of("type", "COMMENT_REPLIED",
+                    "name", actorName,
+                    "postId", postId));
+    }
 }

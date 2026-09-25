@@ -33,7 +33,7 @@
                             <v-list-item v-for="n in items" :key="n.id" :class="{ 'nc-unread': !n.read }" lines="two"
                                 @click="onNotice(n)">
                                 <template #prepend>
-                                    <v-icon :icon="n.icon" :color="n.kind === 'friend' ? 'primary' : 'info'" />
+                                    <v-icon :icon="n.icon" :color="n.color ?? 'grey'" />
                                 </template>
                                 <v-list-item-title class="text-wrap">{{ n.text }}</v-list-item-title>
                                 <v-list-item-subtitle>{{ timeAgo(n.time) }}</v-list-item-subtitle>

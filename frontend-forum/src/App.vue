@@ -51,7 +51,7 @@ watch(
 const handleIncoming = (msg) => {
   msg.mine = msg.sender?.userId === userStore.uid;
   msg.status = "sent";
-  
+
   messageStore.addMessage(msg);
 
   const isOpen = chatStore.currentConversationId === msg.conversationId && !chatStore.isMinimized;
@@ -62,27 +62,40 @@ const handleIncoming = (msg) => {
     messageStore.markAsRead(msg.conversationId);
   }
 };
-// 好友邀請
 const handleNotification = (n) => {
   const who = n.name || "某位使用者";
-
   switch (n.type) {
+    // 好友邀請
     case "FRIEND_REQUEST":
       showMessage(`${who} 向你送出好友邀請`);
       push({ kind: "friend", icon: "mdi-account-plus", text: `${who} 向你送出好友邀請`, to: "/friends" });
+      friendStore.refreshFriendData();
       break;
+
     case "FRIEND_ACCEPTED":
       showMessage(`${who} 接受了你的好友邀請`);
       push({ kind: "friend", icon: "mdi-account-check", text: `${who} 接受了你的好友邀請`, to: "/friends" });
+      friendStore.refreshFriendData();
       break;
+
     case "FRIEND_REJECTED":
     case "FRIEND_CANCELED":
+      friendStore.refreshFriendData();
       break;
+
+    case "BOARD_POST":
+      push({
+        kind: "board",
+        icon: "mdi-note-text",
+        text: `${who} 有新文章`,
+        to: `/post/${n.postId}`,
+      });
+      break;
+
     default:
       return;
-  }
 
-  friendStore.refreshFriendData();
+  }
 };
 
 const resync = async () => {
@@ -103,13 +116,13 @@ watch(
 
       // 取未讀 丟進通知
       chatStore.conversationList
-      .filter((c) => c.type === "DIRECT" && c.unreadCount > 0)
-      .forEach((c) => push({
-        kind: "message",
-        icon: "mdi-message-text",
-        text: `${c.title}：${c.lastMessage}`,
-        conversationId: c.id,
-      }));
+        .filter((c) => c.type === "DIRECT" && c.unreadCount > 0)
+        .forEach((c) => push({
+          kind: "message",
+          icon: "mdi-message-text",
+          text: `${c.title}：${c.lastMessage}`,
+          conversationId: c.id,
+        }));
       chatStore.restoreWindow();
       connectSocket({
         onMessage: handleIncoming,

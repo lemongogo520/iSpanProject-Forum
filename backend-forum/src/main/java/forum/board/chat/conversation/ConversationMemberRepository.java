@@ -38,4 +38,10 @@ public interface ConversationMemberRepository extends JpaRepository<Conversation
         @Query("SELECT m.user.id FROM ConversationMemberEntity m WHERE m.conversation.id = :cid")
         List<UUID> findUserIdsByConversationId(@Param("cid") Long cid);
 
+        @Query("""
+                SELECT m.user.id FROM ConversationMemberEntity m
+                WHERE m.conversation.board.id = :boardId
+        """)
+        List<UUID> findSubscriberIdsByBoardId(@Param("boardId") Integer boardId);
+
 }

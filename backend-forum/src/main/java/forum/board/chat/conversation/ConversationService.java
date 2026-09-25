@@ -191,4 +191,10 @@ public class ConversationService {
         return toDTO(c, userId, false, 0L);
     }
 
+
+    // 找某看板的訂閱者
+    public List<UUID> getBoardSubscriberList(Integer boardId) {
+        return cmRepo.findSubscriberIdsByBoardId(boardId);
+    }
+
 }

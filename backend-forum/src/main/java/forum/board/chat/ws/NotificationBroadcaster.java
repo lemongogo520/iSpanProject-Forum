@@ -1,5 +1,6 @@
 package forum.board.chat.ws;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -19,5 +20,16 @@ public class NotificationBroadcaster {
             return;
         messaging.convertAndSendToUser(userId.toString(), "/queue/notifications",
                 Map.of("type", type, "name", actorName == null ? "" : actorName));
+    }
+
+    public void boardPosted(List<UUID> subscriberIds, UUID authorId, String boardName, Integer postId) {
+        for (UUID uid : subscriberIds) {
+            if (uid.equals(authorId))
+                continue;
+            messaging.convertAndSendToUser(uid.toString(), "/queue/notifications",
+                    Map.of("type", "BOARD_POST",
+                            "name", boardName,
+                            "postId", postId));
+        }
     }
 }

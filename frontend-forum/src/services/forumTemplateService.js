@@ -15,4 +15,10 @@ export const forumTemplateService = {
   getStatus() {
     return httpClient.get("/api/forumtemplates/status");
   },
+
+  generateAiTemplate(data) {
+  return httpClient.post("/api/forumtemplates/ai-generate",
+    data,
+  );
+},
 };

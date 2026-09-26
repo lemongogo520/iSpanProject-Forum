@@ -42,11 +42,11 @@
               {{ template.name }}
             </v-card-title>
 
-            <v-card-subtitle>
-              {{ template.code }}
+            <v-card-subtitle class="pt-1 pb-4">
+              描述你的論壇用途，AI 將自動規劃分類與討論版
             </v-card-subtitle>
 
-            <v-card-text>
+            <v-card-text class="ai-dialog-content">
               <p class="mb-4">
                 {{ template.description }}
               </p>
@@ -66,6 +66,52 @@
             </v-card-actions>
           </v-card>
         </v-col>
+        <!-- AI 範本 -->
+        <v-col cols="12" sm="6" md="3">
+          <v-card
+            class="template-card ai-template-card"
+            :class="{ selected: selectedCode === 'AI_GENERATED' }"
+            variant="outlined"
+            @click="openAiDialog"
+          >
+            <v-card-title class="d-flex align-center">
+              <v-icon icon="mdi-robot-outline" color="primary" class="mr-2" />
+              AI 自訂範本
+            </v-card-title>
+
+            <v-card-subtitle>AI_GENERATED</v-card-subtitle>
+
+            <v-card-text>
+              <p class="mb-4">輸入論壇用途，由 AI 建議分類與討論版</p>
+
+              <v-chip
+                color="primary"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-auto-fix"
+              >
+                {{
+                  aiTemplate
+                    ? `${aiTemplate.categories.length} 個分類`
+                    : "AI 智慧產生"
+                }}
+              </v-chip>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-btn
+                variant="text"
+                color="primary"
+                prepend-icon="mdi-auto-fix"
+                @click.stop="openAiDialog"
+              >
+                {{ aiTemplate ? "重新產生" : "開始產生" }}
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+
+        <!-- 自訂論壇 -->
         <v-col cols="12" sm="6" md="3">
           <v-card
             class="template-card"
@@ -73,14 +119,22 @@
             variant="outlined"
             @click="selectCustomTemplate"
           >
-            <v-card-title> 自訂論壇 </v-card-title>
+            <v-card-title class="d-flex align-center">
+              <v-icon icon="mdi-tune-variant" color="secondary" class="mr-2" />
+              自訂論壇
+            </v-card-title>
 
-            <v-card-subtitle> CUSTOM </v-card-subtitle>
+            <v-card-subtitle>CUSTOM</v-card-subtitle>
 
             <v-card-text>
               <p class="mb-4">自行建立需要的分類與討論版</p>
 
-              <v-chip color="secondary" variant="tonal" size="small">
+              <v-chip
+                color="secondary"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-cog-outline"
+              >
                 自由設定
               </v-chip>
             </v-card-text>
@@ -200,12 +254,19 @@
             color="primary"
             size="large"
             :loading="applying"
-            :disabled="applying"
+            :disabled="applying || selectedCode === 'AI_GENERATED'"
             @click="confirmDialog = true"
           >
             套用此範本
           </v-btn>
-
+          <v-alert
+            v-if="selectedCode === 'AI_GENERATED'"
+            type="info"
+            variant="tonal"
+            class="mt-3"
+          >
+            AI 範本目前可以預覽，完成後端套用功能後即可建立論壇。
+          </v-alert>
           <!-- 自訂論壇時顯示 -->
           <v-btn
             v-else-if="selectedCode === 'CUSTOM'"
@@ -218,7 +279,74 @@
           </v-btn>
         </div>
       </section>
+      <v-dialog v-model="aiDialog" max-width="680" persistent>
+        <v-card rounded="lg">
+          <v-card-title class="d-flex align-center">
+            <v-icon icon="mdi-robot-outline" color="primary" class="mr-2" />
+            AI 論壇範本產生器
+          </v-card-title>
 
+          <v-card-text>
+            <v-textarea
+              v-model="aiForm.description"
+              label="請描述論壇用途"
+              placeholder="例如：建立一個大學生程式設計與專題交流論壇"
+              variant="outlined"
+              rows="4"
+              counter="300"
+              maxlength="300"
+              :disabled="aiGenerating"
+            />
+
+            <v-row>
+              <v-col cols="12" sm="6">
+                <v-select
+                  v-model="aiForm.categoryCount"
+                  label="分類數量"
+                  :items="[1, 2, 3, 4, 5]"
+                  variant="outlined"
+                  :disabled="aiGenerating"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="6">
+                <v-select
+                  v-model="aiForm.boardsPerCategory"
+                  label="每個分類的討論版數量"
+                  :items="[1, 2, 3, 4, 5, 6]"
+                  variant="outlined"
+                  :disabled="aiGenerating"
+                />
+              </v-col>
+            </v-row>
+
+            <v-alert v-if="aiError" type="error" variant="tonal" class="mt-2">
+              {{ aiError }}
+            </v-alert>
+          </v-card-text>
+
+          <v-card-actions class="px-6 pb-5">
+            <v-spacer />
+
+            <v-btn
+              variant="text"
+              :disabled="aiGenerating"
+              @click="aiDialog = false"
+            >
+              取消
+            </v-btn>
+
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-auto-fix"
+              :loading="aiGenerating"
+              @click="generateAiTemplate"
+            >
+              AI 產生範本
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <v-dialog v-model="confirmDialog" max-width="520" persistent>
         <v-card rounded="lg">
           <v-card-title class="d-flex align-center">
@@ -301,9 +429,33 @@ const applying = ref(false);
 const loadError = ref("");
 const confirmDialog = ref(false);
 
+//AI 功能
+const aiDialog = ref(false);
+const aiGenerating = ref(false);
+const aiError = ref("");
+const aiTemplate = ref(null);
+
+const aiForm = ref({
+  description: "",
+  categoryCount: 3,
+  boardsPerCategory: 3,
+});
 const selectedBoards = ref({});
 
+function selectAllBoards(template) {
+  const result = {};
+
+  template?.categories?.forEach((category) => {
+    result[category.name] = category.boards.map((board) => board.name);
+  });
+
+  selectedBoards.value = result;
+}
+
 const selectedTemplate = computed(() => {
+  if (selectedCode.value === "AI_GENERATED") {
+    return aiTemplate.value;
+  }
   return templates.value.find(
     (template) => template.code === selectedCode.value,
   );
@@ -392,13 +544,7 @@ function selectTemplate(code) {
 
   const template = templates.value.find((item) => item.code === code);
 
-  const result = {};
-
-  template?.categories.forEach((category) => {
-    result[category.name] = category.boards.map((board) => board.name);
-  });
-
-  selectedBoards.value = result;
+  selectAllBoards(template);
 }
 
 function isCategorySelected(category) {
@@ -424,6 +570,43 @@ function buildSelections() {
     .filter((category) => category.boardNames.length > 0);
 }
 
+function openAiDialog() {
+  aiError.value = "";
+  aiDialog.value = true;
+}
+
+async function generateAiTemplate() {
+  const description = aiForm.value.description.trim();
+
+  if (!description) {
+    aiError.value = "請輸入論壇用途";
+    return;
+  }
+
+  aiGenerating.value = true;
+  aiError.value = "";
+
+  try {
+    const response = await forumTemplateService.generateAiTemplate({
+      description,
+      categoryCount: aiForm.value.categoryCount,
+      boardsPerCategory: aiForm.value.boardsPerCategory,
+    });
+
+    aiTemplate.value = response.data;
+    selectedCode.value = "AI_GENERATED";
+
+    selectAllBoards(aiTemplate.value);
+
+    aiDialog.value = false;
+
+    showMessage("AI 論壇範本產生成功");
+  } catch (error) {
+    aiError.value = getErrorMessage(error, "AI 範本產生失敗，請稍後再試");
+  } finally {
+    aiGenerating.value = false;
+  }
+}
 function selectCustomTemplate() {
   selectedCode.value = "CUSTOM";
   selectedBoards.value = {};
@@ -484,21 +667,39 @@ onMounted(loadTemplates);
 }
 
 .template-card {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  min-height: 220px;
+  overflow: hidden;
   cursor: pointer;
+  border-radius: 14px;
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    transform 0.2s;
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.template-card :deep(.v-card-text) {
+  flex: 1;
 }
 
 .template-card:hover {
-  transform: translateY(-2px);
+  border-color: #93c5fd;
+  box-shadow: 0 8px 22px rgb(15 23 42 / 10%);
+  transform: translateY(-3px);
 }
 
 .template-card.selected {
   border: 2px solid #2563eb;
-  box-shadow: 0 6px 18px rgb(37 99 235 / 15%);
+  box-shadow: 0 8px 24px rgb(37 99 235 / 18%);
+}
+.ai-template-card {
+  background: linear-gradient(
+    145deg,
+    rgb(239 246 255 / 75%),
+    rgb(255 255 255 / 100%)
+  );
 }
 
 .preview-section {
@@ -574,5 +775,16 @@ onMounted(loadTemplates);
     align-items: flex-start;
     flex-direction: column;
   }
+}
+.ai-dialog-content {
+  padding-top: 12px;
+}
+
+.ai-dialog-content :deep(.v-field) {
+  border-radius: 12px;
+}
+
+.ai-dialog-content :deep(.v-textarea textarea) {
+  line-height: 1.65;
 }
 </style>

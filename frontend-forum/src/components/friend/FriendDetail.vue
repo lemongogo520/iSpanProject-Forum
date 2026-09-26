@@ -122,12 +122,13 @@ const startChat = async (friend) => {
   flex-direction: column;
 }
 
-.detail-inner {
+.detail-inner > *{
   max-width: 720px;
   width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 20px;
 }
 
@@ -218,6 +219,7 @@ const startChat = async (friend) => {
 
 .post-card {
   display: block;
+  flex-shrink: 0;
   padding: 14px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--forum-radius, 14px);

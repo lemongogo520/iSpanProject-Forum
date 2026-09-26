@@ -16,7 +16,7 @@
       </v-tabs>
 
       <!-- 管理卡片 -->
-      <v-card class="bg-white" elevation="2" rounded="lg">
+      <v-card class="bg-white pa-6" max-width="800"  elevation="6" rounded="xl">
         <v-card-title class="d-flex align-center pa-4 border-b">
           <v-icon start icon="mdi-store-cog-outline" color="primary"></v-icon>
           商品上下架管理
@@ -52,7 +52,7 @@
           ></v-text-field>
         </v-card-title>
 
-        <v-table hover v-if="selectedCategory">
+        <v-table hover v-if="selectedCategory" fixed-header height="400px">
           <thead>
             <tr>
               <th class="text-left" width="100">商品預覽</th>

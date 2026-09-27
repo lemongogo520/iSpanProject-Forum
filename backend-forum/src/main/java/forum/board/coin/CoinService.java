@@ -137,7 +137,7 @@ public class CoinService {
                 );
 
         Users recipient = usersRepository
-                .findByAccount(request.getRecipientAccount().trim())
+                .findByAccountAndActiveTrue(request.getRecipientAccount().trim())
                 .orElseThrow(() ->
                     new IllegalArgumentException("找不到收款帳號")
                 );

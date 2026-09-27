@@ -12,17 +12,20 @@ public interface UsersRepository extends JpaRepository<Users, UUID> {
 
     boolean existsByAccount(String account);
 
-    Optional<Users> findByAccount(String account);
+    Optional<Users> findByAccountAndActiveTrue(String account);
     
     Optional<Users> findById(String id);
 
     @Query("""
-        SELECT u
-        FROM Users u
-        LEFT JOIN u.usersDetail d
-        WHERE LOWER(u.account) LIKE LOWER(CONCAT('%', :keyword, '%'))
-           OR LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-    """)
-    List<Users> searchUsers(@Param("keyword") String keyword);
+    	    SELECT u
+    	    FROM Users u
+    	    LEFT JOIN u.usersDetail d
+    	    WHERE u.active = true
+    	      AND (
+    	          LOWER(u.account) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    	          OR LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    	      )
+    	""")
+    	List<Users> searchUsers(@Param("keyword") String keyword);
 }
     

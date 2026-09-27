@@ -381,7 +381,7 @@ public class SchoolForumSeedService {
 
         private Users getUser(String account) {
                 return usersRepository
-                                .findByAccount(account)
+                                .findByAccountAndActiveTrue(account)
                                 .orElseThrow(() -> new IllegalStateException(
                                                 "找不到假資料使用者：" + account));
         }

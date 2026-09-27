@@ -26,7 +26,7 @@
           <v-text-field
             v-model="search"
             label="搜尋使用者"
-            placeholder="輸入帳號、名稱、暱稱或 Email"
+            placeholder="輸入帳號或名稱"
             prepend-inner-icon="mdi-magnify"
             variant="outlined"
             density="compact"
@@ -98,6 +98,11 @@
       </div>
     </div>
 
+    <UserDetailView
+      v-model="userDetailDialog"
+      :account="selectedAccount"
+      @saved="reloadPage"
+    />
     <!-- Create User Dialog -->
     <v-dialog
       v-model="showCreateDialog"
@@ -132,14 +137,6 @@
           <v-text-field
             v-model="newUser.name"
             label="名稱"
-            variant="outlined"
-            density="compact"
-            class="mb-4"
-          />
-
-          <v-text-field
-            v-model="newUser.nickname"
-            label="暱稱"
             variant="outlined"
             density="compact"
             class="mb-4"
@@ -195,10 +192,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { userService } from '@/services/userService'
+import Sidebar from '@/components/config/ConfigSidebar.vue'
+import UserDetailView from "@/views/user/UserDetailView.vue";
 
 const users = ref([])
 const search = ref('')
 const loading = ref(false)
+const userDetailDialog = ref(false)
+const selectedAccount = ref('')
 
 const showCreateDialog = ref(false)
 
@@ -206,7 +207,6 @@ const newUser = ref({
   account: '',
   password: '',
   name: '',
-  nickname: '',
   email: '',
   permission: 3
 })
@@ -230,6 +230,7 @@ const loadUsers = async () => {
 
   try {
     users.value = await userService.getUsers(search.value)
+    console.log('取得使用者:', users)
   } catch (error) {
     console.error('取得使用者失敗:', error)
   } finally {
@@ -251,7 +252,6 @@ const openCreateDialog = () => {
     account: '',
     password: '',
     name: '',
-    nickname: '',
     email: '',
     permission: 3
   }
@@ -271,17 +271,30 @@ const createUser = async () => {
   }
 }
 
+//編輯使用者
 const editUser = (user) => {
-  console.log('編輯使用者:', user)
+  selectedAccount.value = user.account
+  userDetailDialog.value = true
 }
 
-const deleteUser = (user) => {
-  console.log('刪除使用者:', user)
+//刪除使用者
+const deleteUser = async (user) => {
+  try {
+    await userService.deleteUser(user.uid)
+    reloadPage()
+  } catch (error) {
+    console.error('刪除使用者失敗:', error)
+  }
+}
+
+const reloadPage = async () => {
+  await loadUsers()
 }
 
 onMounted(() => {
   loadUsers()
 })
+
 </script>
 
 

@@ -28,7 +28,8 @@
             <div class="field-content">
               <v-text-field v-model="form.account" disabled hide-details />
               <v-btn
-                v-if="configStore.settings.allow_change_password === 'true'"
+                v-if="configStore.settings.allow_change_password === 'true' &&
+                (!props.account || userStore.account === props.account)"
                 variant="text"
                 color="primary"
                 @click="showChangePasswordDialog = true"
@@ -498,9 +499,8 @@ console.log(configStore.settings)
   pointsNavigationError.value = "";
   void loadPoints();
   try {
-    const user = await userService.getUserDetail(userStore.account);
-
-    console.log("取得使用者資料：", user);
+    const account = props.account || userStore.account
+    const user = await userService.getUserDetail(account);
 
     Object.assign(form, {
       account: user.account ?? "",
@@ -568,7 +568,8 @@ async function save() {
     await userService.saveUserDetail(form);
 
     // 重新查詢，確認後端確實已儲存名稱。
-    const user = await userService.getUserDetail(userStore.account);
+    const account = props.account || userStore.account
+    const user = await userService.getUserDetail(account);
 
     nameExistsInDatabase.value = !!user.name?.trim();
 

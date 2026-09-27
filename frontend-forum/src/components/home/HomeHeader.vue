@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useDisplay } from "vuetify";
 import MessageMenu from "../chat/MessageMenu.vue";
 import { useConfigStore } from '@/stores/config'
+import DollAvatar from "@/components/doll/DollAvatar.vue";
 
 
 const router = useRouter();
@@ -300,7 +301,9 @@ onBeforeUnmount(() => {
             aria-label="開啟會員選單"
             @click="drawer = false"
           >
-            <v-avatar
+            <DollAvatar v-if="userStore.uid" :user-id="userStore.uid" :size="56" :scale="1.8"
+            class="comment-avatar" @click.stop.prevent/>
+            <v-avatar v-else
               color="#3266a9"
               size="36"
             >
@@ -337,7 +340,7 @@ onBeforeUnmount(() => {
         >
           <div class="profile-heading">
             <DollAvatar v-if="userStore.uid" :user-id="userStore.uid" :size="56" :scale="1.8"
-            class="comment-avatar" v-bind="props" @click.stop.prevent/>
+            class="comment-avatar" @click.stop.prevent/>
             <v-avatar v-else
               color="#e8eff9"
               size="48"

@@ -1,10 +1,12 @@
 package forum.board.users;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import forum.board.common.util.IpUtil;
 import forum.board.config.Settings;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -94,6 +97,37 @@ public class UsersController {
             @PathVariable UUID uid) {
 
         return userService.getUser(uid);
+    }
+    
+    @PostMapping("/admin")
+    public ResponseEntity<?> createUser(
+            @RequestBody AdminUserCreateDTO dto,
+            HttpServletRequest request) {
+
+        try {
+            userService.adminRegister(dto, IpUtil.getClientIp(request));
+            return ResponseEntity.ok(dto);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/admin/{uid}")
+    public ResponseEntity<?> deleteUser(
+            @PathVariable UUID uid) {
+
+        try {
+            userService.deleteUser(uid);
+            return ResponseEntity.ok(
+                    Map.of("message", "使用者刪除成功")
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 }
     

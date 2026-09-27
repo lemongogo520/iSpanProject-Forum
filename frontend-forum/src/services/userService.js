@@ -37,7 +37,7 @@ export const userService = {
       }
     })
 
-    console.log(response.data)
+    console.log(response.data);
     return response.data
   },
 
@@ -45,30 +45,22 @@ export const userService = {
   async createUser(user) {
     const response = await httpClient({
       method: 'post',
-      url: '/api/users',
+      url: '/api/users/admin',
       data: user
     })
 
     return response.data
   },
 
-  //
-  async updateUser(uid, user) {
-    const response = await httpClient({
-      method: 'put',
-      url: `/api/users/${uid}`,
-      data: user
-    })
-
-    return response.data
-  },
-
+  //刪除使用者
   async deleteUser(uid) {
+    console.log(uid);
     const response = await httpClient({
       method: 'delete',
-      url: `/api/users/${uid}`
+      url: `/api/users/admin/${uid}`
     })
 
+    console.log(response.data);
     return response.data
   }
 }

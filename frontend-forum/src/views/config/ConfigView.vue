@@ -256,10 +256,13 @@ import Sidebar from '@/components/config/ConfigSidebar.vue'
 import FileUpload from '@/components/file/FileUpload.vue'
 import fileService, { fileModule } from '@/services/uploadFileService'
 import { useConfigStore } from '@/stores/config'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const currentTab = ref('basic')
 const saving = ref(false)
 const configStore = useConfigStore();
+const allowLeave = ref(false)
 
 // FileUpload 使用的檔案資料
 const dialogData = ref([])
@@ -600,18 +603,19 @@ const loadLoginLogo = async () => {
 // 儲存並離開
 const saveAndLeave = async () => {
   const success = await saveSettings()
-  
-  if (!success || !pendingLeave.value) { 
-    return 
+
+  if (!success || !pendingLeave.value) {
+    return
   }
 
-  if (!hasChanges() && pendingLeave.value) {
-    const next = pendingLeave.value
+  if (!hasChanges()) {
+    const to = pendingLeave.value
 
     pendingLeave.value = null
     showLeaveDialog.value = false
+    allowLeave.value = true
 
-    next()
+    router.push(to)
   }
 }
 
@@ -621,12 +625,13 @@ const discardAndLeave = () => {
     return
   }
 
-  const next = pendingLeave.value
+  const to = pendingLeave.value
 
   pendingLeave.value = null
   showLeaveDialog.value = false
+  allowLeave.value = true
 
-  next()
+  router.push(to)
 }
 
 // 取消離開
@@ -636,14 +641,19 @@ const cancelLeave = () => {
 }
 
 // 路由離開確認
-onBeforeRouteLeave((to, from, next) => {
+onBeforeRouteLeave((to) => {
+  if (allowLeave.value) {
+    allowLeave.value = false
+    return true
+  }
+  
   if (!hasChanges()) {
-    next()
-    return
+    return true
   }
 
-  pendingLeave.value = next
+  pendingLeave.value = to
   showLeaveDialog.value = true
+  return false
 })
 </script>
 

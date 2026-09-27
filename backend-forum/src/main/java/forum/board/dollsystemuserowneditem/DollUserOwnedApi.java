@@ -41,6 +41,22 @@ public class DollUserOwnedApi {
         return ResponseEntity.ok(items);
     }
 
+    // 取得玩家所有圖層的擁有裝備 (供前端隨機換裝使用)
+    @GetMapping("/api/dollitem/userowned/all")
+    public ResponseEntity<?> getAllOwnedItems(HttpSession session) {
+
+        Object sessionUserId = session.getAttribute("loginUserId");
+        if (sessionUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("使用者尚未登入");
+        }
+
+        UUID userId = (UUID) sessionUserId;
+
+        List<DollItemResponseDTO> items = ownedService.getAllOwnedItems(userId);
+        return ResponseEntity.ok(items);
+    }
+
+
     // 商城檢視 (分頁版)
     @GetMapping("/api/dollitems/dollshop/{categoryId}")
     public ResponseEntity<?> getShopItemsByPage(

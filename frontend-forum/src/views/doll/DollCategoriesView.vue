@@ -13,7 +13,11 @@
         <v-tab to="/config/doll/adminitems" value="adminitems">商品上下架</v-tab>
       </v-tabs>
       <!-- 主選單卡片 -->
-      <v-card class="pa-5 mt-4" max-width="450" elevation="2" rounded="lg">
+      <v-card class="bg-white pa-6" max-width="450" elevation="6" rounded="xl">
+        <v-card-title class="text-h5 font-weight-bold mb-4 d-flex align-center text-primary-darken-1">
+          <v-icon icon="mdi-layers-outline" class="mr-2"></v-icon>
+            圖層資訊一覽
+        </v-card-title>
         <v-card-text class="px-0">
           <!-- 列表選單 -->
           <v-list density="compact" class="px-0 pt-0">

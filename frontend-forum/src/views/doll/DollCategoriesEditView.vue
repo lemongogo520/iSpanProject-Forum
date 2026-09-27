@@ -1,5 +1,5 @@
 <template>
-  <v-card class="bg-white" rounded="lg" elevation="6">
+  <v-card class="bg-white pa-6" elevation="6" rounded="xl">
     <v-card-title
       class="d-flex align-center pa-4 border-b font-weight-bold text-primary-darken-1"
     >

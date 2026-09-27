@@ -9,7 +9,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useDisplay } from "vuetify";
 import MessageMenu from "../chat/MessageMenu.vue";
 import { useConfigStore } from '@/stores/config'
-
+import DollAvatar from "../doll/DollAvatar.vue";
 
 const router = useRouter();
 const route = useRoute();

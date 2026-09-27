@@ -82,12 +82,17 @@ import { ref, onMounted } from "vue";
 import DollConvas from "@/components/doll/DollConvas.vue";
 import DollItemSelector from "@/components/doll/DollItemSelector.vue";
 import httpClient from "@/services/httpClient";
+import { userAvatar } from "@/services/dollSystemApi/dollAvaratApi";
+import { useUserStore } from "@/stores/user";
 
 const baseUrl = "http://localhost:8080/sprites/";
 
 const equippedItems = ref({});
 const isSnackbarVisible = ref(false);
 const snackbarMessage = ref(null);
+
+const avatarStore = userAvatar();
+const userStore = useUserStore();
 
 function loadEquippedItems() {
   httpClient({
@@ -151,6 +156,8 @@ function saveEquippedItems() {
   })
     .then((response) => {
       if (response.status === 200) {
+        // 清除這位使用者的 avatar 快取，讓 DollAvatar 下次渲染時拿到最新資料
+        avatarStore.clearCache(userStore.uid);
         alert("套裝儲存成功！");
       }
     })

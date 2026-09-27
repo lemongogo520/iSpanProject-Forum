@@ -1,5 +1,6 @@
 <template>
-    <v-menu v-model="open" location="bottom end" origin="top end" offset="8" :close-on-content-click="false" max-width="380">
+    <v-menu v-model="open" location="bottom end" origin="top end" offset="8" :close-on-content-click="false"
+        max-width="380">
         <!-- 選單按鈕 -->
         <template #activator="{ props }">
             <v-btn v-bind="props" icon variant="text">
@@ -93,7 +94,7 @@
     </v-menu>
 </template>
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useChatStore } from "@/stores/conversation";
 import { useNotificationCenter } from "@/composables/useNotificationCenter";
@@ -123,34 +124,46 @@ const onConversation = (c) => {
     open.value = false;
     chatStore.openChat(c.id);
 };
+
+
+watch(open, (v) => {
+    if (!v) return;
+    // 兩邊都有未讀時，通知優先
+    if (unreadCount.value > 0) tab.value = "notice";
+    else if (chatStore.totalUnread > 0) tab.value = "message";
+});
 </script>
 <style scoped>
 .nc-body {
-  max-height: 400px;
-  overflow-y: auto;
+    max-height: 400px;
+    overflow-y: auto;
 }
+
 .nc-foot {
-  display: flex;
-  justify-content: flex-end;
-  gap: 4px;
-  padding: 6px 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 6px 8px;
 }
+
 .nc-unread {
-  background: var(--color-primary-soft);
+    background: var(--color-primary-soft);
 }
+
 .nc-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: end;
-  gap: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    gap: 4px;
 }
+
 .nc-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 32px;
-  color: var(--color-text);
-  font-size: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px;
+    color: var(--color-text);
+    font-size: 0.875rem;
 }
 </style>

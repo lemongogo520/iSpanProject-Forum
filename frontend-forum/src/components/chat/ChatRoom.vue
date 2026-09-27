@@ -19,7 +19,7 @@
 
     <template v-if="!chatStore.isMinimized">
       <MessageList :conversationId="conversationId" :showSender="isBoard" />
-      <MessageInput :conversationId="conversationId" />
+      <MessageInput :conversationId="conversationId" :locked="conversation?.archived === true"/>
     </template>
   </div>
 </template>

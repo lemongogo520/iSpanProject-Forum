@@ -19,6 +19,7 @@ import forum.board.chat.dto.MessageRequestDTO;
 import forum.board.chat.dto.MessageResponseDTO;
 import forum.board.chat.message.MessagesEntity.ChatType;
 import forum.board.friends.dto.FriendResponseDTO;
+import forum.board.friends.exception.BusinessException;
 import forum.board.friends.exception.ResourceNotFoundException;
 import forum.board.users.UserDetail;
 import forum.board.users.Users;
@@ -117,18 +118,22 @@ public class MessagesService {
         // 確認使用者是對話成員
         checkAccess(conversationId, senderId);
 
-        // 冪等檢查：重送同一個 clientMsgId 直接回既有訊息
+        ConversationEntity conversation = findConversation(conversationId);
+        Users sender = findUser(senderId);
+        String content = request.content().trim();
+        if (Boolean.TRUE.equals(conversation.getArchived())) {
+            throw new BusinessException("此對話已封存，無法傳送訊息");
+        }
+        
+        // 重複檢查：重送同一個 clientMsgId 直接回既有訊息
         if (request.clientMsgId() != null) {
             Optional<MessagesEntity> existing =
-                    mRepo.findByConversationIdAndClientMsgId(conversationId, request.clientMsgId());
+            mRepo.findByConversationIdAndClientMsgId(conversationId, request.clientMsgId());
             if (existing.isPresent()) {
                 return toResponseDTO(senderId, existing.get());
             }
         }
-
-        ConversationEntity conversation = findConversation(conversationId);
-        Users sender = findUser(senderId);
-        String content = request.content().trim();
+        
 
         MessagesEntity msg = new MessagesEntity();
         msg.setConversation(conversation);

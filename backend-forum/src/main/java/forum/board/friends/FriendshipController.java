@@ -120,4 +120,17 @@ public class FriendshipController {
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
 
+	/*
+	 * 取消好友邀請
+	 * /api/friendship/{targetUserId}
+	 */
+	@DeleteMapping("/{targetUserId}")
+	public ResponseEntity<?> deleteFriendRequest(@PathVariable UUID targetUserId, 
+		HttpSession session) {
+		UUID loginUserId = (UUID) session.getAttribute("loginUserId");
+		UUID otherId = fService.removeFriend(loginUserId,targetUserId);
+		notifier.notify(otherId, "FRIEND_REMOVED", myName(loginUserId));
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
+
 }

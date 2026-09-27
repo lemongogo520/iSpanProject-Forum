@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import forum.board.chat.conversation.ConversationService;
 import forum.board.friends.FriendshipEntity.FriendshipStatus;
 import forum.board.friends.dto.FriendResponseDTO;
 import forum.board.friends.dto.FriendshipResponseDTO;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class FriendshipService {
 	private final FriendshipRepository fRepo;
 	private final UsersRepository uRepo;
+	private final ConversationService cService;
 
 	private UUID[] normalize(UUID a, UUID b) {
 		// -1:目前 UUID 值小於目標值
@@ -29,7 +31,6 @@ public class FriendshipService {
 		// 1:大於
 		return a.compareTo(b) < 0 ? new UUID[] { a, b } : new UUID[] { b, a };
 	}
-
 
 	private FriendshipEntity findPendingFriendship(Long friendshipId) {
 		FriendshipEntity friendship = fRepo.findById(friendshipId)
@@ -126,9 +127,12 @@ public class FriendshipService {
 
 		validateRequestReceiver(friendship, currentUserId);
 		friendship.setStatus(FriendshipStatus.ACCEPTED);
+		
+		UUID otherId =  otherSide(friendship, currentUserId);
+		cService.unarchiveDirect(currentUserId, otherId);
 		fRepo.save(friendship);
+		return otherId;
 
-		return otherSide(friendship, currentUserId);
 	}
 
 	/* 拒絕好友邀請 */
@@ -144,7 +148,7 @@ public class FriendshipService {
 	}
 
 	/* 取得好友列表 */
-	@Transactional(readOnly = true) 
+	@Transactional(readOnly = true)
 	public List<FriendResponseDTO> getFriendsList(UUID currentUserId) {
 		List<FriendshipEntity> friendsList = fRepo.findFriends(currentUserId, FriendshipStatus.ACCEPTED);
 
@@ -161,7 +165,7 @@ public class FriendshipService {
 	}
 
 	/* 送出的好友邀請 */
-	@Transactional(readOnly = true) 
+	@Transactional(readOnly = true)
 	public List<FriendshipResponseDTO> getRequestList(UUID currentUserId) {
 		List<FriendshipEntity> friendshipList = fRepo.findSentRequests(currentUserId,
 				FriendshipStatus.PENDING);
@@ -179,7 +183,7 @@ public class FriendshipService {
 	}
 
 	/* 收到的好友邀請 */
-	@Transactional(readOnly = true) 
+	@Transactional(readOnly = true)
 	public List<FriendshipResponseDTO> getReceivedList(UUID currentUserId) {
 		List<FriendshipEntity> friendshipList = fRepo.findPendingRequests(currentUserId);
 		return friendshipList.stream().map(friendship -> {
@@ -197,6 +201,20 @@ public class FriendshipService {
 		UUID other = otherSide(friendship, currentUserId);
 		fRepo.delete(friendship);
 		return other;
+	}
+
+	// 刪除好友
+	@Transactional
+	public UUID removeFriend(UUID currentUserId, UUID targetId) {
+		UUID[] pair = normalize(currentUserId, targetId);
+		FriendshipEntity f = fRepo.findByUser1IdAndUser2Id(pair[0], pair[1])
+				.orElseThrow(() -> new ResourceNotFoundException("不是好友"));
+		if (f.getStatus() != FriendshipStatus.ACCEPTED) {
+			throw new BusinessException("不是好友");
+		}
+		fRepo.delete(f);
+		cService.archiveDirect(currentUserId, targetId);
+		return targetId;
 	}
 
 }

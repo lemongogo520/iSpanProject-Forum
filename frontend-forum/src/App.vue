@@ -82,6 +82,11 @@ const handleNotification = (n) => {
     case "FRIEND_CANCELED":
       friendStore.refreshFriendData();
       break;
+
+    case "FRIEND_REMOVED":
+      friendStore.refreshFriendData();
+      chatStore.getConversations();
+      break;
     // 發文
     case "BOARD_POST":
       push({

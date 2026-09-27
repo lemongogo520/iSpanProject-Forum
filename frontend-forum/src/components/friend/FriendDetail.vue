@@ -1,4 +1,12 @@
 <template>
+  <DeleteConfirmDialog
+    :model-value="confirmOpen"
+    title="刪除好友"
+    :message="`確定要刪除「${friendStore.selectedFriend?.displayName}」嗎？`"
+    :loading="removing"
+    @cancel="confirmOpen = false"
+    @confirm="confirmRemove()"
+  />
   <div class="friend-detail">
     <template v-if="friendStore.selectedFriend" class="detail-inner">
       <div class="detail-section rounded-lg">
@@ -23,6 +31,10 @@
           @click="startChat(friendStore.selectedFriend)">
           私訊
         </v-btn>
+
+        <v-btn variant="text" color="error" size="small" @click="confirmOpen = true">
+        刪除好友
+      </v-btn>
 
       </div>
       <!-- 近期發表文章 -->
@@ -80,9 +92,15 @@ import { useChatStore } from "@/stores/conversation";
 import httpClient from "@/services/httpClient";
 import defaultPostImage from "@/assets/images/default-post.png";
 import { timeAgo, formatDate } from "@/utils/time";
+import { useNotification } from "@/composables/useNotification";
+import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog.vue";
 
 const friendStore = useFriendStore();
 const chatStore = useChatStore();
+
+const { showMessage } = useNotification();
+const confirmOpen = ref(false);
+const removing = ref(false);
 
 const recentPosts = ref([]);
 const loadingPosts = ref(false);
@@ -110,6 +128,24 @@ watch(
 const startChat = async (friend) => {
   const c = await chatStore.directConversation(friend.userId);
   chatStore.openChat(c.id);
+};
+
+const confirmRemove = async () => {
+  if (removing.value) return;
+  const target = friendStore.selectedFriend;
+  if (!target) return;
+  removing.value = true;
+  try {
+    await friendStore.removeFriend(target?.userId);
+    confirmOpen.value = false;
+    showMessage(`已刪除好友「${target.displayName}」`);
+  } catch (e) {
+    console.error("刪除好友失敗", e);
+    confirmOpen.value = false;
+    showMessage(e.response?.data?.message ?? "刪除失敗", "error");
+  } finally {
+    removing.value = false;
+  }
 };
 </script>
 <style scoped>

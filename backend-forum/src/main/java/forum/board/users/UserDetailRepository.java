@@ -16,10 +16,19 @@ public interface UserDetailRepository extends JpaRepository<UserDetail, Integer>
     	    SELECT d
     	    FROM UserDetail d
     	    JOIN d.users u
-    	    JOIN UserPermission p ON p.userId = u.id 
+    	    JOIN UserPermission p ON p.userId = u.id
     	    JOIN Permissions r ON r.id = p.permissionId
     	    WHERE r.rank IN :ranks
+    	    AND u.active = true
     	""")
 	List<UserDetail> findByRankIn(@Param("ranks") List<Integer> ranks);
+    
+    @Query("""
+    	    SELECT d
+    	    FROM UserDetail d
+    	    JOIN d.users u
+    	    WHERE u.active = true
+    	""")
+	List<UserDetail> findAllActive();
 }
     

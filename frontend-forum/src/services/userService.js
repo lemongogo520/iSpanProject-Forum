@@ -54,13 +54,23 @@ export const userService = {
 
   //刪除使用者
   async deleteUser(uid) {
-    console.log(uid);
     const response = await httpClient({
       method: 'delete',
       url: `/api/users/admin/${uid}`
     })
 
     console.log(response.data);
+    return response.data
+  },
+
+  //更新使用者權限資料
+  async updateUserPermission(uid, permissionId) {
+    const response = await httpClient.put(
+        `/api/users/${uid}/permission`,
+        {
+          permissionId
+        }
+      )
     return response.data
   }
 }

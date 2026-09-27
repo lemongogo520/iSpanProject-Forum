@@ -7,5 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PermissionsController {
 	private final PermissionsService permissionsService;
+	
+	
 }
     

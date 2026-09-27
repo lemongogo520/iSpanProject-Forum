@@ -241,7 +241,7 @@ public class UsersService {
 			List<UserDetail> listUsers = new ArrayList<>();
 
 			if (types.contains(0)) {
-				listUsers = userDetailRepository.findAll();
+				listUsers = userDetailRepository.findAllActive();
 			} else {
 				listUsers = userDetailRepository.findByRankIn(types);
 			}
@@ -363,5 +363,18 @@ public class UsersService {
 	    user.setActive(false);
 	    usersRepository.save(user);
 	
+	}
+
+	public void updateUserPermission(UUID userId, Integer permissionId) {
+		// TODO Auto-generated method stub
+
+
+	    UserPermission userPermission =
+	            userPermissionRepository.findByUserId(userId)
+	                    .orElseThrow(() -> new RuntimeException("找不到使用者權限"));
+
+	    userPermission.setPermissionId(permissionId);
+
+	    userPermissionRepository.save(userPermission);
 	}
 }

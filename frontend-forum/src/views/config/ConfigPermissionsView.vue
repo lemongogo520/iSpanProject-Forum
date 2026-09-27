@@ -104,16 +104,13 @@
           <v-list v-if="forumAdmins.length">
             <v-list-item
               v-for="user in forumAdmins"
-              :key="user.id"
+              :key="user.uid"
             >
               <template #prepend>
-                <v-avatar size="42">
-                  <v-img
-                    v-if="user.photoUrl"
-                    :src="user.photoUrl"
-                    cover
-                  />
-                  <v-icon v-else>
+                <DollAvatar v-if="user.uid" :user-id="user.uid" :size="42" :scale="1.4"
+                class="comment-avatar" @click.stop.prevent/>
+                <v-avatar v-else size="42">
+                  <v-icon>
                     mdi-account
                   </v-icon>
                 </v-avatar>
@@ -163,6 +160,7 @@ import { ref, onMounted } from 'vue'
 import { userService } from '@/services/userService'
 import Sidebar from '@/components/config/ConfigSidebar.vue'
 import GetAllUsersDialog from '@/components/user/GetAllUsersDialog.vue'
+import DollAvatar from "@/components/doll/DollAvatar.vue";
 
 const loading = ref(false)
 const systemAdmins = ref([])
@@ -177,7 +175,7 @@ const openUserDialog = (permission) => {
   userDialog.value = true
 }
 
-const selectUser = (user) => {
+const selectUser = async (user) => {
   if (selectedPermission.value === 1) {
     systemAdmins.value.push(user)
   }
@@ -186,10 +184,12 @@ const selectUser = (user) => {
     forumAdmins.value.push(user)
   }
 
+  await userService.updateUserPermission(user.uid, selectedPermission.value)
   userDialog.value = false
+  await loadUsers()
 }
 
-const removePermission = (user) => {
+const removePermission = async (user) => {
   if (user.permission === 1) {
     systemAdmins.value = systemAdmins.value.filter(
       item => item.id !== user.id
@@ -201,6 +201,9 @@ const removePermission = (user) => {
       item => item.id !== user.id
     )
   }
+
+  await userService.updateUserPermission(user.uid, 3)
+  await loadUsers()
 }
 
 const loadUsers = async () => {

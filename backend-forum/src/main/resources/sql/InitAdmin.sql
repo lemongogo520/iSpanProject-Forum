@@ -114,7 +114,6 @@ IF NOT EXISTS (
     FROM user_permission up
     INNER JOIN permissions p ON p.id = up.permission_id
     WHERE up.user_id = '11111111-1111-4111-8111-111111111111'
-      AND p.[name] = 'manager'
 )
 BEGIN
     INSERT INTO [dbo].[user_permission]
@@ -162,7 +161,6 @@ IF NOT EXISTS (
     FROM user_permission up
     INNER JOIN permissions p ON p.id = up.permission_id
     WHERE up.user_id = '22222222-2222-4222-8222-222222222222'
-      AND p.[name] = 'user'
 )
 BEGIN
     INSERT INTO [dbo].[user_permission]
@@ -210,7 +208,6 @@ IF NOT EXISTS (
     FROM user_permission up
     INNER JOIN permissions p ON p.id = up.permission_id
     WHERE up.user_id = '33333333-3333-4333-8333-333333333333'
-      AND p.[name] = 'user'
 )
 BEGIN
     INSERT INTO [dbo].[user_permission]

@@ -304,7 +304,11 @@ async function loadPoints() {
   pointsBalance.value = null;
 
   try {
-    const response = await httpClient.get("/api/coins/wallet");
+    const response = await httpClient.get("/api/coins/wallet", {
+  params: {
+    userId: userStore.uid,
+  },
+});
 
     // 相容一般 Axios 回傳與已由攔截器取出 data 的情況。
     const data = response?.data ?? response;

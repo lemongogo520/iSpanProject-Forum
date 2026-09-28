@@ -40,13 +40,10 @@
               :key="user.id"
             >
               <template #prepend>
-                <v-avatar size="42">
-                  <v-img
-                    v-if="user.photoUrl"
-                    :src="user.photoUrl"
-                    cover
-                  />
-                  <v-icon v-else>
+                <DollAvatar v-if="user.uid" :user-id="user.uid" :size="42" :scale="1.4"
+                class="comment-avatar" @click.stop.prevent/>
+                <v-avatar v-else size="42">
+                  <v-icon>
                     mdi-account
                   </v-icon>
                 </v-avatar>

@@ -7,6 +7,8 @@ import friendsImage from "@/assets/home/friends.png";
 import avatarImage from "@/assets/home/avatar.png";
 import shopImage from "@/assets/home/shop.png";
 import tasksImage from "@/assets/home/tasks.png";
+import LatestPosts from "@/components/home/LatestPosts.vue";
+import HotPostsCarousel from "@/components/home/HotPostsCarousel.vue";
 
 const featureImages = { forum: forumImage, friends: friendsImage, avatar: avatarImage, shop: shopImage, tasks: tasksImage };
 
@@ -134,61 +136,12 @@ const dialogContent = computed(() => infoDialog.value === "about"
         </div>       
       </section>
 
-      <section class="latest-posts-panel" aria-label="最新文章">
-        <div class="latest-posts-heading">
-          <v-icon icon="mdi-text-box-outline" size="22" /><h2>最新文章</h2>
-        </div>
-        <div class="latest-posts-content">
-          <!-- 組員提供的最新文章元件放在這裡，每篇文章呈現一橫列 -->
-          <p class="latest-posts-empty">目前尚未載入最新文章</p>
-        </div>
-      </section>
+      <LatestPosts class="latest-posts-panel" />
     </div>
 
       <div class="community-area" @mouseenter="lowerHover = true" @mouseleave="lowerHover = false" @focusin="lowerFocus = true" @focusout="handleLowerFocusOut">        
         <div class="community-grid">
-          <section class="panel topics-panel" aria-labelledby="topics-title" aria-roledescription="輪播">
-  <div class="panel-heading">
-    <h2 id="topics-title"><v-icon icon="mdi-fire" color="orange" size="23" />熱門討論</h2>
-    <v-chip size="x-small" variant="tonal">示範資料</v-chip>
-  </div>
-
-  <div class="topic-carousel">
-    <button type="button" class="topic-prev lower-control" aria-label="上一組熱門討論" @click="changeTopicPage(-1)">
-      <v-icon icon="mdi-chevron-left" />
-    </button>
-
-    <div class="topic-grid">
-      <article v-for="topic in visibleTopics" :key="topic.title" class="discussion-card">
-        <div class="discussion-image-wrap">
-          <img v-if="topic.image" :src="topic.image" :alt="topic.title" class="discussion-image" />
-          <div v-else class="discussion-image-placeholder">
-            <v-icon icon="mdi-image-outline" size="40" />
-          </div>
-          <v-chip :color="topic.color" size="small" variant="flat" class="discussion-category">{{ topic.category }}</v-chip>
-        </div>
-
-        <div class="discussion-body">
-          <h3>{{ topic.title }}</h3>
-          <p class="discussion-stats">
-            <span><v-icon icon="mdi-eye-outline" size="16" /> {{ topic.views }}</span>
-            <span><v-icon icon="mdi-comment-outline" size="16" /> {{ topic.comments }}</span>
-          </p>
-        </div>
-      </article>
-    </div>
-
-    <button type="button" class="topic-next lower-control" aria-label="下一組熱門討論" @click="changeTopicPage(1)">
-      <v-icon icon="mdi-chevron-right" />
-    </button>
-  </div>
-
-  <div class="topic-dots">
-    <button v-for="page in topicPageCount" :key="page" type="button" :class="{ active: topicPage === page - 1 }" :aria-label="`第 ${page} 組熱門討論`" :aria-current="topicPage === page - 1 ? 'true' : undefined" @click="topicPage = page - 1">
-      <span></span>
-    </button>
-  </div>
-</section>
+          <HotPostsCarousel :limit="9" class="panel topics-panel" />
           <aside class="home-promo-panel" aria-label="遊戲與動畫推薦">
   <a  href="https://www.ispan.com.tw/kaohsiung/"  target="_blank" rel="noopener noreferrer"  class="home-promo-link"  aria-label="前往資展國際高雄訓練中心（另開分頁）">
   <img src="/images/promo-ispan.png" alt="資展國際高雄訓練中心，探索程式學習" />

@@ -25,7 +25,7 @@ const fetchLatestPosts = async () => {
   errorMessage.value = "";
 
   try {
-    const response = await getLatestPosts(12);
+    const response = await getLatestPosts(6);
     posts.value = Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error("最新文章讀取失敗：", error);

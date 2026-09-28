@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.dao.ConcurrencyFailureException;
 
-
 @Controller
 public class CoinController {
     private final CoinService coinService;
@@ -64,26 +63,30 @@ public class CoinController {
      */
     @ResponseBody
     @GetMapping("/api/coins/wallet")
-    public ResponseEntity<?> getWallet(HttpSession session) {
+    public ResponseEntity<?> getWallet(
+            @RequestParam("userId") UUID userId,
+            HttpSession session) {
 
-        UUID userId = getLoginUserId(session);
+        UUID loginUserId = getLoginUserId(session);
 
-        if (userId == null) {
+        if (loginUserId == null) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(new MessageResponse(
-                        false,
-                        "請先登入"
-                    ));
+                    .body(new MessageResponse(false, "請先登入"));
         }
 
-        CoinWallet wallet =
-                coinService.getOrCreateWallet(userId);
+        if (!loginUserId.equals(userId)) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new MessageResponse(false, "無權查看此會員點數"));
+        }
+
+        // 使用前端傳入的目標會員 ID 查詢。
+        CoinWallet wallet = coinService.getOrCreateWallet(userId);
 
         WalletResponse response = new WalletResponse(
                 wallet.getId(),
-                wallet.getBalance()
-        );
+                wallet.getBalance());
 
         return ResponseEntity.ok(response);
     }
@@ -94,11 +97,9 @@ public class CoinController {
     @ResponseBody
     @GetMapping("/api/coins/transactions")
     public ResponseEntity<?> getTransactions(
-            @RequestParam(defaultValue = "0")
-            int page,
+            @RequestParam(defaultValue = "0") int page,
 
-            @RequestParam(defaultValue = "10")
-            int size,
+            @RequestParam(defaultValue = "10") int size,
 
             HttpSession session) {
 
@@ -108,38 +109,32 @@ public class CoinController {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body(new MessageResponse(
-                        false,
-                        "請先登入"
-                    ));
+                            false,
+                            "請先登入"));
         }
 
-        Page<CoinTransaction> transactionPage =
-                coinService.getTransactions(
-                    userId,
-                    page,
-                    size
-                );
+        Page<CoinTransaction> transactionPage = coinService.getTransactions(
+                userId,
+                page,
+                size);
 
-        List<TransactionResponse> content =
-                transactionPage.getContent()
-                    .stream()
-                    .map(this::toTransactionResponse)
-                    .toList();
+        List<TransactionResponse> content = transactionPage.getContent()
+                .stream()
+                .map(this::toTransactionResponse)
+                .toList();
 
-        TransactionPageResponse response =
-                new TransactionPageResponse(
-                    content,
-                    transactionPage.getNumber(),
-                    transactionPage.getSize(),
-                    transactionPage.getTotalElements(),
-                    transactionPage.getTotalPages(),
-                    transactionPage.isFirst(),
-                    transactionPage.isLast()
-                );
+        TransactionPageResponse response = new TransactionPageResponse(
+                content,
+                transactionPage.getNumber(),
+                transactionPage.getSize(),
+                transactionPage.getTotalElements(),
+                transactionPage.getTotalPages(),
+                transactionPage.isFirst(),
+                transactionPage.isLast());
 
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * 查詢目前登入會員今天的任務。
      *
@@ -161,8 +156,7 @@ public class CoinController {
         }
 
         try {
-            List<DailyTaskResponse> tasks =
-                    dailyTaskService.getTodayTasks(userId);
+            List<DailyTaskResponse> tasks = dailyTaskService.getTodayTasks(userId);
 
             return ResponseEntity.ok(tasks);
 
@@ -208,10 +202,9 @@ public class CoinController {
         }
 
         try {
-            DailyTaskClaimResponse response =
-                    dailyTaskService.claimReward(
-                            userId,
-                            taskId);
+            DailyTaskClaimResponse response = dailyTaskService.claimReward(
+                    userId,
+                    taskId);
 
             return ResponseEntity.ok(response);
 
@@ -240,11 +233,7 @@ public class CoinController {
                             "任務或入帳紀錄異常，請聯絡系統管理員"));
         }
     }
-    
-  
-    
 
-   
     /*
      * 執行會員轉帳。
      */
@@ -260,38 +249,33 @@ public class CoinController {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body(new MessageResponse(
-                        false,
-                        "請先登入"
-                    ));
+                            false,
+                            "請先登入"));
         }
 
         try {
             coinService.transfer(userId, request);
 
             return ResponseEntity.ok(
-                new MessageResponse(
-                    true,
-                    "轉帳成功"
-                )
-            );
+                    new MessageResponse(
+                            true,
+                            "轉帳成功"));
 
         } catch (IllegalArgumentException e) {
 
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse(
-                        false,
-                        e.getMessage()
-                    ));
+                            false,
+                            e.getMessage()));
 
         } catch (Exception e) {
 
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse(
-                        false,
-                        "轉帳失敗，請稍後再試"
-                    ));
+                            false,
+                            "轉帳失敗，請稍後再試"));
         }
     }
 
@@ -300,8 +284,7 @@ public class CoinController {
      */
     private UUID getLoginUserId(HttpSession session) {
 
-        Object loginUserId =
-                session.getAttribute("loginUserId");
+        Object loginUserId = session.getAttribute("loginUserId");
 
         if (loginUserId instanceof UUID uuid) {
             return uuid;
@@ -317,7 +300,7 @@ public class CoinController {
 
         return null;
     }
-    
+
     /**
      * 完成今日簽到。
      * 完成後仍需另外呼叫領獎 API。
@@ -357,13 +340,9 @@ public class CoinController {
                             e.getMessage()));
         }
     }
-    
-    
-   
-    
-    //DTO
-    
-    
+
+    // DTO
+
     /*
      * 將 Entity 轉成前端需要的資料。
      */
@@ -378,8 +357,7 @@ public class CoinController {
                 transaction.getReferenceId(),
                 transaction.getRelatedUserId(),
                 transaction.getDescription(),
-                transaction.getCreateTime()
-        );
+                transaction.getCreateTime());
     }
 
     /*
@@ -403,7 +381,7 @@ public class CoinController {
             String description,
             Instant createTime) {
     }
-    
+
     public record TransactionPageResponse(
             List<TransactionResponse> content,
             int page,
@@ -413,7 +391,6 @@ public class CoinController {
             boolean first,
             boolean last) {
     }
-    
 
     /*
      * 一般訊息回傳格式。

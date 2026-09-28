@@ -1,6 +1,7 @@
 import httpClient from "@/services/httpClient";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
+import { useChatStore } from "./conversation";
 
 export const useFriendStore = defineStore("friend", () => {
   const friendList = ref([]);
@@ -84,6 +85,7 @@ export const useFriendStore = defineStore("friend", () => {
     try {
       await httpClient.patch(`/api/friendship/request/${friendshipId}/accept`);
       requestList.value = requestList.value.filter((r) => r.id !== friendshipId);
+      await getFriendList();
     } catch (e) {
       error.value = "接受好友邀請失敗";
       console.log("接受好友邀請失敗", e);
@@ -132,6 +134,18 @@ export const useFriendStore = defineStore("friend", () => {
       delete processing.value[friendshipId];
     }
   }
+
+  // 刪除好友
+  const removeFriend = async (targetUserId) => {
+    await httpClient.delete(`/api/friendship/${targetUserId}`);
+    friendList.value = friendList.value.filter((f) => f.userId !== targetUserId);
+    if(selectedFriendId.value === targetUserId) selectedFriendId.value = null;
+    try {
+      await useChatStore().getConversations();
+    } catch (e) {
+      console.error("重撈對話列表失敗", e);
+    }
+  }
   // ===========================================================
   // 重新刷新好友列表
   const refreshFriendData = () =>
@@ -155,7 +169,7 @@ export const useFriendStore = defineStore("friend", () => {
     selectFriend,
     getFriendList, getRequestList, getSendRequestList,
     acceptFriendRequest, rejectFriendRequest,
-    sendFriendRequest, cancelFriendRequest,
+    sendFriendRequest, cancelFriendRequest,removeFriend,
     refreshFriendData,
     reset,
   };

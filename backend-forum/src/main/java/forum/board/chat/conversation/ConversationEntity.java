@@ -56,6 +56,9 @@ public class ConversationEntity {
     @Column(nullable = false)
     private Instant updateTime;
 
+    @Column(name = "archived")
+    private Boolean archived = false;
+
     @PrePersist
     public void prePersist() {
         Instant now = Instant.now();

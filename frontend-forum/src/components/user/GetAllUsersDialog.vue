@@ -25,13 +25,10 @@
             :subtitle="item?.account"
             >
                 <template #prepend>
-                    <v-avatar size="40">
-                        <v-img
-                        v-if="item?.photoUrl"
-                        :src="item.photoUrl"
-                        cover
-                        />
-                        <v-icon v-else>
+                    <DollAvatar v-if="item.uid" :user-id="item.uid" :size="32" :scale="1.2"
+                      class="comment-avatar" @click.stop.prevent/>
+                    <v-avatar v-else size="40">
+                        <v-icon>
                         mdi-account
                         </v-icon>
                     </v-avatar>
@@ -44,13 +41,10 @@
                 v-if="item"
                 class="selected-user"
             >
-                <v-avatar size="32">
-                <v-img
-                    v-if="item.photoUrl"
-                    :src="item.photoUrl"
-                    cover
-                />
-                <v-icon v-else>
+                <DollAvatar v-if="item.uid" :user-id="item.uid" :size="32" :scale="1.2"
+                  class="comment-avatar" @click.stop.prevent/>
+                <v-avatar v-else size="32">
+                <v-icon>
                     mdi-account
                 </v-icon>
                 </v-avatar>
@@ -88,6 +82,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import httpClient from '@/services/httpClient'
+import DollAvatar from "@/components/doll/DollAvatar.vue";
 
 //types=0:取得全部使用者
 //types=1:取得系統管理者

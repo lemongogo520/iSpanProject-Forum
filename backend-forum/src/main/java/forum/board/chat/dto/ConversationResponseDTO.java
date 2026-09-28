@@ -15,5 +15,6 @@ public record ConversationResponseDTO(
     String lastMessage,
     Instant createTime,
     Instant updateTime,
-    Long unreadCount
+    Long unreadCount,
+    boolean archived
 ) {}

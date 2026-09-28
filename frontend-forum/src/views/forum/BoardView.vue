@@ -28,7 +28,19 @@
           <v-card-subtitle v-if="board.description" class="mt-2">
             {{ board.description }}
           </v-card-subtitle>
+          <template #append>
+            <div class="d-flex align-center ga-2 align-self-end">
+              <BoardSubscribeButton :board-id="Number(boardId)" />
+              <v-btn
+                prepend-icon="mdi-forum"
+                @click="chatStore.getboardConversation(Number(boardId))"
+              >
+                聊天室
+              </v-btn>
+            </div>
+          </template>
         </v-card-item>
+
       </v-card>
       <!-- 左側文章、右側聊天室 -->
       <div class="board-layout">
@@ -165,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import httpClient from "@/services/httpClient";
@@ -408,11 +420,38 @@ const goBack = () => {
 // 頁面載入
 // ======================
 
+// 進入看板 → 自動開啟聊天室
+watch(
+  () => boardId,
+  async (newId, oldId) => {
+    if (oldId) leaveBoardChat(oldId);      // 切換看板時先處理舊的
+    if (newId) {
+      const dto = await chatStore.getboardConversation(Number(newId));
+      chatStore.openChat(dto.id, dto.subscribed ? null : dto);
+      chatStore.isMinimized = true;
+      chatStore.persistWindow();
+    }
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   fetchBoard();
-
   fetchPosts();
+
 });
+
+// ======================
+// 離開看板關閉聊天室
+// ======================
+
+const leaveBoardChat = (boardId) => {
+  const conv = chatStore.findConversation(chatStore.currentConversationId);
+  if (conv?.type !== "BOARD" || conv.boardId !== Number(boardId)) return;
+  if (!conv.subscribed) chatStore.closeChat();
+};
+
+onUnmounted(() => leaveBoardChat(boardId));
 
 </script>
 <style scoped>

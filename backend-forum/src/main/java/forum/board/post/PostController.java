@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import forum.board.chat.conversation.ConversationService;
+import forum.board.chat.ws.NotificationBroadcaster;
 import forum.board.config.Settings;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,9 @@ public class PostController {
 	private final PostImageService postImageService;
 
 	private final Settings settings;
+
+	private final ConversationService cService;
+	private final NotificationBroadcaster notifier;
 
 	// 取得熱門文章
 	@GetMapping("/api/posts/hot")
@@ -111,6 +116,8 @@ public class PostController {
 		}
 		try {
 			Posts result = postService.create(post, userId);
+			List<UUID> subscribers = cService.getBoardSubscriberList(result.getBoard().getId());
+			notifier.boardPosted(subscribers, userId, result.getBoard().getName(), post.getId());
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(result);
 		} catch (RuntimeException e) {

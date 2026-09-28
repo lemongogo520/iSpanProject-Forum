@@ -3,6 +3,7 @@ package forum.board.users;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -85,14 +86,15 @@ public class UsersService {
 		userDetailRepository.save(userDetail);
 		userPermissionRepository.save(userPer);
 
-		// 註冊會員成功後，贈送每個圖層分類下的第一件上架服裝
+		// 註冊會員成功後，每個圖層分類下隨機贈送一件上架服裝
 		List<DollCategory> allCategories = dollCategoryRepository.findAll();
 		for (DollCategory category : allCategories) {
-			DollItem firstItem = dollItemRepository.findFirstByCategoryIdAndIsActiveTrueOrderByIdAsc(category.getId());
-			if (firstItem != null) {
+			List<DollItem> activeItems = dollItemRepository.findByCategoryIdAndIsActiveTrue(category.getId());
+			if (!activeItems.isEmpty()) {
+				DollItem randomItem = activeItems.get((int) (Math.random() * activeItems.size()));
 				DollUserOwned dollUserOwned = new DollUserOwned();
 				dollUserOwned.setUser(user);
-				dollUserOwned.setItem(firstItem);
+				dollUserOwned.setItem(randomItem);
 				dollUserOwnedRepository.save(dollUserOwned);
 			}
 		}
@@ -115,7 +117,7 @@ public class UsersService {
 	 * @return
 	 */
 	public Users getUsersByAccount(String account) {
-		return usersRepository.findByAccount(account).orElse(null);
+		return usersRepository.findByAccountAndActiveTrue(account).orElse(null);
 	}
 
 	/**
@@ -126,10 +128,10 @@ public class UsersService {
 	 */
 	public UserDetailDTO getUserInfoByAccount(String account) {
 
-		if (usersRepository.findByAccount(account) != null) {
+		if (usersRepository.findByAccountAndActiveTrue(account).isPresent()) {
 			UserDetailDTO dto = new UserDetailDTO();
 
-			Users users = usersRepository.findByAccount(account).get();
+			Users users = usersRepository.findByAccountAndActiveTrue(account).get();
 			UserDetail ud = userDetailRepository.findByUserId(users.getId()).get();
 			dto.setId(users.getId());
 			dto.setAccount(users.getAccount());
@@ -171,8 +173,8 @@ public class UsersService {
 	 * @return
 	 */
 	public boolean existsAccount(String account) {
-		// TODO Auto-generated method stub
-		return false;
+
+		return usersRepository.existsByAccount(account);
 	}
 
 	/**
@@ -204,7 +206,7 @@ public class UsersService {
 			return dto;
 		}
 
-		return null;
+		return new UserDetailDTO();
 	}
 
 	public UserDetail saveUserDetail(UserDetailDTO dto, UUID userId, HttpServletRequest request) {
@@ -230,7 +232,7 @@ public class UsersService {
 			userDetailRepository.save(ud);
 		}
 
-		return null;
+		return new UserDetail();
 	}
 
 	public List<UsersDTO> getAllUsersByTypes(List<Integer> types) {
@@ -240,7 +242,7 @@ public class UsersService {
 			List<UserDetail> listUsers = new ArrayList<>();
 
 			if (types.contains(0)) {
-				listUsers = userDetailRepository.findAll();
+				listUsers = userDetailRepository.findAllActive();
 			} else {
 				listUsers = userDetailRepository.findByRankIn(types);
 			}
@@ -257,58 +259,122 @@ public class UsersService {
 		return null;
 	}
 
-    // 取得全部使用者
-    public List<AdminUserResponseDTO> getAllUsers() {
+	// 取得全部使用者
+	public List<AdminUserResponseDTO> getAllUsers() {
 
         return usersRepository.findAll()
                 .stream()
                 .map(this::toDTO)
+                .filter(Objects::nonNull)
                 .toList();
     }
 
-    // 取得單一使用者
-    public AdminUserResponseDTO getUser(UUID uid) {
+	// 取得單一使用者
+	public AdminUserResponseDTO getUser(UUID uid) {
 
-        Users users = usersRepository.findById(uid)
-                .orElseThrow(() ->
-                        new RuntimeException("找不到使用者"));
+		Users users = usersRepository.findById(uid)
+				.orElseThrow(() -> new RuntimeException("找不到使用者"));
 
-        return toDTO(users);
-    }
+		return toDTO(users);
+	}
 
-    // 搜尋使用者
-    public List<AdminUserResponseDTO> searchUsers(String keyword) {
+	// 搜尋使用者
+	public List<AdminUserResponseDTO> searchUsers(String keyword) {
 
-        if (keyword == null || keyword.isBlank()) {
-            return getAllUsers();
-        }
+		if (keyword == null || keyword.isBlank()) {
+			return getAllUsers();
+		}
 
         return usersRepository.searchUsers(keyword)
                 .stream()
                 .map(this::toDTO)
+                .filter(Objects::nonNull)
                 .toList();
     }
 
-    private AdminUserResponseDTO toDTO(Users users) {
+	private AdminUserResponseDTO toDTO(Users users) {
 
-    	UserDetailDTO dto = getUserInfoByAccount(users.getAccount());
-    	if(dto != null) {
-            return new AdminUserResponseDTO(
-                    users.getId(),
-                    users.getAccount(),
-                    dto.getName(),
-                    dto.getEmail(),
-                    dto.getPermission()
-            );
-    	}
-    	else {
-            return new AdminUserResponseDTO(
-                    users.getId(),
-                    users.getAccount(),
-                    "",
-                    "",
-                    2
-            );
-    	}
+        UserDetailDTO dto = getUserInfoByAccount(users.getAccount());
+
+        if (dto == null) {
+            return null;
+        }
+
+        return new AdminUserResponseDTO(
+                users.getId(),
+                users.getAccount(),
+                dto.getName(),
+                dto.getEmail(),
+                dto.getPermission()
+        );
     }
+
+	public void adminRegister(AdminUserCreateDTO dto, String registerIp) {
+		if (usersRepository.existsByAccount(dto.getAccount())) {
+			throw new AccountExistsException("帳號已存在");
+		}
+
+		// TODO Auto-generated method stub
+		Users user = new Users();
+		user.setAccount(dto.getAccount());
+		user.setPassword(passwordEncoder.encode(dto.getPassword()));
+		user.setCreateIp(registerIp);
+
+		UUID newId = UUID.randomUUID();
+		user.setId(newId);
+		user.setCreator(newId);
+
+		UserDetail userDetail = new UserDetail();
+		// 加入預設使用者圖片
+		userDetail.setUserId(newId);
+		userDetail.setName(dto.getName());
+		userDetail.setEmail(dto.getEmail());
+		userDetail.setCreateIp(registerIp);
+		userDetail.setCreator(newId);
+
+		UserPermission userPer = new UserPermission();
+		userPer.setUserId(newId);
+		userPer.setCreateIp(registerIp);
+		userPer.setCreator(newId);
+		userPer.setPermissionId(dto.getPermission());
+
+		usersRepository.save(user);
+		userDetailRepository.save(userDetail);
+		userPermissionRepository.save(userPer);
+
+		// 註冊會員成功後，贈送每個圖層分類下的第一件上架服裝
+		List<DollCategory> allCategories = dollCategoryRepository.findAll();
+		for (DollCategory category : allCategories) {
+			DollItem firstItem = dollItemRepository.findFirstByCategoryIdAndIsActiveTrueOrderByIdAsc(category.getId());
+			if (firstItem != null) {
+				DollUserOwned dollUserOwned = new DollUserOwned();
+				dollUserOwned.setUser(user);
+				dollUserOwned.setItem(firstItem);
+				dollUserOwnedRepository.save(dollUserOwned);
+			}
+		}
+	}
+
+	public void deleteUser(UUID uid) {
+	    Users user = usersRepository.findById(uid)
+	            .orElseThrow(() ->
+	                    new IllegalArgumentException("找不到使用者"));
+
+	    user.setActive(false);
+	    usersRepository.save(user);
+	
+	}
+
+	public void updateUserPermission(UUID userId, Integer permissionId) {
+		// TODO Auto-generated method stub
+
+
+	    UserPermission userPermission =
+	            userPermissionRepository.findByUserId(userId)
+	                    .orElseThrow(() -> new RuntimeException("找不到使用者權限"));
+
+	    userPermission.setPermissionId(permissionId);
+
+	    userPermissionRepository.save(userPermission);
+	}
 }

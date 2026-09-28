@@ -12,6 +12,7 @@ import { useMessageStore } from "./stores/message";
 import { connectSocket, disconnectSocket } from "./services/socket";
 import { useUserStore } from "./stores/user";
 import { useConfigStore } from '@/stores/config'
+import { useNotificationCenter } from "@/composables/useNotificationCenter";
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -20,6 +21,7 @@ const chatStore = useChatStore();
 const friendStore = useFriendStore();
 const messageStore = useMessageStore();
 const { snackbar, showMessage } = useNotification();
+const { push, clear } = useNotificationCenter();
 const configStore = useConfigStore()
 
 const hideHeaderPaths = ["/login", "/register"];
@@ -45,6 +47,7 @@ watch(
 )
 
 // =========== websocket =================
+// 訊息
 const handleIncoming = (msg) => {
   msg.mine = msg.sender?.userId === userStore.uid;
   msg.status = "sent";
@@ -59,9 +62,73 @@ const handleIncoming = (msg) => {
     messageStore.markAsRead(msg.conversationId);
   }
 };
+const handleNotification = (n) => {
+  const who = n.name || "某位使用者";
+  switch (n.type) {
+    // 好友邀請
+    case "FRIEND_REQUEST":
+      showMessage(`${who} 向你送出好友邀請`);
+      push({ kind: "friend", icon: "mdi-account-plus", text: `${who} 向你送出好友邀請`, to: "/friends" ,color: "#8bbce0",});
+      friendStore.refreshFriendData();
+      break;
+
+    case "FRIEND_ACCEPTED":
+      showMessage(`${who} 接受了你的好友邀請`);
+      push({ kind: "friend", icon: "mdi-account-check", text: `${who} 接受了你的好友邀請`, to: "/friends" ,color: "#8bbce0",});
+      friendStore.refreshFriendData();
+      break;
+
+    case "FRIEND_REJECTED":
+    case "FRIEND_CANCELED":
+      friendStore.refreshFriendData();
+      break;
+
+    case "FRIEND_REMOVED":
+      friendStore.refreshFriendData();
+      chatStore.getConversations();
+      break;
+    // 發文
+    case "BOARD_POST":
+      push({
+        kind: "board",
+        icon: "mdi-note-text",
+        text: `${who} 有新文章`,
+        to: `/post/${n.postId}`,
+        color: "#7fb89b",
+      });
+      break;
+    // 文章留言
+    case "POST_REPLIED":
+      push({
+        kind: "post",
+        icon: "mdi-comment-text-outline",
+        text: n.title
+          ? `${who} 回覆了你的文章「${n.title}」`
+          : `${who} 回覆了你的文章`,
+        to: `/post/${n.postId}`,
+        color: "#c9a97e",
+      });
+      break;
+    // 留言留言
+    case "COMMENT_REPLIED":
+      push({
+        kind: "post",
+        icon: "mdi-comment-arrow-left-outline",
+        text: `${who} 回覆了你的留言`,
+        to: `/post/${n.postId}`,
+        color: "#c9a97e",
+      });
+      break;
+
+    default:
+      return;
+
+  }
+};
 
 const resync = async () => {
   await chatStore.getConversations();
+  await friendStore.refreshFriendData();
   if (chatStore.currentConversationId) {
     messageStore.getMessages(chatStore.currentConversationId);
   }
@@ -77,6 +144,7 @@ watch(
       chatStore.restoreWindow();
       connectSocket({
         onMessage: handleIncoming,
+        onNotification: handleNotification,
         onReconnect: resync,
         onGiveUp: () => {
           showMessage("連線中斷,請重新整理", "error");
@@ -85,10 +153,10 @@ watch(
       });
     } else {
       disconnectSocket();
-      console.log("reset");
       friendStore.reset();
       chatStore.reset();
       messageStore.reset();
+      clear();
     }
   },
   { immediate: true }

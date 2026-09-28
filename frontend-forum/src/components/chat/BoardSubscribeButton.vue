@@ -10,6 +10,9 @@
 import { computed, ref } from "vue";
 import { useChatStore } from "@/stores/conversation";
 
+import { useNotification } from "@/composables/useNotification";
+const { showMessage } = useNotification();
+
 const props = defineProps({
     boardId: { type: Number, required: true },
     iconOnly: { type: Boolean, default: false },
@@ -28,6 +31,7 @@ const toggle = async () => {
         else await chatStore.subscribeBoard(props.boardId);
     } catch (e) {
         console.error("訂閱操作失敗", e);
+        showMessage(e.response?.data?.message ?? "送出失敗", "error");
     } finally {
         busy.value = false;
     }

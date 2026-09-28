@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import forum.board.chat.ws.NotificationBroadcaster;
 import forum.board.config.Settings;
 import forum.board.users.Users;
 import forum.board.users.UsersRepository;
@@ -35,6 +36,8 @@ public class CommentsController {
 	private final CommentsHistoryService commentsHistoryService;
 
 	private final Settings settings;
+
+	private final NotificationBroadcaster notifier;
 
 	// 新增留言 如果沒加parentCommentId代表為主要留言
 	@PostMapping("/api/comments/posts/{postId}")
@@ -58,7 +61,25 @@ public class CommentsController {
 
 		try {
 			Comments comment = commentsService.createComments(postId, parentCommentId, newComments, user);
-
+			if(parentCommentId != null){ 
+				// 子留言
+				notifier.commentReplied(
+					comment.getParentComment().getUsers().getId(), 
+					user.getId(), 
+					user.getUsersDetail().getName(),
+					comment.getPost().getId());
+					System.out.println("回覆子留言: 通知"+comment.getUsers().getId());
+			} else{
+				// 直接回覆文章 → 通知文章作者
+				String shortTitle = comment.getPost().getTitle().length() > 20 ? comment.getPost().getTitle().substring(0, 20) + "…" : comment.getPost().getTitle();
+				notifier.postReplied(
+					comment.getPost().getUsers().getId(), 
+					user.getId(), 
+					user.getUsersDetail().getName(),
+					comment.getPost().getId(), 
+					shortTitle);
+					System.out.println("回覆文章: 通知"+comment.getUsers().getId());
+			}
 			return ResponseEntity.ok(comment);
 
 		} catch (RuntimeException e) {

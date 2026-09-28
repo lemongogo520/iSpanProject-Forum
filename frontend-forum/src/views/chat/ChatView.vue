@@ -7,7 +7,6 @@
                 <ConversationList />
             </div>
         </v-card>
-
         <!-- 右：聊天室 -->
         <v-card class="chat-main auth-card" rounded="lg" elevation="6">
             <template v-if="cid">
@@ -24,7 +23,7 @@
                 </div>
                 <v-divider />
                 <MessageList :key="cid" :conversationId="cid" />
-                <MessageInput :conversationId="cid" />
+                <MessageInput :conversationId="cid" :locked="conversation?.archived === true"  />
             </template>
             <div v-else class="chat-main-empty">
                 <v-icon size="48">mdi-message-outline</v-icon>

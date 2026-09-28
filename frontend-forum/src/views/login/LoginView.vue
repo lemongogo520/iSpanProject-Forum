@@ -86,7 +86,7 @@
               <div class="remember-row">
                 <v-checkbox
                   v-model="remember"
-                  label="記住我"
+                  label="保持登入"
                   density="compact"
                   hide-details
                 />

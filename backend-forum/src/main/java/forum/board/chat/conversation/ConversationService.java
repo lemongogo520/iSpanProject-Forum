@@ -15,6 +15,8 @@ import forum.board.board.BoardRepository;
 import forum.board.chat.conversation.ConversationEntity.ConversationType;
 import forum.board.chat.dto.ConversationResponseDTO;
 import forum.board.chat.message.MessagesRepository;
+import forum.board.friends.FriendshipRepository;
+import forum.board.friends.FriendshipEntity.FriendshipStatus;
 import forum.board.friends.exception.BusinessException;
 import forum.board.friends.exception.ResourceNotFoundException;
 import forum.board.users.Users;
@@ -30,6 +32,7 @@ public class ConversationService {
     private final MessagesRepository mRepo;
     private final UsersRepository uRepo;
     private final BoardRepository bRepo;
+    private final FriendshipRepository fRepo;
 
     private ConversationResponseDTO toDTO(ConversationEntity c, UUID currentUserId, boolean subscribed,
             Long unreadCount) {
@@ -60,7 +63,17 @@ public class ConversationService {
                 c.getLastMessage(),
                 c.getCreateTime(),
                 c.getUpdateTime(),
-                unreadCount);
+                unreadCount,
+                Boolean.TRUE.equals(c.getArchived()));
+    }
+
+    
+    // -------------------  私訊 ------------------------------
+    private boolean isFriend(UUID a, UUID b) {
+    UUID[] pair = a.compareTo(b) < 0 ? new UUID[]{a, b} : new UUID[]{b, a};
+    return fRepo.findByUser1IdAndUser2Id(pair[0], pair[1])
+                .filter(f -> f.getStatus() == FriendshipStatus.ACCEPTED)
+                .isPresent();
     }
 
     // 找到私訊對話 找不到就新建
@@ -70,12 +83,21 @@ public class ConversationService {
             throw new BusinessException("不可以跟自己聊天");
         }
 
+        if (!isFriend(user1Id, user2Id)) {
+            throw new BusinessException("只能與好友私訊");
+        }
+
         Users user1 = uRepo.findById(user1Id).orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
         Users user2 = uRepo.findById(user2Id).orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
 
         // 先找兩人有沒有聊過天 沒有就建立 conversation+conversation member
         ConversationEntity c = cRepo.findDirectConversation(user1Id, user2Id)
                 .orElseGet(() -> createDirectConversation(user1, user2));
+
+        if (Boolean.TRUE.equals(c.getArchived())) {
+            c.setArchived(false);
+        }
+
         ConversationMemberEntity member = cmRepo.findByConversationIdAndUserId(c.getId(), user1.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("找不到該對話成員"));
         Long unreadCount = mRepo.countUnreadMessages(c.getId(), member.getLastReadTime(), user1.getId());
@@ -103,6 +125,18 @@ public class ConversationService {
         return c;
     }
 
+    @Transactional
+    public void archiveDirect(UUID a, UUID b) {
+        cRepo.findDirectConversation(a, b).ifPresent(c -> c.setArchived(true));
+    }
+
+    @Transactional
+    public void unarchiveDirect(UUID a, UUID b) {
+        cRepo.findDirectConversation(a, b).ifPresent(c -> c.setArchived(false));
+    }
+
+
+    // -------------------  討論版 ----------------------
     // 用conversationId找討論版對話
     public ConversationResponseDTO getOneBoardConversation(Long conversationId, UUID userId) {
         ConversationEntity c = cRepo.findById(conversationId).orElseThrow(() -> new ResourceNotFoundException("找不到對話"));
@@ -189,6 +223,12 @@ public class ConversationService {
         cmRepo.findByConversationIdAndUserId(c.getId(), userId).ifPresent(cmRepo::delete);
 
         return toDTO(c, userId, false, 0L);
+    }
+
+
+    // 找某看板的訂閱者
+    public List<UUID> getBoardSubscriberList(Integer boardId) {
+        return cmRepo.findSubscriberIdsByBoardId(boardId);
     }
 
 }

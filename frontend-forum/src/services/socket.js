@@ -2,11 +2,13 @@ import { Client } from "@stomp/stompjs";
 
 let client = null;
 let messageHandler = null;
+let notificationHandler = null;
 
 
-export function connectSocket({ onMessage, onReconnect, onGiveUp } = {}) {
-    messageHandler = onMessage;
+export function connectSocket({ onMessage, onNotification, onReconnect, onGiveUp } = {}) {
     if (client?.active) return;
+    messageHandler = onMessage;
+    notificationHandler = onNotification;
 
     let firstConnect = true;
     let failures = 0;
@@ -24,12 +26,18 @@ export function connectSocket({ onMessage, onReconnect, onGiveUp } = {}) {
                 onMessage?.(JSON.parse(frame.body));
             });
 
+            client.subscribe("/user/queue/notifications", (frame) => {  
+                notificationHandler?.(JSON.parse(frame.body));
+            });
+
             // 重建看板訂閱
             const ids = [...topicSubs.keys()];
             topicSubs.clear();
             ids.forEach((id) => subscribeConversation(id, boardHandler));
             if (!firstConnect) onReconnect?.();
             firstConnect = false;
+
+
         },
         onWebSocketClose: () => {
             failures += 1;

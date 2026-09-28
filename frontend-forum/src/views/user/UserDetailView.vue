@@ -28,7 +28,8 @@
             <div class="field-content">
               <v-text-field v-model="form.account" disabled hide-details />
               <v-btn
-                v-if="configStore.settings.allow_change_password === 'true'"
+                v-if="configStore.settings.allow_change_password === 'true' &&
+                (!props.account || userStore.account === props.account)"
                 variant="text"
                 color="primary"
                 @click="showChangePasswordDialog = true"
@@ -303,7 +304,11 @@ async function loadPoints() {
   pointsBalance.value = null;
 
   try {
-    const response = await httpClient.get("/api/coins/wallet");
+    const response = await httpClient.get("/api/coins/wallet", {
+  params: {
+    userId: userStore.uid,
+  },
+});
 
     // 相容一般 Axios 回傳與已由攔截器取出 data 的情況。
     const data = response?.data ?? response;
@@ -498,9 +503,8 @@ console.log(configStore.settings)
   pointsNavigationError.value = "";
   void loadPoints();
   try {
-    const user = await userService.getUserDetail(userStore.account);
-
-    console.log("取得使用者資料：", user);
+    const account = props.account || userStore.account
+    const user = await userService.getUserDetail(account);
 
     Object.assign(form, {
       account: user.account ?? "",
@@ -568,7 +572,8 @@ async function save() {
     await userService.saveUserDetail(form);
 
     // 重新查詢，確認後端確實已儲存名稱。
-    const user = await userService.getUserDetail(userStore.account);
+    const account = props.account || userStore.account
+    const user = await userService.getUserDetail(account);
 
     nameExistsInDatabase.value = !!user.name?.trim();
 

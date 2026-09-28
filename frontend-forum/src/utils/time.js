@@ -49,6 +49,16 @@ export function dateLabel(iso) {
   });
 }
 
+/** 完整日期：2000年5月28日 */
+export function formatDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 /** 同一天判斷，用於決定要不要插入日期分隔線 */
 export function isSameDay(a, b) {
   if (!a || !b) return false;

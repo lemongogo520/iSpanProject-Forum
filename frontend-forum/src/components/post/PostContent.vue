@@ -5,22 +5,26 @@
       <!-- 作者卡片 -->
       <v-col cols="12" md="2" class="author-column">
         <v-card elevation="1" class="author-area rounded-lg">
-          <div v-if="post.userId" class="author-doll-frame">
-            <DollAvatar
-              v-if="post.userId"
-              :user-id="post.userId"
-              :scale="2.2"
-              is-full-body
-              class="author-doll"
-            />
-          </div>
-          <v-avatar v-else size="90" class="mb-4">
-            <v-icon icon="mdi-account" size="55" />
-          </v-avatar>
-
-          <div class="text-subtitle-1 font-weight-bold">
-            {{ post.userName || " " }}
-          </div>
+          <UserQuickMenu :userId="post?.userId" :name="post?.userName">
+            <template #default="{ quickMenuProps }">
+              <div v-if="post.userId" class="author-doll-frame" v-bind="quickMenuProps">
+                <DollAvatar
+                  v-if="post.userId"
+                  :user-id="post.userId"
+                  :scale="2.2"
+                  is-full-body
+                  class="author-doll"
+                />
+              </div>
+              <v-avatar v-else size="90" class="mb-4">
+                <v-icon icon="mdi-account" size="55" />
+              </v-avatar>
+              
+              <div class="text-subtitle-1 font-weight-bold">
+                {{ post.userName || " " }}
+              </div>
+            </template>
+          </UserQuickMenu>
         </v-card>
       </v-col>
 
@@ -114,6 +118,7 @@
 
 <script setup>
 import DollAvatar from "@/components/doll/DollAvatar.vue";
+import UserQuickMenu from "@/components/common/UserQuickMenu.vue";
 defineProps({
   post: {
     type: Object,

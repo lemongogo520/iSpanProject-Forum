@@ -19,6 +19,8 @@ public interface FriendshipRepository extends JpaRepository<FriendshipEntity, Lo
 	// 指定user的好友關係
 	@Query("""
 	        FROM FriendshipEntity f
+			JOIN FETCH f.user1 u1 JOIN FETCH u1.usersDetail
+    		JOIN FETCH f.user2 u2 JOIN FETCH u2.usersDetail
 	        WHERE (f.user1.id = :userId OR f.user2.id = :userId)
 	          AND f.status = :status
 	    """)
@@ -31,13 +33,19 @@ public interface FriendshipRepository extends JpaRepository<FriendshipEntity, Lo
 		透過 user1 / user2 找出誰是接收者*/
 	@Query(""" 
 		FROM FriendshipEntity f 
+		JOIN FETCH f.requester r JOIN FETCH r.usersDetail
 		WHERE f.status = 'PENDING' 
 		AND f.requester.id <> :userId 
 		AND ( f.user1.id = :userId OR f.user2.id = :userId ) """) 
 	List<FriendshipEntity> findPendingRequests( @Param("userId") UUID userId );
 
 	/* user自己送出的待處理好友邀請 */ 
-	List<FriendshipEntity> findByRequesterIdAndStatus( 
-		  UUID requesterId
-		, FriendshipStatus status );
+	@Query("""
+    SELECT f FROM FriendshipEntity f
+    JOIN FETCH f.user1 u1 JOIN FETCH u1.usersDetail
+    JOIN FETCH f.user2 u2 JOIN FETCH u2.usersDetail
+    WHERE f.requester.id = :userId AND f.status = :status
+    """)
+	List<FriendshipEntity> findSentRequests(@Param("userId") UUID userId,
+											@Param("status") FriendshipStatus status);
 }

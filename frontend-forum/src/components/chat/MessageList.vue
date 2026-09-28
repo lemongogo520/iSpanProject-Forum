@@ -7,7 +7,10 @@
       <div v-if="!isSameDay(messages[i - 1]?.createTime, m.createTime)" class="date-divider">
         <span>{{ dateLabel(m.createTime) }}</span>
       </div>
-      <MessageItem :message="m" :conversationId="conversationId" />
+      <MessageItem :message="m"
+        :conversation-id="conversationId"
+        :show-sender="showSender"
+        :show-avatar="isFirstOfGroup(i)"/>
     </template>
 
     <div v-if="!messages.length && !messageStore.loading" class="empty">
@@ -21,6 +24,7 @@ import { useMessageStore } from "@/stores/message";
 import { useChatStore } from "@/stores/conversation.js";
 import MessageItem from "@/components/chat/MessageItem.vue";
 import { isSameDay, dateLabel } from "@/utils/time"
+const chatStore = useChatStore();
 
 const props = defineProps({
   conversationId: {
@@ -43,8 +47,18 @@ const hasMore = computed(
   () => messageStore.cursorMap[props.conversationId]?.hasMore ?? false,
 );
 
-const chatStore = useChatStore();
+const isFirstOfGroup = (i) => {
+  const cur = messages.value[i];
+  const prev = messages.value[i - 1];
+  if (!prev) return true;                                    // 第一則
+  if (prev.sender?.userId !== cur.sender?.userId) return true;   // 換人了
+  if (!isSameDay(prev.createTime, cur.createTime)) return true;  // 跨日（中間有分隔線）
+  return false;
+};
 
+// ==========
+// 訊息捲動 
+// ==========
 const scrollToBottom = async () => {
   await nextTick();
   const el = scroller.value;
@@ -94,6 +108,7 @@ const onScroll = async () => {
   background: var(--color-background-light);
 }
 
+/* 載入舊訊息的指示器：浮在頂端，不佔高度 */
 .loading-older {
   position: sticky;
   top: 0;
@@ -104,12 +119,14 @@ const onScroll = async () => {
   z-index: 1;
 }
 
+/* 沒有對話 */
 .empty {
   margin: auto;
-  color: rgb(var(--v-theme-on-surface-variant));
+  color: var(--color-text);
   font-size: 0.85rem;
 }
 
+/* 日期分隔線 */
 .date-divider {
   display: flex;
   justify-content: center;
@@ -117,10 +134,10 @@ const onScroll = async () => {
 }
 
 .date-divider span {
-  font-size: 0.7rem;
+   font-size: 0.7rem;
   padding: 2px 12px;
   border-radius: 999px;
   background: rgba(var(--v-theme-on-surface), 0.06);
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: var(--color-text);
 }
 </style>

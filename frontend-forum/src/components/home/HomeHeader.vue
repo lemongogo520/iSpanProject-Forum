@@ -7,8 +7,9 @@ import { useUserStore } from "@/stores/user";
 import { userService } from "@/services/userService";
 import { useAuthStore } from "@/stores/auth";
 import { useDisplay } from "vuetify";
-import MessageMenu from "../chat/MessageMenu.vue";
 import { useConfigStore } from '@/stores/config'
+import DollAvatar from "@/components/doll/DollAvatar.vue";
+import NotificationCenter from "@/components/common/NotificationCenter.vue";
 
 
 const router = useRouter();
@@ -282,7 +283,7 @@ onBeforeUnmount(() => {
       </nav>
 
       <v-spacer />
-      <MessageMenu />
+      <NotificationCenter/>
       <!-- 會員選單 -->
       <v-menu
         v-model="memberMenu"
@@ -293,21 +294,22 @@ onBeforeUnmount(() => {
       >
         <template #activator="{ props: menuProps }">
           <v-btn
-            v-bind="menuProps"
-            class="user-button"
-            variant="text"
-            color="white"
-            aria-label="開啟會員選單"
-            @click="drawer = false"
+          v-bind="menuProps"
+          class="user-button"
+          variant="text"
+          color="white"
+          aria-label="開啟會員選單"
+          @click="drawer = false"
           >
-            <v-avatar
+              <DollAvatar v-if="userStore.uid" :userId="userStore.uid" :size="36" :scale="1.0"/>
+              <v-avatar v-else
               color="#3266a9"
               size="36"
-            >
+              >
               <v-icon
-                icon="mdi-account"
-                size="23"
-                color="white"
+              icon="mdi-account"
+              size="23"
+              color="white"
               />
             </v-avatar>
 
@@ -336,8 +338,7 @@ onBeforeUnmount(() => {
           elevation="8"
         >
           <div class="profile-heading">
-            <DollAvatar v-if="userStore.uid" :user-id="userStore.uid" :size="56" :scale="1.8"
-            class="comment-avatar" v-bind="props" @click.stop.prevent/>
+            <DollAvatar v-if="userStore.uid" :user-id="userStore.uid" :size="48" :scale="1.8"/>
             <v-avatar v-else
               color="#e8eff9"
               size="48"

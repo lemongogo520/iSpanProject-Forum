@@ -1,16 +1,16 @@
 <template>
   <article class="comment-card">
     <div class="comment-layout">
-      <UserFriendMenu :userId="comment.users?.id">
-        <template #default="{ props }">
+      <UserQuickMenu :userId="comment.users?.id">
+        <template #default="{ quickMenuProps }">
           <DollAvatar v-if="comment.users?.id" :user-id="comment.users.id" :size="56" :scale="1.8"
-            class="comment-avatar" v-bind="props" @click.stop.prevent/>
-          <v-avatar v-else size="56" color="light-blue-lighten-4" class="comment-avatar" v-bind="menuProps"
+            class="comment-avatar" v-bind="quickMenuProps" @click.stop.prevent/>
+          <v-avatar v-else size="56" color="light-blue-lighten-4" class="comment-avatar" v-bind="quickMenuProps"
             @click.stop.prevent>
             <v-icon icon="mdi-account" color="light-blue-darken-2" size="32" />
           </v-avatar>
         </template>
-      </UserFriendMenu>
+      </UserQuickMenu>
       <div class="comment-main">
         <div class="comment-author">{{ getUserName(comment) }}</div>
 
@@ -90,10 +90,14 @@
             </div>
 
             <div v-for="child in childComments" :key="child.id" class="child-comment">
-              <DollAvatar v-if="child.users?.id" :user-id="child.users.id" :size="44" :scale="1.25" />
-              <v-avatar v-else size="44" color="grey-lighten-3">
-                <v-icon icon="mdi-account" color="grey-darken-1" size="27" />
-              </v-avatar>
+              <UserQuickMenu :userId="child.users?.id">
+                <template #default="{ quickMenuProps }">
+                  <DollAvatar v-if="child.users?.id" :user-id="child.users.id" :size="44" :scale="1.25" v-bind="quickMenuProps"/>
+                  <v-avatar v-else size="44" color="grey-lighten-3" v-bind="quickMenuProps">
+                    <v-icon icon="mdi-account" color="grey-darken-1" size="27" />
+                  </v-avatar>
+                </template>
+              </UserQuickMenu>
 
               <div class="comment-main">
                 <div class="comment-author">{{ getUserName(child) }}</div>
@@ -156,7 +160,7 @@
 
 <script setup>
 import DollAvatar from "@/components/doll/DollAvatar.vue";
-import UserFriendMenu from "@/components/common/UserFriendMenu.vue";
+import UserQuickMenu from "@/components/common/UserQuickMenu.vue";
 
 const props = defineProps({
   comment: { type: Object, required: true },

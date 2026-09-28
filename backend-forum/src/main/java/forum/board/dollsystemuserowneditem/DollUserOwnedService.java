@@ -34,6 +34,14 @@ public class DollUserOwnedService {
                 .collect(Collectors.toList());
     }
 
+    // 取得玩家「所有圖層」的擁有裝備 (供前端隨機換裝使用)
+    public List<DollItemResponseDTO> getAllOwnedItems(UUID userId) {
+        List<DollItem> items = ownedRepo.findItemsByUserId(userId);
+        return items.stream()
+                .map(DollItemResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     // 取得特定圖層的所有裝備(並標記使用者是否擁有)
     public List<DollItemResponseDTO> getAllItemsWithOwnedStatus(UUID userId, Integer categoryId) {
 

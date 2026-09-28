@@ -17,9 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
+import forum.board.chat.ws.NotificationBroadcaster;
 import forum.board.friends.dto.FriendResponseDTO;
 import forum.board.friends.dto.FriendshipResponseDTO;
 import forum.board.friends.dto.SendFriendDTO;
+import forum.board.users.UsersRepository;
 import jakarta.servlet.http.HttpSession;
 
 @RestController
@@ -28,7 +30,14 @@ import jakarta.servlet.http.HttpSession;
 public class FriendshipController {
 
 	private final FriendshipService fService;
+	private final UsersRepository uRepo;
+	private final NotificationBroadcaster notifier;
 
+	private String myName(UUID userId) {
+		return uRepo.findById(userId)
+					.map(u -> u.getUsersDetail().getName())
+					.orElse("某位使用者");
+	}
 	/*
 	 * /api/friendship/request
 	 */
@@ -36,6 +45,7 @@ public class FriendshipController {
 	public ResponseEntity<Object> sendFriendRequest(@RequestBody SendFriendDTO request, HttpSession session) {
 		UUID loginUserId = (UUID) session.getAttribute("loginUserId");
 		fService.sendFriendRequest(loginUserId, request.targetUserId());
+		notifier.notify(request.targetUserId(), "FRIEND_REQUEST", myName(loginUserId));
 
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
@@ -47,8 +57,8 @@ public class FriendshipController {
 	@PatchMapping("/request/{friendshipId}/accept")
 	public ResponseEntity<Object> acceptFriendRequest(@PathVariable Long friendshipId, HttpSession session) {
 		UUID loginUserId = (UUID) session.getAttribute("loginUserId");
-		fService.acceptFriendRequest(friendshipId, loginUserId);
-
+		UUID otherId = fService.acceptFriendRequest(friendshipId, loginUserId);
+		notifier.notify(otherId, "FRIEND_ACCEPTED", myName(loginUserId));
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 
@@ -59,8 +69,8 @@ public class FriendshipController {
 	@DeleteMapping("/request/{friendshipId}")
 	public ResponseEntity<Object> rejectFriendRequest(@PathVariable Long friendshipId, HttpSession session) {
 		UUID loginUserId = (UUID) session.getAttribute("loginUserId");
-		fService.rejectFriendRequest(friendshipId, loginUserId);
-
+		UUID otherId = fService.rejectFriendRequest(friendshipId, loginUserId);
+		notifier.notify(otherId, "FRIEND_REJECTED", myName(loginUserId));
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
 
@@ -105,8 +115,21 @@ public class FriendshipController {
 	@PatchMapping("/request/{friendshipId}/cancel")
 	public ResponseEntity<Object> cancelFriendRequest(@PathVariable Long friendshipId, HttpSession session) {
 		UUID loginUserId = (UUID) session.getAttribute("loginUserId");
-		fService.cancelFriendRequest(friendshipId, loginUserId);
+		UUID otherId = fService.cancelFriendRequest(friendshipId, loginUserId);
+		notifier.notify(otherId, "FRIEND_CANCELED", myName(loginUserId));
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
 
+	/*
+	 * 取消好友邀請
+	 * /api/friendship/{targetUserId}
+	 */
+	@DeleteMapping("/{targetUserId}")
+	public ResponseEntity<?> deleteFriendRequest(@PathVariable UUID targetUserId, 
+		HttpSession session) {
+		UUID loginUserId = (UUID) session.getAttribute("loginUserId");
+		UUID otherId = fService.removeFriend(loginUserId,targetUserId);
+		notifier.notify(otherId, "FRIEND_REMOVED", myName(loginUserId));
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
 

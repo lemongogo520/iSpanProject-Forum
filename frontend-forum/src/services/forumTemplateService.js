@@ -17,8 +17,9 @@ export const forumTemplateService = {
   },
 
   generateAiTemplate(data) {
-  return httpClient.post("/api/forumtemplates/ai-generate",
-    data,
-  );
-},
+    return httpClient.post("/api/forumtemplates/ai-generate", data);
+  },
+  applyAiTemplate(template) {
+    return httpClient.post("/api/forumtemplates/ai-apply", template);
+  },
 };

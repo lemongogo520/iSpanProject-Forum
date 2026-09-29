@@ -136,7 +136,7 @@ const dialogContent = computed(() => infoDialog.value === "about"
         </div>       
       </section>
 
-      <LatestPosts class="latest-posts-panel" />
+      <LatestPosts />
     </div>
 
       <div class="community-area" @mouseenter="lowerHover = true" @mouseleave="lowerHover = false" @focusin="lowerFocus = true" @focusout="handleLowerFocusOut">        
@@ -420,14 +420,6 @@ const dialogContent = computed(() => infoDialog.value === "about"
   width: 100%;
   min-width: 0;
   margin: 0;
-}
-
-.latest-posts-panel {
-  min-width: 0;
-  overflow: hidden;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
 }
 
 .latest-posts-heading {

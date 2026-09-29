@@ -18,18 +18,19 @@
       {{ errorMessage }}
     </v-alert>
 
-    <div v-else-if="hotPosts.length" class="hot-post-viewport">
+    <div v-else-if="hotPosts.length" ref="viewport" class="hot-post-viewport">
       <div
         class="hot-post-track"
+        :class="{ 'is-animated': shouldAnimate }"
         :style="{
           '--scroll-duration': `${Math.max(hotPosts.length * 5, 20)}s`,
         }"
       >
-        <!-- 第一組文章 -->
-        <div class="hot-post-list">
+        <!-- 原始文章 -->
+        <div ref="originalList" class="hot-post-list">
           <v-card
             v-for="post in hotPosts"
-            :key="`original-${post.id}`"
+            :key="post.id"
             class="post-card"
             variant="outlined"
             @click="goToPost(post.id)"
@@ -68,8 +69,8 @@
           </v-card>
         </div>
 
-        <!-- 複製一組，讓動畫能夠無縫循環 -->
-        <div class="hot-post-list" aria-hidden="true">
+        <!-- 只有超出畫面、需要輪播時才複製 -->
+        <div v-if="shouldAnimate" class="hot-post-list" aria-hidden="true">
           <v-card
             v-for="post in hotPosts"
             :key="`copy-${post.id}`"
@@ -119,7 +120,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import DollAvatar from "@/components/doll/DollAvatar.vue";
@@ -139,13 +140,38 @@ const hotPosts = ref([]);
 const loading = ref(false);
 const errorMessage = ref("");
 
+const viewport = ref(null);
+const originalList = ref(null);
+const shouldAnimate = ref(false);
+
+let resizeObserver = null;
+
+const updateAnimationState = () => {
+  if (!viewport.value || !originalList.value) {
+    shouldAnimate.value = false;
+    return;
+  }
+
+  shouldAnimate.value =
+    originalList.value.scrollWidth > viewport.value.clientWidth + 1;
+};
+
 const loadHotPosts = async () => {
   loading.value = true;
   errorMessage.value = "";
 
   try {
     const response = await getHotPosts(props.limit);
-    hotPosts.value = response.data;
+    const data = Array.isArray(response.data) ? response.data : [];
+
+    hotPosts.value = Array.from(
+      new Map(
+        data.filter((post) => post?.id != null).map((post) => [post.id, post]),
+      ).values(),
+    );
+
+    await nextTick();
+    updateAnimationState();
   } catch (error) {
     console.error("熱門文章載入失敗：", error);
     errorMessage.value = "目前無法載入熱門文章";
@@ -158,7 +184,26 @@ const goToPost = (postId) => {
   router.push(`/post/${postId}`);
 };
 
-onMounted(loadHotPosts);
+onMounted(async () => {
+  await loadHotPosts();
+  await nextTick();
+
+  updateAnimationState();
+
+  resizeObserver = new ResizeObserver(updateAnimationState);
+
+  if (viewport.value) {
+    resizeObserver.observe(viewport.value);
+  }
+
+  if (originalList.value) {
+    resizeObserver.observe(originalList.value);
+  }
+});
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+});
 </script>
 
 <style scoped>
@@ -186,18 +231,23 @@ onMounted(loadHotPosts);
 .hot-post-track {
   display: flex;
   width: max-content;
+}
+
+.hot-post-track.is-animated {
   animation: hot-post-scroll var(--scroll-duration) linear infinite;
   will-change: transform;
 }
-
 .hot-post-list {
   display: flex;
   gap: 12px;
-  padding-right: 12px;
 }
 
-.hot-post-viewport:hover .hot-post-track,
-.hot-post-viewport:focus-within .hot-post-track {
+.hot-post-track.is-animated .hot-post-list {
+  padding-right: 12px;
+} 
+
+.hot-post-viewport:hover .hot-post-track.is-animated,
+.hot-post-viewport:focus-within .hot-post-track.is-animated {
   animation-play-state: paused;
 }
 

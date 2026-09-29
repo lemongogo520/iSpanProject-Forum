@@ -25,6 +25,8 @@ public class ForumTemplateService {
 
     private final UserPermissionService userPermissionService;
 
+    private final CategoryRepository categoryRepo;
+
     // 範本回傳 目前暫定 企業 學校 一般、和自訂
     public List<ForumTemplateDto> findAllTemplates() {
         return List.of(
@@ -173,5 +175,40 @@ public class ForumTemplateService {
 
     public boolean isInitialized() {
         return categoryRepository.count() > 0;
+    }
+
+    @Transactional
+    public void applyAiTemplate(ForumTemplateDto template, UUID userId) {
+        if (!userPermissionService.isSystemAdmin(userId)) {
+            throw new IllegalStateException("沒有系統管理員權限");
+        }
+
+        if (categoryRepo.count() > 0) {
+            throw new IllegalStateException("論壇已有分類，不能再次套用初始化範本");
+        }
+
+        if (template == null
+                || template.categories() == null
+                || template.categories().isEmpty()) {
+            throw new IllegalArgumentException("AI 範本沒有分類");
+        }
+
+        for (CategoryTemplateDto categoryTemplate : template.categories()) {
+            Category category = new Category();
+            category.setName(categoryTemplate.name());
+            category.setRank(categoryTemplate.rank());
+
+            Category savedCategory = categoryRepo.save(category);
+
+            for (BoardTemplateDto boardTemplate : categoryTemplate.boards()) {
+                Board board = new Board();
+                board.setName(boardTemplate.name());
+                board.setDescription(boardTemplate.description());
+                board.setRank(boardTemplate.rank());
+                board.setCategory(savedCategory);
+
+                boardRepository.save(board);
+            }
+        }
     }
 }

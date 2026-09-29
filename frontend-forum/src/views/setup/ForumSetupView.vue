@@ -254,19 +254,11 @@
             color="primary"
             size="large"
             :loading="applying"
-            :disabled="applying || selectedCode === 'AI_GENERATED'"
+            :disabled="applying"
             @click="confirmDialog = true"
           >
             套用此範本
           </v-btn>
-          <v-alert
-            v-if="selectedCode === 'AI_GENERATED'"
-            type="info"
-            variant="tonal"
-            class="mt-3"
-          >
-            AI 範本目前可以預覽，完成後端套用功能後即可建立論壇。
-          </v-alert>
           <!-- 自訂論壇時顯示 -->
           <v-btn
             v-else-if="selectedCode === 'CUSTOM'"
@@ -521,10 +513,27 @@ async function applySelectedTemplate() {
   applying.value = true;
 
   try {
-    const response = await forumTemplateService.applyTemplate(
-      selectedCode.value,
-      selections,
-    );
+    let response;
+
+    if (selectedCode.value === "AI_GENERATED") {
+      response = await forumTemplateService.applyAiTemplate({
+        ...aiTemplate.value,
+        categories: previewCategories.value.map((category, categoryIndex) => ({
+          name: category.name,
+          rank: category.rank ?? categoryIndex + 1,
+          boards: category.boards.map((board, boardIndex) => ({
+            name: board.name,
+            description: board.description,
+            rank: board.rank ?? boardIndex + 1,
+          })),
+        })),
+      });
+    } else {
+      response = await forumTemplateService.applyTemplate(
+        selectedCode.value,
+        selections,
+      );
+    }
 
     confirmDialog.value = false;
 

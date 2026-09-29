@@ -336,7 +336,7 @@ public class UsersService {
 		userPer.setUserId(newId);
 		userPer.setCreateIp(registerIp);
 		userPer.setCreator(newId);
-		userPer.setPermissionId(dto.getPermission());
+		userPer.setPermissionId(permissionsService.getPermissionByRank(dto.getPermission()).getId());
 
 		usersRepository.save(user);
 		userDetailRepository.save(userDetail);

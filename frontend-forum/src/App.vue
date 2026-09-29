@@ -24,7 +24,7 @@ const { snackbar, showMessage } = useNotification();
 const { push, clear } = useNotificationCenter();
 const configStore = useConfigStore()
 
-const hideHeaderPaths = ["/login", "/register"];
+const hideHeaderPaths = ["/login", "/register", "/setup/forum"];
 const showHeader = computed(() => {
   return (
     !hideHeaderPaths.includes(route.path) && !route.path.startsWith("/config")

@@ -468,7 +468,17 @@ const fetchModerationPermission = () => {
 // 返回
 // ======================
 const goBack = () => {
-  router.back();
+  const boardId = post.value?.boardId;
+
+  if (boardId) {
+    router.push({
+      name: "board",
+      params: { boardId },
+    });
+    return;
+  }
+
+  router.push({ name: "userCategories" });
 };
 // ======================
 // 頁面載入

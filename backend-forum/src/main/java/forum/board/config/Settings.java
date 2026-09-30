@@ -40,6 +40,7 @@ public class Settings {
     }
 
     public Map<String, String> getAll() {
+        reload();
         return Map.copyOf(settings);
     }
 

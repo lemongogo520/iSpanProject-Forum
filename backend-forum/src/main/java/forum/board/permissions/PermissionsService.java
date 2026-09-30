@@ -13,5 +13,22 @@ public class PermissionsService {
 	public Permissions getPermission(String rankName) {
 		return permissionsRepository.findByName(rankName).get();
 	}
+
+	public Permissions getPermissionByRank(Integer rank) {
+		
+		String rankName = "user";
+		switch(rank) {
+			case 1:
+				rankName = "systemadmin";
+				break;
+			case 2:
+				rankName = "manager";
+				break;
+			default:
+				rankName = "user";
+				break;
+		}
+		return getPermission(rankName);
+	}
 }
     

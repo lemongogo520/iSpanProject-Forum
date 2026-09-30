@@ -40,6 +40,14 @@ public class DollitemAPi {
         return ResponseEntity.ok(changeItemName);
     }
 
+    // 更改Dollitem價格api
+    @PatchMapping("/api/dollitems/changeprice/{itemId}")
+    public ResponseEntity<?> changeDollItemPrice(@PathVariable Integer itemId, @RequestParam Integer newPrice) {
+
+        DollItem updateItemPrice = itemService.updateItemPrice(itemId, newPrice);
+        return ResponseEntity.ok(updateItemPrice);
+    }
+
     // 更改Dollitem上下架api
     @PatchMapping("/api/dollitems/status/{itemId}")
     public ResponseEntity<?> updateDollItemStatus(@PathVariable Integer itemId, @RequestParam boolean isActive) {

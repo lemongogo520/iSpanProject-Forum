@@ -1,4 +1,7 @@
 <template>
+  <v-snackbar v-model="isSnackbarVisible" :timeout="2000" :color="snackbarColor" location="top">
+    {{ snackbarMessage }}
+  </v-snackbar>
   <div class="layout">
     <Sidebar />
     <div class="content">
@@ -10,46 +13,25 @@
       <v-tabs color="primary" class="tabs mb-6" model-value="adminitems">
         <v-tab to="/config/doll" value="categories">圖層管理</v-tab>
         <v-tab to="/config/doll/newitem" value="newitem">新增素材</v-tab>
-        <v-tab to="/config/doll/adminitems" value="adminitems"
-          >商品上下架</v-tab
-        >
+        <v-tab to="/config/doll/adminitems" value="adminitems">商品上下架</v-tab>
       </v-tabs>
 
       <!-- 管理卡片 -->
-      <v-card class="bg-white pa-6" max-width="800"  elevation="6" rounded="xl">
+      <v-card class="bg-white pa-6" max-width="800" elevation="6" rounded="xl">
         <v-card-title class="d-flex align-center pa-4 border-b">
           <v-icon start icon="mdi-store-cog-outline" color="primary"></v-icon>
           商品上下架管理
           <v-spacer></v-spacer>
 
           <!-- 分類選擇下拉選單 -->
-          <v-select
-            v-model="selectedCategory"
-            :items="categories"
-            item-title="typeName"
-            item-value="id"
-            label="選擇圖層分類"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="max-w-xs mr-4"
-            style="max-width: 200px"
-            color="primary"
-          ></v-select>
+          <v-select v-model="selectedCategory" :items="categories" item-title="typeName" item-value="id" label="選擇圖層分類"
+            variant="outlined" density="compact" hide-details class="max-w-xs mr-4" style="max-width: 200px"
+            color="primary"></v-select>
 
           <!-- 搜尋列 -->
-          <v-text-field
-            v-model="search"
-            prepend-inner-icon="mdi-magnify"
-            label="搜尋商品名稱"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="max-w-xs"
-            style="max-width: 250px"
-            color="primary"
-            :disabled="!selectedCategory"
-          ></v-text-field>
+          <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="搜尋商品名稱" variant="outlined"
+            density="compact" hide-details class="max-w-xs" style="max-width: 250px" color="primary"
+            :disabled="!selectedCategory"></v-text-field>
         </v-card-title>
 
         <v-table hover v-if="selectedCategory" fixed-header height="400px">
@@ -66,62 +48,24 @@
           <tbody>
             <tr v-for="item in filteredItems" :key="item.id">
               <td>
-                <v-avatar
-                  rounded
-                  size="64"
-                  color="grey-lighten-4"
-                  class="my-2 border"
-                  style="overflow: hidden"
-                >
-                  <DollConvas
-                    v-if="item.filePath"
-                    :equippedItems="{ current: item }"
-                    :scale="1"
-                  />
-                  <v-icon v-else color="grey-lighten-1"
-                    >mdi-image-outline</v-icon
-                  >
+                <v-avatar rounded size="64" color="grey-lighten-4" class="my-2 border" style="overflow: hidden">
+                  <DollConvas v-if="item.filePath" :equippedItems="{ current: item }" :scale="1" />
+                  <v-icon v-else color="grey-lighten-1">mdi-image-outline</v-icon>
                 </v-avatar>
               </td>
               <td class="font-weight-medium" style="width: 250px">
                 <!-- 編輯模式 -->
                 <div v-if="editItemId === item.id" class="d-flex align-center">
-                  <v-text-field
-                    v-model="editItemName"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    class="mr-2"
-                    style="min-width: 120px"
-                    @keyup.enter="saveName(item)"
-                    @keyup.esc="cancelEdit"
-                  ></v-text-field>
-                  <v-btn
-                    icon="mdi-check"
-                    color="success"
-                    size="x-small"
-                    variant="text"
-                    @click="saveName(item)"
-                  ></v-btn>
-                  <v-btn
-                    icon="mdi-close"
-                    color="error"
-                    size="x-small"
-                    variant="text"
-                    @click="cancelEdit"
-                  ></v-btn>
+                  <v-text-field v-model="editItemName" density="compact" variant="outlined" hide-details class="mr-2"
+                    style="min-width: 120px" @keyup.enter="saveName(item)" @keyup.esc="cancelEdit"></v-text-field>
+                  <v-btn icon="mdi-check" color="success" size="x-small" variant="text" @click="saveName(item)"></v-btn>
+                  <v-btn icon="mdi-close" color="error" size="x-small" variant="text" @click="cancelEdit"></v-btn>
                 </div>
                 <!-- 閱讀模式 -->
                 <div v-else class="d-flex align-center">
                   <span>{{ item.name }}</span>
-                  <v-btn
-                    icon="mdi-pencil"
-                    size="x-small"
-                    variant="text"
-                    color="grey"
-                    class="ml-2"
-                    @click="startEdit(item)"
-                  ></v-btn>
+                  <v-btn icon="mdi-pencil" size="x-small" variant="text" color="grey" class="ml-2"
+                    @click="startEdit(item)"></v-btn>
                 </div>
               </td>
               <td>
@@ -129,36 +73,31 @@
                   {{ categoryNameMap[item.category.id] || "未分類" }}
                 </v-chip>
               </td>
-              <td>
-                <div class="d-flex align-center">
-                  <v-icon size="small" color="amber-darken-2" class="mr-1"
-                    >mdi-star-four-points</v-icon
-                  >
-                  <span class="font-weight-bold text-grey-darken-2">{{
-                    item.price
-                  }}</span>
+              <td style="width: 160px">
+                <!-- 編輯模式 -->
+                <div v-if="editPriceId === item.id" class="d-flex align-center">
+                  <v-text-field v-model.number="editItemPrice" density="compact" variant="outlined" hide-details type="number" min="0" class="mr-2"
+                    style="min-width: 80px" @keyup.enter="savePrice(item)" @keyup.esc="cancelEditPrice"></v-text-field>
+                  <v-btn icon="mdi-check" color="success" size="x-small" variant="text" @click="savePrice(item)"></v-btn>
+                  <v-btn icon="mdi-close" color="error" size="x-small" variant="text" @click="cancelEditPrice"></v-btn>
+                </div>
+                <!-- 閱讀模式 -->
+                <div v-else class="d-flex align-center">
+                  <v-icon size="small" color="amber-darken-2" class="mr-1">mdi-star-four-points</v-icon>
+                  <span class="font-weight-bold text-grey-darken-2">{{ item.price }}</span>
+                  <v-btn icon="mdi-pencil" size="x-small" variant="text" color="grey" class="ml-2"
+                    @click="startEditPrice(item)"></v-btn>
                 </div>
               </td>
               <td class="text-center">
-                <v-chip
-                  size="small"
-                  :color="item.isActive ? 'success' : 'grey'"
-                  variant="flat"
-                  class="font-weight-bold text-white"
-                >
+                <v-chip size="small" :color="item.isActive ? 'success' : 'grey'" variant="flat"
+                  class="font-weight-bold text-white">
                   {{ item.isActive ? "販售中" : "已下架" }}
                 </v-chip>
               </td>
               <td class="text-center">
-                <v-switch
-                  v-model="item.isActive"
-                  @change="handleStatusToggle(item)"
-                  color="success"
-                  hide-details
-                  density="compact"
-                  inset
-                  class="d-inline-flex"
-                ></v-switch>
+                <v-switch v-model="item.isActive" @change="handleStatusToggle(item)" color="success" hide-details
+                  density="compact" inset class="d-inline-flex"></v-switch>
               </td>
             </tr>
           </tbody>
@@ -166,30 +105,20 @@
 
         <!-- 當沒有選擇分類時顯示 -->
         <div v-else class="pa-10 text-center text-grey-darken-1">
-          <v-icon size="64" color="grey-lighten-2" class="mb-4"
-            >mdi-layers-search-outline</v-icon
-          >
+          <v-icon size="64" color="grey-lighten-2" class="mb-4">mdi-layers-search-outline</v-icon>
           <div class="text-h6 font-weight-bold mb-2">請先選擇一個圖層分類</div>
           <div>選擇分類後即可管理該分類下的商品上下架狀態</div>
         </div>
 
         <!-- 當沒有搜尋結果時顯示 -->
-        <div
-          v-if="selectedCategory && filteredItems.length === 0"
-          class="pa-5 text-center text-grey"
-        >
+        <div v-if="selectedCategory && filteredItems.length === 0" class="pa-5 text-center text-grey">
           找不到符合條件的商品
         </div>
       </v-card>
 
       <!-- 測試用按鈕區塊 -->
       <div class="mt-4 text-right">
-        <v-btn
-          color="warning"
-          prepend-icon="mdi-auto-fix"
-          @click="testUnlockAll"
-          :loading="isUnlocking"
-        >
+        <v-btn color="warning" prepend-icon="mdi-auto-fix" @click="testUnlockAll" :loading="isUnlocking">
           測試：全圖鑑一鍵解鎖 (給予所有 DollItem)
         </v-btn>
       </div>
@@ -210,7 +139,12 @@ const {
   fetchAdminItems,
   updateItemStatus,
   updateItemName,
+  updateItemPrice,
   unlockAllItems,
+  isSnackbarVisible,
+  snackbarMessage,
+  snackbarColor,
+  showSnackBar,
 } = useAdminDollItems();
 
 // 搜尋關鍵字與選擇的分類
@@ -218,6 +152,8 @@ const search = ref("");
 const selectedCategory = ref(null);
 const editItemId = ref(null);
 const editItemName = ref("");
+const editPriceId = ref(null);
+const editItemPrice = ref(0);
 const isUnlocking = ref(false);
 
 // 測試用：無差別全圖鑑解鎖
@@ -225,10 +161,10 @@ const testUnlockAll = () => {
   isUnlocking.value = true;
   unlockAllItems()
     .then((res) => {
-      alert(`全圖鑑解鎖成功！已從所有分類中抓取並新增了 ${res.count} 件裝備！`);
+      showSnackBar(`全圖鑑解鎖成功！共新增了 ${res.count} 件裝備！`, "success");
     })
     .catch((err) => {
-      alert(err === "資料庫中沒有任何裝備" ? err : "解鎖失敗，請查看 Console。");
+      showSnackBar(err === "資料庫中沒有任何裝備" ? err : "解鎖失敗，請檢查網路狀態", "error");
     })
     .finally(() => {
       isUnlocking.value = false;
@@ -279,7 +215,7 @@ const cancelEdit = () => {
 const saveName = (item) => {
   // 防呆：名稱不能空白
   if (!editItemName.value.trim()) {
-    alert("商品名稱不能為空！");
+    showSnackBar("商品名稱不能為空！", "error");
     return;
   }
 
@@ -293,7 +229,35 @@ const saveName = (item) => {
       editItemName.value = "";
     })
     .catch((error) => {
-      alert("更新名稱失敗，請檢查連線狀態");
+      // API層已發出錯誤snackbar
+    });
+};
+
+// 處理編輯商品價格
+const startEditPrice = (item) => {
+  editPriceId.value = item.id;
+  editItemPrice.value = item.price;
+};
+
+const cancelEditPrice = () => {
+  editPriceId.value = null;
+  editItemPrice.value = 0;
+};
+
+const savePrice = (item) => {
+  if (editItemPrice.value === null || editItemPrice.value === "" || editItemPrice.value < 0) {
+    showSnackBar("商品價格不能為負數或空白！", "error");
+    return;
+  }
+
+  updateItemPrice(item.id, editItemPrice.value)
+    .then(() => {
+      item.price = editItemPrice.value;
+      editPriceId.value = null;
+      editItemPrice.value = 0;
+    })
+    .catch((error) => {
+      // API層已發出錯誤snackbar
     });
 };
 

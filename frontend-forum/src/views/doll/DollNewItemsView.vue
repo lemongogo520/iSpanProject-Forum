@@ -1,4 +1,12 @@
 <template>
+  <v-snackbar
+    v-model="isSnackbarVisible"
+    :timeout="2000"
+    :color="snackbarColor"
+    location="top"
+  >
+    {{ snackbarMessage }}
+  </v-snackbar>
   <div class="layout">
     <Sidebar />
     <div class="content">
@@ -92,8 +100,10 @@
 import { addNewDollItem } from '@/services/dollSystemApi/dollNewItemApi';
 import Sidebar from "@/components/config/ConfigSidebar.vue";
 
-const { categories, isSubmit, formData, submitItem, selectedFile } =
-  addNewDollItem();
+const { 
+  categories, isSubmit, formData, submitItem, selectedFile,
+  isSnackbarVisible, snackbarMessage, snackbarColor
+} = addNewDollItem();
 </script>
 <style scoped>
 .layout {

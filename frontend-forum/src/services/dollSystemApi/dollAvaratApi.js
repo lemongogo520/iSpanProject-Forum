@@ -53,9 +53,12 @@ export const userAvatar = defineStore("useAvatar", () => {
     pendingRequest.value[userId] = request;
     return request;
   }
+  const lastUpdatedAt = ref({});
+
   // 儲存套裝後呼叫，清除指定使用者的快取，讓下次渲染重新打 API
   function clearCache(userId) {
     delete cache.value[userId];
+    lastUpdatedAt.value[userId] = Date.now();
   }
-  return { cache, fetchAvatar, clearCache };
+  return { cache, fetchAvatar, clearCache, lastUpdatedAt };
 });

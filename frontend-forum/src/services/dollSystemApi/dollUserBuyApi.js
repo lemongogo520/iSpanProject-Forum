@@ -29,7 +29,7 @@ export function addItems(itemIds) {
     data: itemIds,
   })
     .then((response) => {
-      console.log("後端回傳:", response.data);
+
       return response.data;
     })
 
@@ -46,12 +46,12 @@ export function buySingleItems(itemId) {
     url: `/api/dollitem/userbuy/${itemId}`,
   })
     .then((response) => {
-      console.log("後端回傳:", response.data);
+
       return response.data;
     })
 
     .catch((error) => {
-      console.log(error);
+
       throw error;
     });
 }

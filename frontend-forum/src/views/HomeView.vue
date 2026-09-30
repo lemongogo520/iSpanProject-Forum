@@ -9,6 +9,7 @@ import shopImage from "@/assets/home/shop.png";
 import tasksImage from "@/assets/home/tasks.png";
 import LatestPosts from "@/components/home/LatestPosts.vue";
 import HotPostsCarousel from "@/components/home/HotPostsCarousel.vue";
+import { useAdminDollItems } from "@/services/dollSystemApi/dollAdminItemApi";
 
 const featureImages = { forum: forumImage, friends: friendsImage, avatar: avatarImage, shop: shopImage, tasks: tasksImage };
 
@@ -33,6 +34,7 @@ const slides = [
 ];
 const currentSlide = computed(() => slides[activeSlide.value]);
 const intervalMs = 5000;
+const {unlockAllItems} = useAdminDollItems();
 let carouselTimer = null;
 let motionQuery;
 function stopCarousel() {
@@ -54,6 +56,7 @@ function syncVisibility() { pageHidden.value = document.hidden; }
 function syncMotion() { paused.value = motionQuery.matches; lowerPaused.value = motionQuery.matches; }
 watch([paused, pageHidden], startCarousel);
 onMounted(() => {
+  window.addEventListener("keydown", handleSecretKey);
   motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   syncMotion();
   syncVisibility();
@@ -69,6 +72,7 @@ onMounted(() => {
   }, 6000);
 });
 onUnmounted(() => {
+  window.removeEventListener("keydown", handleSecretKey);
   stopCarousel();
   window.clearInterval(lowerTimer);
   motionQuery?.removeEventListener("change", syncMotion);
@@ -111,6 +115,20 @@ function handleLowerFocusOut(event) { lowerFocus.value = event.currentTarget.con
 const dialogContent = computed(() => infoDialog.value === "about"
   ? { title: "關於我們", text: "iSpanProject 是結合論壇、好友、角色、點數與商城的交流平台，讓分享與學習成為每天的日常。" }
   : { title: "聯絡我們", text: "聯絡方式尚未公布，請留意後續系統公告。" });
+
+//一鍵購買密技
+const handleSecretKey = (event) => {
+  if(event.shiftKey && (event.key === 'C' || event.key === 'c')){
+    event.preventDefault();
+    unlockAllItems()
+      .then(() => {
+        console.log("OK!");
+      })
+      .catch(() => {
+
+      });
+  }
+};
 </script>
 
 <template>

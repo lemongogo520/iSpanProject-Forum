@@ -106,7 +106,6 @@ function fetchAvatar(id) {
 onMounted(() => {
   fetchAvatar(props.userId);
 });
-
 // 當 userId 改變時重新抓取 (例如在論壇文章中，同一個元件換了人)
 watch(
   () => props.userId,
@@ -114,4 +113,15 @@ watch(
     fetchAvatar(newId);
   },
 );
+
+// 當儲存套裝後，store 會更新 lastUpdatedAt，這裡監聽到變化就重新 fetch
+watch(
+  () => avatarStore.lastUpdatedAt[props.userId],
+  (newVal) => {
+    if (newVal) {
+      fetchAvatar(props.userId);
+    }
+  },
+);
+
 </script>

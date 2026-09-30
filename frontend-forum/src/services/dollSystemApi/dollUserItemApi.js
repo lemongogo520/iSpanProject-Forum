@@ -23,7 +23,7 @@ export function listUserItems() {
       .then((response) => {
         //篩選出isOwned為true的資料，因為後端會回傳所有資料
         dollItems.value = response.data.filter((item) => item.isOwned === true);
-        console.log("裝備資料載入成功", dollItems.value);
+
       })
 
       .catch((error) => console.log(error));
@@ -119,7 +119,7 @@ export function listShopItems() {
         pageContent.value = response.data.content;
         currentPageNum.value = response.data.number + 1; // Spring 從 0 算，+1 換算成人類頁碼
         totalPages.value = response.data.totalPages;
-        console.log("商城裝備資料載入成功", pageContent.value);
+
       })
 
       .catch((error) => console.log(error));

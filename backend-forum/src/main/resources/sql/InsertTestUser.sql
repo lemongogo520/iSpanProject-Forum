@@ -25,7 +25,7 @@ WITH seed AS (
                 AS uniqueidentifier) AS uid,
            'test' + CAST(n AS varchar(10)) + '@example.com' AS email
     FROM (VALUES
-        (1,N'小明'),(2,N'阿華'),(3,N'美玲'),(4,N'志豪'),(5,N'怡君'),
+        (1,N'老王'),(2,N'阿華'),(3,N'美玲'),(4,N'志豪'),(5,N'怡君'),
         (6,N'建宏'),(7,N'雅婷'),(8,N'俊傑'),(9,N'淑芬'),(10,N'家豪'),
         (11,N'曉薇'),(12,N'宗翰'),(13,N'佩蓉'),(14,N'柏翰'),(15,N'欣怡')
     ) AS v(n, name)
@@ -134,9 +134,13 @@ JOIN [dbo].[doll_categories] c ON c.id = i.category_id
 JOIN [dbo].[users] u           ON u.id = o.user_id
 WHERE u.account LIKE 'test%'
   AND (
-      c.is_required = 1
-      OR ABS(CHECKSUM(CONVERT(varchar(36), u.id) + c.code)) % 10 < 7
-  )
+    c.is_required = 1
+    OR ABS(CHECKSUM(CONVERT(varchar(36), u.id) + c.code)) % 100 <
+       CASE c.code
+           WHEN 'hat'  THEN 25     -- 帽子 25%
+           ELSE 70                 -- 其他部位 70%
+       END
+)
   AND NOT EXISTS (
       SELECT 1 FROM [dbo].[doll_user_equip] e
       WHERE e.user_id = o.user_id AND e.category_id = i.category_id

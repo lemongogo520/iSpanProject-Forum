@@ -9,6 +9,17 @@ export function useAdminDollItems() {
   const { categories, fetchCategories } = listAllCategories();
   const adminItems = ref([]);
 
+  // Snackbar 狀態
+  const isSnackbarVisible = ref(false);
+  const snackbarMessage = ref("");
+  const snackbarColor = ref("success");
+
+  function showSnackBar(message, type = "success") {
+    snackbarMessage.value = message;
+    snackbarColor.value = type;
+    isSnackbarVisible.value = true;
+  }
+
   function fetchAdminItems(categoryId) {
     return httpClient({
       method: "get",
@@ -18,7 +29,7 @@ export function useAdminDollItems() {
         adminItems.value = response.data;
       })
       .catch((error) => {
-        console.error("讀取商品失敗", error);
+        showSnackBar("讀取商品失敗", "error");
       });
   }
 
@@ -30,10 +41,10 @@ export function useAdminDollItems() {
       url: `/api/dollitems/status/${itemId}?isActive=${isActive}`,
     })
       .then((response) => {
-        console.log(`商品 ${itemId} 狀態更新為: ${isActive ? "上架" : "下架"}`);
+        showSnackBar(`商品狀態已更新為: ${isActive ? "上架" : "下架"}`, "success");
       })
       .catch((error) => {
-        console.error("更新商品狀態失敗", error);
+        showSnackBar("更新商品狀態失敗", "error");
         return Promise.reject(error); // 將錯誤往外拋，讓外面的畫面知道更新失敗了
       });
   }
@@ -47,10 +58,27 @@ export function useAdminDollItems() {
       },
     })
       .then((response) => {
-        console.log(`商品 ${itemId} 名稱更新為: ${newName}`);
+        showSnackBar("商品名稱更新成功", "success");
       })
       .catch((error) => {
-        console.error("更新商品名稱失敗", error);
+        showSnackBar("更新商品名稱失敗", "error");
+        return Promise.reject(error); // 將錯誤往外拋，讓外面的畫面知道更新失敗了
+      });
+  }
+
+  function updateItemPrice(itemId, newPrice) {
+    return httpClient({
+      method: "patch",
+      url: `/api/dollitems/changeprice/${itemId}`,
+      params: {
+        newPrice: newPrice,
+      }
+    })
+      .then((response) => {
+        showSnackBar("商品價格更新成功", "success");
+      })
+      .catch((error) => {
+        showSnackBar("更新商品價格失敗", "error");
         return Promise.reject(error); // 將錯誤往外拋，讓外面的畫面知道更新失敗了
       });
   }
@@ -61,7 +89,7 @@ export function useAdminDollItems() {
       // 1. 取得所有分類
       const catRes = await httpClient.get("/api/dollcategory/all");
       const allCategories = catRes.data;
-      
+
       let allIds = [];
       // 2. 針對每一個分類，去抓出底下的所有商品 ID
       for (const cat of allCategories) {
@@ -69,14 +97,13 @@ export function useAdminDollItems() {
         const items = itemRes.data;
         allIds = allIds.concat(items.map(item => item.id));
       }
-      
+
       if (allIds.length === 0) return Promise.reject("資料庫中沒有任何裝備");
 
       // 3. 一次性打給 batch API 全部新增
       const response = await httpClient.post("/api/dollitem/userbuy/batch", allIds);
       return { count: allIds.length, message: response.data };
     } catch (error) {
-      console.error("全圖鑑解鎖失敗", error);
       return Promise.reject(error);
     }
   }
@@ -89,6 +116,11 @@ export function useAdminDollItems() {
     fetchAdminItems,
     updateItemStatus,
     updateItemName,
+    updateItemPrice,
     unlockAllItems,
+    isSnackbarVisible,
+    snackbarMessage,
+    snackbarColor,
+    showSnackBar,
   };
 }

@@ -1,4 +1,7 @@
 <template>
+  <v-snackbar v-model="isSnackbarVisible" :timeout="2000" :color="snackbarColor" location="top">
+    {{ snackbarMessage }}
+  </v-snackbar>
   <div class="layout">
     <Sidebar />
     <div class="content">
@@ -16,21 +19,16 @@
       <v-card class="bg-white pa-6" max-width="450" elevation="6" rounded="xl">
         <v-card-title class="text-h5 font-weight-bold mb-4 d-flex align-center text-primary-darken-1">
           <v-icon icon="mdi-layers-outline" class="mr-2"></v-icon>
-            圖層資訊一覽
+          圖層資訊一覽
         </v-card-title>
         <v-card-text class="px-0">
           <!-- 列表選單 -->
           <v-list density="compact" class="px-0 pt-0">
-            <v-list-item
-              v-for="category in categories"
-              :key="category.id"
-              class="mb-1 rounded border category-list-item"
-              variant="flat"
-              style="
+            <v-list-item v-for="category in categories" :key="category.id"
+              class="mb-1 rounded border category-list-item" variant="flat" style="
                 background: var(--color-background-light);
                 border-color: var(--color-border) !important;
-              "
-            >
+              ">
               <template v-slot:title>
                 <span class="font-weight-medium text-body-2">{{
                   category.typeName
@@ -39,48 +37,26 @@
 
               <template v-slot:append>
                 <!-- Z 軸標籤 -->
-                <v-chip
-                  size="medium"
-                  variant="tonal"
-                  color="primary"
-                  class="mr-3 px-4"
-                >
+                <v-chip size="medium" variant="tonal" color="primary" class="mr-3 px-4">
                   圖層: {{ category.zIndex }}
                 </v-chip>
                 <!-- 編輯按鈕 -->
-                <v-btn
-                  :style="{ visibility: isEditMode ? 'visible' : 'hidden' }"
-                  icon="mdi-pencil"
-                  variant="text"
-                  color="grey-darken-1"
-                  size="small"
-                  @click="openEditModal(category)"
-                ></v-btn>
+                <v-btn :style="{ visibility: isEditMode ? 'visible' : 'hidden' }" icon="mdi-pencil" variant="text"
+                  color="grey-darken-1" size="small" @click="openEditModal(category)"></v-btn>
               </template>
             </v-list-item>
           </v-list>
         </v-card-text>
 
         <v-card-actions class="px-0 pt-3 border-t mt-2">
-          <v-switch
-            v-model="isEditMode"
-            color="primary"
-            label="啟用編輯模式"
-            hide-details
-            density="compact"
-            inset
-          ></v-switch>
+          <v-switch v-model="isEditMode" color="primary" label="啟用編輯模式" hide-details density="compact" inset></v-switch>
         </v-card-actions>
       </v-card>
 
       <!-- Vuetify 內建彈窗 -->
       <v-dialog v-model="isModalVisible" max-width="420" persistent>
-        <DollCategoriesEditView
-          v-if="isModalVisible"
-          :category="selectedCategory"
-          @close="isModalVisible = false"
-          @save="saveCategory"
-        />
+        <DollCategoriesEditView v-if="isModalVisible" :category="selectedCategory" @close="isModalVisible = false"
+          @save="saveCategory" />
       </v-dialog>
     </div>
   </div>
@@ -99,6 +75,9 @@ const {
   selectedCategory,
   openEditModal,
   saveCategory,
+  isSnackbarVisible,
+  snackbarMessage,
+  snackbarColor
 } = useDollCategories();
 
 onMounted(() => {

@@ -2,11 +2,41 @@
   <v-snackbar
     v-model="isSnackbarVisible"
     :timeout="1000"
-    color="error"
+    :color=snackbarColor
     location="top"
   >
     {{ snackbarMessage }}
   </v-snackbar>
+
+  <v-dialog v-model="isConfirmDialogVisible" max-width="400">
+    <v-card rounded="lg">
+      <v-card-title class="text-h6 pt-4 px-4 font-weight-bold">
+        確認儲存
+      </v-card-title>
+      <v-card-text class="px-4 py-2">
+        確定要儲存目前的套裝嗎？
+      </v-card-text>
+      <v-card-actions class="px-4 pb-4">
+        <v-spacer></v-spacer>
+        <v-btn
+          variant="outlined"
+          color="grey"
+          @click="isConfirmDialogVisible = false"
+        >
+          取消
+        </v-btn>
+        <v-btn
+          variant="flat"
+          color="primary"
+          @click="saveEquippedItems"
+          :loading="isSaving"
+        >
+          確定儲存
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
   <v-container
     fluid
     class="fill-height pa-6"
@@ -61,8 +91,7 @@
               variant="flat"
               class="auth-button font-weight-bold"
               prepend-icon="mdi-content-save"
-              @click="saveEquippedItems"
-              :loading="isSaving"
+              @click="isConfirmDialogVisible = true"
               >儲存套裝</v-btn
             >
           </v-card-actions>
@@ -90,9 +119,17 @@ const baseUrl = "http://localhost:8080/sprites/";
 const equippedItems = ref({});
 const isSnackbarVisible = ref(false);
 const snackbarMessage = ref(null);
+const snackbarColor = ref('success');
+const isConfirmDialogVisible = ref(false);
 
 const avatarStore = userAvatar();
 const userStore = useUserStore();
+
+function showSnackBar(message, type = 'success'){
+  snackbarMessage.value = message;
+  snackbarColor.value = type;
+  isSnackbarVisible.value = true;
+}
 
 function loadEquippedItems() {
   httpClient({
@@ -127,18 +164,13 @@ const equipItem = (item) => {
     if (equippedItems.value[categoryId]?.id === item.id) {
       // 防呆：如果是必須穿戴的部位 (身體、頭)，禁止脫下成空白
       if (item.category.isRequired) {
-        console.warn(`部位 [${item.category.typeName}] 為必須裝備，無法脫下！`);
-        snackbarMessage.value = `部位 [${item.category.typeName}] 為必須裝備，無法脫下！`;
-        isSnackbarVisible.value = true;
+        showSnackBar(`部位 [${item.category.typeName}] 為必須裝備，無法脫下！`,"error")
         return;
       }
-
       delete equippedItems.value[categoryId];
-      console.log(`已脫下裝備: ${item.name}`);
     } else {
       // 如果點擊的是「不同」的裝備，就是直接覆蓋掉舊的 (更換)
       equippedItems.value[categoryId] = item;
-      console.log(`穿上裝備: ${item.name}`);
     }
   }
 };
@@ -158,15 +190,15 @@ function saveEquippedItems() {
       if (response.status === 200) {
         // 清除這位使用者的 avatar 快取，讓 DollAvatar 下次渲染時拿到最新資料
         avatarStore.clearCache(userStore.uid);
-        alert("套裝儲存成功！");
+        showSnackBar("套裝儲存成功！","success");
       }
     })
     .catch((error) => {
-      console.error("儲存套裝失敗", error);
-      alert("儲存失敗，請確認連線或登入狀態");
+      showSnackBar("儲存失敗，請確認連線或登入狀態","error");
     })
     .finally(() => {
       isSaving.value = false;
+      isConfirmDialogVisible.value = false;
     });
 }
 

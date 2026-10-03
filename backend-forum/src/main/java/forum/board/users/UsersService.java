@@ -18,6 +18,8 @@ import forum.board.dollsystemcategories.DollCategoryRepository;
 import forum.board.common.util.IpUtil;
 import forum.board.dollsystemitem.DollItem;
 import forum.board.dollsystemitem.DollItemRepository;
+import forum.board.dollsystemuserequip.DollUserEquip;
+import forum.board.dollsystemuserequip.DollUserEquipRepository;
 import forum.board.dollsystemuserowneditem.DollUserOwned;
 import forum.board.dollsystemuserowneditem.DollUserOwnedRepository;
 import forum.board.exception.*;
@@ -47,6 +49,7 @@ public class UsersService {
 	private final DollItemRepository dollItemRepository;
 	private final DollUserOwnedRepository dollUserOwnedRepository;
 	private final DollCategoryRepository dollCategoryRepository;
+	private final DollUserEquipRepository dollUserEquipRepository;
 
 	/**
 	 * 註冊會員
@@ -92,10 +95,17 @@ public class UsersService {
 			List<DollItem> activeItems = dollItemRepository.findByCategoryIdAndIsActiveTrue(category.getId());
 			if (!activeItems.isEmpty()) {
 				DollItem randomItem = activeItems.get((int) (Math.random() * activeItems.size()));
+				//放入背包
 				DollUserOwned dollUserOwned = new DollUserOwned();
 				dollUserOwned.setUser(user);
 				dollUserOwned.setItem(randomItem);
 				dollUserOwnedRepository.save(dollUserOwned);
+				//自動穿上
+				DollUserEquip dollUserEquip = new DollUserEquip();
+				dollUserEquip.setUser(user);
+				dollUserEquip.setCategory(category);
+				dollUserEquip.setItem(randomItem);
+				dollUserEquipRepository.save(dollUserEquip);
 			}
 		}
 	}

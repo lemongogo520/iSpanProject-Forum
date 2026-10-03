@@ -12,6 +12,17 @@ export function addNewDollItem() {
   });
   const selectedFile = ref(null);
 
+  // Snackbar 狀態
+  const isSnackbarVisible = ref(false);
+  const snackbarMessage = ref("");
+  const snackbarColor = ref("success");
+
+  function showSnackBar(message, type = "success") {
+    snackbarMessage.value = message;
+    snackbarColor.value = type;
+    isSnackbarVisible.value = true;
+  }
+
   //初始化
   onMounted(async () => {
     try {
@@ -30,7 +41,7 @@ export function addNewDollItem() {
       !formData.value.name ||
       !selectedFile.value
     ) {
-      alert("請填寫完整資訊後再上傳");
+      showSnackBar("請填寫完整資訊後再上傳", "error");
       return;
     }
 
@@ -64,13 +75,13 @@ export function addNewDollItem() {
         data: payload,
       });
 
-      alert("部件新增成功!");
+      showSnackBar("部件新增成功!", "success");
 
       formData.value.name = "";
       formData.value.price = 0;
       selectedFile.value = null;
     } catch (error) {
-      alert("新增失敗，請檢察檔案格式!");
+      showSnackBar("新增失敗，請檢察檔案格式!", "error");
     } finally {
       isSubmit.value = false;
     }
@@ -82,5 +93,8 @@ export function addNewDollItem() {
     formData,
     selectedFile,
     submitItem,
+    isSnackbarVisible,
+    snackbarMessage,
+    snackbarColor,
   };
 }

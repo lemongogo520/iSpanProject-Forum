@@ -109,22 +109,27 @@ END;
 IF NOT EXISTS (SELECT 1 FROM [dbo].[doll_user_owned])
 BEGIN
     INSERT INTO [dbo].[doll_user_owned] (user_id, item_id, acquired_at)
-    SELECT u.id, rnd.item_id, SYSDATETIMEOFFSET()
+    SELECT u.id, pick.item_id, SYSDATETIMEOFFSET()
     FROM [dbo].[users] u
-    CROSS JOIN (
-        -- 每個 category 隨機抽一個 item
-        SELECT 
-            i.id AS item_id,
-            i.category_id,
-            ROW_NUMBER() OVER (PARTITION BY i.category_id ORDER BY NEWID()) AS rn
+    CROSS JOIN [dbo].[doll_categories] c
+    CROSS APPLY (
+        SELECT TOP 1 i.id AS item_id
         FROM [dbo].[doll_items] i
-        WHERE i.is_active = 1
-    ) rnd
-    WHERE rnd.rn = 1
-      AND NOT EXISTS (
+        WHERE i.category_id = c.id
+        AND i.is_active = 1
+        AND (
+            c.code NOT IN ('body', 'head')
+            OR ABS(CHECKSUM(CONVERT(varchar(36), u.id) )) % 10 < 3
+            OR i.item_name LIKE CASE
+                    WHEN ABS(CHECKSUM(CONVERT(varchar(36), u.id))) % 2 = 0
+                    THEN N'男性%' ELSE N'女性%' END
+        )
+        ORDER BY CHECKSUM(CONCAT(CONVERT(varchar(36), u.id), '-', CONVERT(varchar(10), i.id)))
+    ) pick
+    WHERE NOT EXISTS (
         SELECT 1 
         FROM [dbo].[doll_user_owned] duo 
         WHERE duo.user_id = u.id 
-          AND duo.item_id = rnd.item_id
+          AND duo.item_id = pick.item_id
     )
 END;

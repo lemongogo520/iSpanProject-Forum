@@ -150,7 +150,7 @@ BEGIN
          [photo], [show_photo], [create_time], [creator], [create_ip])
     VALUES
         ('22222222-2222-4222-8222-222222222222',
-         N'一般使用者一', NULL, 0,
+         N'小明', NULL, 0,
          NULL, 0, NULL, 0,
          NULL, 0, SYSDATETIMEOFFSET(),
          '803BB44C-4F12-4056-8733-9D254162CCAE',
@@ -172,6 +172,18 @@ BEGIN
          '803BB44C-4F12-4056-8733-9D254162CCAE',
          '127.0.0.1')
 END;
+
+/* user001 建立錢包並給 500 點 */
+IF NOT EXISTS (
+    SELECT 1 FROM [dbo].[coin_wallet]
+    WHERE user_id = '22222222-2222-4222-8222-222222222222'
+)
+BEGIN
+    INSERT INTO [dbo].[coin_wallet] (id, user_id, balance, version, create_time)
+    VALUES (NEWID(), '22222222-2222-4222-8222-222222222222', 500, 0, SYSDATETIMEOFFSET())
+END;
+
+
 /* 初始化一般使用者 user002，密碼 123456 */
 IF NOT EXISTS (SELECT 1 FROM users WHERE account = 'user002')
 BEGIN
@@ -197,7 +209,7 @@ BEGIN
          [photo], [show_photo], [create_time], [creator], [create_ip])
     VALUES
         ('33333333-3333-4333-8333-333333333333',
-         N'一般使用者二', NULL, 0,
+         N'小美', NULL, 0,
          NULL, 0, NULL, 0,
          NULL, 0, SYSDATETIMEOFFSET(),
          '803BB44C-4F12-4056-8733-9D254162CCAE',

@@ -192,7 +192,7 @@ const emit = defineEmits([
 ]);
 
 const getUserName = (data) => {
-  return data?.users?.account || "使用者";
+  return data?.userName || "使用者";
 };
 
 const isCommentOwner = (data) => {

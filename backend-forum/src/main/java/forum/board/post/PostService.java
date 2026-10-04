@@ -153,7 +153,7 @@ public class PostService {
 						post.getPostType(),
 						post.getBoard().getId(),
 						post.getBoard().getName(),
-						post.getUsers().getAccount(),
+						post.getUsers().getUsersDetail().getName(),
 						post.getCreateTime()))
 				.toList();
 	}
@@ -228,7 +228,7 @@ public class PostService {
 		postDTO.setCreateTime(post.getCreateTime());
 		postDTO.setModifyTime(post.getModifyTime());
 		postDTO.setIsDeleted(post.getIsDeleted());
-		postDTO.setUserName(post.getUsers().getAccount());
+		postDTO.setUserName(post.getUsers().getUsersDetail().getName());
 		postDTO.setBoardId(post.getBoard().getId());
 		postDTO.setUserId(post.getUsers().getId());
 
@@ -590,7 +590,7 @@ public class PostService {
 						post.getId(),
 						post.getTitle(),
 						post.getUsers().getId(),
-						post.getUsers().getAccount(),
+						post.getUsers().getUsersDetail().getName(),
 						post.getBoard().getId(),
 						post.getBoard().getName(),
 						post.getPostType(),

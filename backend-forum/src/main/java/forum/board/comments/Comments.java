@@ -3,6 +3,7 @@ package forum.board.comments;
 import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import forum.board.post.Posts;
 import forum.board.users.Users;
@@ -73,6 +74,13 @@ public class Comments {
 	@Column(name = "modify_time")
 	private Instant modifyTime;
 
+	@JsonProperty("userName")
+	public String getUserName() {
+		return users != null && users.getUsersDetail() != null
+				? users.getUsersDetail().getName()
+				: null;
+	}
+
 	@PrePersist
 	public void createAt() {
 
@@ -86,7 +94,7 @@ public class Comments {
 			if (Boolean.TRUE.equals(this.deletedByModerator)) {
 				if (deleteReason != null &&
 						!deleteReason.isBlank()) {
-					return "此留言因「"+ deleteReason+ "」已被管理員刪除";
+					return "此留言因「" + deleteReason + "」已被管理員刪除";
 				}
 				return "此留言因違反規章已被管理員刪除";
 			}
